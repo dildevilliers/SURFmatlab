@@ -1,6 +1,9 @@
 # /fieldFuncs
 A variety of functions that manipulates the standard (far)field structure [FFstruct]
 
+Function list:
+    example1.m: Example function that does nothing and does not exist
+
 FFstruct contains:
   At least
     .th - [Na x Nf] matrix of theta angles (in rad) between [0,th_max]
@@ -15,7 +18,7 @@ Na = number of angular samples: length(unique(.th))*length(unique(.ph))
 Nf = number of frequency samples    
 
 
-Example for angles (first colums):
+Example for angles (first columns):
     .th = [0,1,2,3,0,1,2,3,0,1,2,3].'
     .ph = [0,0,0,0,1,1,1,1,2,2,2,2].'
 
