@@ -45,7 +45,21 @@ classdef FarField
     methods
         % Make a basic constructor method 
         function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
-            % E3 can be empty or left out, and freq can be left out
+            
+            % function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
+            % Constructor method for the FarField object
+            % Required inputs:
+            % th: column vector [Nang x 1] of th angles in rad
+            % ph: column vector [Nang x 1] of ph angles in rad
+            % E1: First E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
+            % E2: Second E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
+            %
+            % Optional inputs - can be left empty or omitted
+            % 'E3': Third E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
+            % 'freq': vector [1 x Nf] of frequencies where the fields are defined in Hz
+            % 'Prad': vector [1 x Nf] of radiated powers in W
+            % 'radEff': vector [1 x Nf] of radiation efficiencies
+            
             % Basic input error checking
             [Nang_th, Nf_th] = size(th);
             [Nang_ph, Nf_ph] = size(ph);
@@ -156,6 +170,30 @@ classdef FarField
            ARinv = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2)));
         end
         
+        %% Angle getters
+        function [u, v, w] = getUVW(FF)
+            u = sin(FF.th).*cos(FF.ph);
+            v = sin(FF.th).*sin(FF.ph);
+            w = cos(FF.th);
+        end
+        
+        function [el, az] = getElAz(FF)
+            [u,v,~] = getUVW(FF);
+%             el = real(asin(v));
+%             az = real(asin(u./cos(el)));
+%             el = pi/2 - FF.th;
+%             az = FF.ph;
+%             az = FF.ph;
+%             el = acos(sqrt(1 - (sin(FF.th).*sin(FF.ph)).^2));
+              el = atan(v);
+              az = atan(u./w)
+        end
+        
+        function [ep, al] = getEpAl(FF)
+            ep = pi/2 - FF.th;
+            al = FF.ph;
+        end
+        
         %% Polarization transformation methods
         % All take the current polarization base of the input object and 
         % transforms it to the required base
@@ -227,9 +265,9 @@ classdef FarField
                 obj.E3 = zeros(size(obj.E1));
                 obj.polBase = 'Ludwig2AE';
                 obj = setEnames(obj);
-                % Sort out poles
-                keyboard;
-                [~,iPole] = ismember([0,0],[obj.th,obj.ph],'ro);
+                % Sort out singularities poles
+                [~,iPole] = ismember([deg2rad(90),deg2rad(90);deg2rad(90),deg2rad(270)],[obj.th,obj.ph],'rows');
+                iPole = iPole(iPole>0);
                 [obj.E1(iPole,:),obj.E2(iPole,:),obj.E3(iPole,:)] = deal(0);
             end
         end
@@ -245,6 +283,11 @@ classdef FarField
                 obj.E3 = zeros(size(obj.E1));
                 obj.polBase = 'Ludwig2EA';
                 obj = setEnames(obj);
+                % Sort out singularities poles
+%                 keyboard;
+                [~,iPole] = ismember([deg2rad(90),deg2rad(0);deg2rad(90),deg2rad(180);deg2rad(90),deg2rad(360)],[obj.th,obj.ph],'rows');
+                iPole = iPole(iPole>0);
+                [obj.E1(iPole,:),obj.E2(iPole,:),obj.E3(iPole,:)] = deal(0);
             end
         end
         

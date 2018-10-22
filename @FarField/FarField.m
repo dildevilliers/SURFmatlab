@@ -45,7 +45,21 @@ classdef FarField
     methods
         % Make a basic constructor method 
         function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
-            % E3 can be empty or left out, and freq can be left out
+            
+            % function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
+            % Constructor method for the FarField object
+            % Required inputs:
+            % th: column vector [Nang x 1] of th angles in rad
+            % ph: column vector [Nang x 1] of ph angles in rad
+            % E1: First E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
+            % E2: Second E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
+            %
+            % Optional inputs - can be left empty or omitted
+            % 'E3': Third E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
+            % 'freq': vector [1 x Nf] of frequencies where the fields are defined in Hz
+            % 'Prad': vector [1 x Nf] of radiated powers in W
+            % 'radEff': vector [1 x Nf] of radiation efficiencies
+            
             % Basic input error checking
             [Nang_th, Nf_th] = size(th);
             [Nang_ph, Nf_ph] = size(ph);
@@ -154,6 +168,30 @@ classdef FarField
             % returns the Axial Ratio (linear) in AR and the inverted Axial Ratio in ARinv [Nang x Nf]
            AR = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2)));
            ARinv = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2)));
+        end
+        
+        %% Angle and projection getters
+        function [u, v, w] = getUVW(FF)
+            u = sin(FF.th).*cos(FF.ph);
+            v = sin(FF.th).*sin(FF.ph);
+            w = cos(FF.th);
+        end
+        
+        function [el, az] = getElAz(FF)
+            [u,v,w] = getUVW(FF);
+            el = asin(v);
+            az = atan2(u,w);
+        end
+        
+        function [ep, al] = getEpAl(FF)
+            [u,v,w] = getUVW(FF);
+            al = asin(u);
+            ep = atan2(v,w);
+        end
+        
+        function [Xg, Yg] = getXgYg(FF)
+            Xg = FF.th.*cos(FF.ph);
+            Yg = FF.th.*sin(FF.ph);
         end
         
         %% Polarization transformation methods
@@ -322,33 +360,6 @@ classdef FarField
         
         plot(FF,varargin)
         
-        
-%         function plot3D(obj,freqIndex,output,norm,scale)
-        function plot3D(obj,varargin)
-            % function plot3D(obj,freqIndex,output,norm,scale)
-            % Plots a 3D representation of the farfield object in obj
-            % freqIndex: natural number index of frequency to be plotted (default 1) 
-            % output: Select between [('Directivity'), 'Gain', 'absE1', 'phaseE1', 'absE2', 'phaseE2']
-            % norm: boolean (false) to normalize to maximum magnitude
-            % scale: Select between [('dB'), 'lin', ('deg'), 'rad']
-            
-            th_vect = unique(obj.th);
-            ph_vect = unique(obj.ph);
-            [PH,TH] = meshgrid(ph_vect,th_vect);
-            
-%             [Z, freqVect] = plotOutputs(obj,freqIndex,output,norm,scale);
-            [Z, freqVect] = plotOutputs(obj,varargin{:});
-%             keyboard;
-            for ff = 1:numel(freqVect)
-%                 Zplot = reshape(Z(:,ff),obj.Nth,obj.Nph);
-                Zplot = Z(:,ff);
-                figure
-                % Use the MATLAB antennas toolbox plotting function
-%                 patternCustom(Zplot,rad2deg(th_vect),rad2deg(ph_vect));
-                patternCustom(Zplot,rad2deg(obj.th),rad2deg(obj.ph));
-            end
-        end
-        
     end
     
     % Internal helper functions
@@ -390,76 +401,6 @@ classdef FarField
             end
         end
         
-        function [Z, freqVect] = plotOutputs(obj,freqIndex,output,norm,scale)
-            % helper function to sort out the requested plot output type,
-            % sampling, normalization and scaling (and error checking)
-%             keyboard
-            ifreq = 1;
-            outputType = 'Directivity';
-            normFlag = false;
-            if nargin > 1
-                ifreq = freqIndex;
-            end
-            if nargin > 2
-                outputType = output;
-            end
-            if strncmp(outputType,'phase',5)
-                scaleType = 'deg';
-            else
-                scaleType = 'dB';
-            end
-            if nargin > 3
-                normFlag = norm;
-            end
-            if nargin > 4
-                if strncmp(outputType,'phase',5)
-                    if ~(strcmp(scale,'dB') || strcmp(scale,'lin'))
-                        error(['Unknown scale type: ', scale, ' for phase plots'])
-                    end
-                else
-                    if ~(strcmp(scale,'dB') || strcmp(scale,'lin'))
-                        error(['Unknown scale type: ', scale, ' for magnitude plots'])
-                    else
-                        scaleType = scale;
-                    end
-                end
-            end
-            
-            switch outputType
-                case 'Directivity'
-                    Zmat = getDirectivity(obj);
-                    if normFlag, Zmat = bsxfun(@times,Zmat,1./(max(Zmat))); end
-                    if strcmp(scaleType,'dB'), Zmat = dB10(Zmat); end
-                case 'Gain'
-                    Zmat = getGain(obj);
-                    if normFlag, Zmat = bsxfun(@times,Zmat,1./(max(Zmat))); end
-                    if strcmp(scaleType,'dB'), Zmat = dB10(Zmat); end
-                case 'absE1'
-                    [Zmat,~,~] = getEfield(obj);
-                    Zmat = abs(Zmat);
-                    if normFlag, Zmat = bsxfun(@times,Zmat,1./(max(Zmat))); end
-                    if strcmp(scaleType,'dB'), Zmat = dB20(Zmat); end
-                case 'phaseE1'
-                    [Zmat,~,~] = getEfield(obj);
-                    Zmat = angle(Zmat);
-                    if normFlag, Zmat = bsxfun(@plus,Zmat,1./(min(Zmat))); end
-                    if strcmp(scaleType,'deg'), Zmat = rad2deg(Zmat); end
-                case 'absE2'
-                    [~,Zmat,~] = getEfield(obj);
-                    Zmat = abs(Zmat);
-                    if normFlag, Zmat = bsxfun(@times,Zmat,1./(max(Zmat))); end
-                    if strcmp(scaleType,'dB'), Zmat = dB20(Zmat); end
-                case 'phaseE2'
-                    [~,Zmat,~] = getEfield(obj);
-                    Zmat = angle(Zmat);
-                    if normFlag, Zmat = bsxfun(@plus,Zmat,1./(min(Zmat))); end
-                    if strcmp(scaleType,'deg'), Zmat = rad2deg(Zmat); end
-                otherwise
-                    error(['Unknown output type: ', outputType])
-            end
-            Z = Zmat(:,ifreq);
-            freqVect = obj.freq(ifreq);
-        end
     end
     
 end
