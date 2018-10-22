@@ -5,7 +5,7 @@ function [] = plot(FF,varargin)
 % Plots a representation of the farfield object in FF
 % name, value are name value pairs, and can be the following:
 %
-% freqIndex is the index(es) of frequencies to be plotted (default 1)
+% freqIndex is the index of the frequency to be plotted (default 1)
 %
 % plotType can be:
 %   ('3D') | '2D' | 'polar' | 'cartesian'
@@ -41,8 +41,14 @@ function [] = plot(FF,varargin)
 %
 % cutValue can be any value in the available angle range.  If omitted, the
 % principle plane cuts will be attempted...
+%
+% step is the plot step size.  Can be empty - then the available data will
+% be used.  If not, a griddata interpolant will be made.
+%
+% plotProperties can be a variety of name, value pairs including:
+%   LineWidth, LineStyle (like '-k.')
 
-narginchk(1,14);
+narginchk(1,20);
 
 %% Parsing through the inputs
 parseobj = inputParser;
@@ -51,7 +57,7 @@ parseobj.FunctionName = 'plot';
 typeValidationObj = @(x) validateattributes(x,{'FarField'},{'numel',1},'plot','FF',1);
 addRequired(parseobj,'FF',typeValidationObj);
 
-typeValidationFreq = @(x) validateattributes(x,{'numeric'},{'vector','nonempty','integer'},'plot','freqIndex');
+typeValidationFreq = @(x) validateattributes(x,{'numeric'},{'real','nonempty','integer'},'plot','freqIndex');
 addParameter(parseobj,'freqIndex',1,typeValidationFreq);
 
 typeValidationnorm = @(x) validateattributes(x,{'numeric'},{'binary','nonempty','numel',1},'plot','norm');
@@ -84,8 +90,16 @@ addParameter(parseobj,'projection','std', @(x) any(validatestring(x,expectedproj
 expectedcutConstant = {'x','y'};
 addParameter(parseobj,'cutConstant','x', @(x) any(validatestring(x,expectedcutConstant)));
 
-typeValidationcutValue = @(x) validateattributes(x,{'numeric'},{'real','ndims',1},'plot','cutValue');
+typeValidationcutValue = @(x) validateattributes(x,{'numeric'},{'real'},'plot','cutValue');
 addParameter(parseobj,'cutValue',[],typeValidationcutValue);
+
+typeValidationstep = @(x) validateattributes(x,{'numeric'},{'real'},'plot','step');
+addParameter(parseobj,'step',[],typeValidationstep);
+
+typeValidationLineWidth = @(x) validateattributes(x,{'numeric'},{'real'},'plot','LineWidth');
+addParameter(parseobj,'LineWidth',1,typeValidationLineWidth);
+
+addParameter(parseobj,'LineStyle',[]);
 
 parse(parseobj, FF, varargin{:});
 
@@ -101,6 +115,9 @@ freqUnit = parseobj.Results.freqUnit;
 projection = parseobj.Results.projection;
 cutConstant = parseobj.Results.cutConstant;
 cutValue = parseobj.Results.cutValue;
+step = parseobj.Results.step;
+LineWidth = parseobj.Results.LineWidth;
+LineStyle = parseobj.Results.LineStyle;
 
 
 %% Extract plot output type
@@ -171,7 +188,7 @@ switch output
 end
 
 Z = Zmat(:,freqIndex);
-freqVect = FF.freq(freqIndex);
+% freqVect = FF.freq(freqIndex);
 
 %% Extract some angles
 switch projection
@@ -213,77 +230,105 @@ switch projection
         yname = 'asin(v) (deg)';
 end
 
-%% Plot for each frequency
-for ff = 1:numel(freqVect)
-    Zplot = Z(:,ff);
-    % Fix Dynamic Range if required
-    if strcmp(outputType,'mag')
-        if strcmp(scaleMag,'dB')
-            Zplot(Zplot < (max(Zplot) - dynamicRange_dB)) = max(Zplot) - dynamicRange_dB;
-        else
-            Zplot(Zplot < max(Zplot)*dr) = max(Zplot)*dr;
-        end
-    end
-    
-    figure
-    switch plotType
-        case '3D'
-            % Use the MATLAB antennas toolbox plotting function
-            patternCustom(Zplot,rad2deg(FF.th),rad2deg(FF.ph));
-        case '2D'
-            X = reshape(x,FF.Nth,FF.Nph);
-            Y = reshape(y,FF.Nth,FF.Nph);
-            surf(X,Y,reshape(Zplot,FF.Nth,FF.Nph),'EdgeColor','Interp','FaceColor','Interp')
-            xlabel(xname)
-            ylabel(yname)
-            view([0,90])
-            axis equal
-            xlim([min(x),max(x)])
-            ylim([min(y), max(y)])
-            colorbar
-        case 'cartesian'
-            lw = 1.5;   % Can maybe chance to be accessed form outside later...
-            if isempty(cutValue)
-                % Find the principle cuts
-                iph0 = find(abs(FF.ph - 0) < eps);
-                iph45 = find(abs(FF.ph - deg2rad(45)) < eps);
-                iph90 = find(abs(FF.ph - deg2rad(90)) < eps);
-                iph135 = find(abs(FF.ph - deg2rad(135)) < eps);
-                iph180 = find(abs(FF.ph - deg2rad(180)) < eps);
-                iph225 = find(abs(FF.ph - deg2rad(225)) < eps);
-                iph270 = find(abs(FF.ph - deg2rad(270)) < eps);
-                iph315 = find(abs(FF.ph - deg2rad(315)) < eps);
-
-                plot(rad2deg(FF.th(iph0)),Zplot(iph0),'k','lineWidth',lw), grid on, hold on
-                plot(rad2deg(FF.th(iph45)),Zplot(iph45),'b','lineWidth',lw)
-                plot(rad2deg(FF.th(iph90)),Zplot(iph90),'r','lineWidth',lw)
-                plot(rad2deg(FF.th(iph135)),Zplot(iph135),'g','lineWidth',lw)
-                plot(-rad2deg(FF.th(iph180)),Zplot(iph180),'k','lineWidth',lw)
-                plot(-rad2deg(FF.th(iph225)),Zplot(iph225),'b','lineWidth',lw)
-                plot(-rad2deg(FF.th(iph270)),Zplot(iph270),'r','lineWidth',lw)
-                plot(-rad2deg(FF.th(iph315)),Zplot(iph315),'g','lineWidth',lw)
-                lg = legend('\phi = 0^\circ','\phi = 45^\circ','\phi = 90^\circ','\phi = 135^\circ');
-                lg.String = lg.String(1:4); % Just keep the first four legend entries
-            else
-                % ToDo
-            end
-    end
-    
-    switch freqUnit
-        case 'Hz'
-            freqMult = 1;
-        case 'kHz'
-            freqMult = 1e-3;
-        case 'MHz'
-            freqMult = 1e-6;
-        case 'GHz'
-            freqMult = 1e-9;
-        case 'THz'
-            freqMult = 1e-12;
-    end
-    freqPlot = freqVect(ff)*freqMult;
-    title([FF.polBase, ', ',FF.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
-    
+%% Make the plots
+switch freqUnit
+    case 'Hz'
+        freqMult = 1;
+    case 'kHz'
+        freqMult = 1e-3;
+    case 'MHz'
+        freqMult = 1e-6;
+    case 'GHz'
+        freqMult = 1e-9;
+    case 'THz'
+        freqMult = 1e-12;
 end
+freqPlot = FF.freq(freqIndex)*freqMult;
+Zplot = Z(:,freqIndex);
+% Fix Dynamic Range if required
+if strcmp(outputType,'mag')
+    if strcmp(scaleMag,'dB')
+        Zplot(Zplot < (max(Zplot) - dynamicRange_dB)) = max(Zplot) - dynamicRange_dB;
+    else
+        Zplot(Zplot < max(Zplot)*dr) = max(Zplot)*dr;
+    end
+end
+
+xMat = reshape(x,FF.Nth,FF.Nph);
+yMat = reshape(y,FF.Nth,FF.Nph);
+if isempty(step)
+    X = xMat;
+    Y = yMat;
+elseif ~strcmp(plotType,'3D') && ~isempty(cutValue)
+    xvect = min(x):step:max(x);
+    yvect = min(y):step:max(y);
+    [X,Y] = meshgrid(xvect,yvect);
+    Zplot = griddata(xMat,yMat,reshape(Zplot,FF.Nth,FF.Nph),X,Y);
+    Zplot = Zplot(:);
+    x = X(:);
+    y = Y(:);
+end
+
+%     figure
+switch plotType
+    case '3D'
+        % Use the MATLAB antennas toolbox plotting function
+        patternCustom(Zplot,rad2deg(FF.th),rad2deg(FF.ph));
+        title([FF.polBase, ', ',FF.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
+    case '2D'
+%         surf(X,Y,reshape(Zplot,FF.Nth,FF.Nph),'EdgeColor','Interp','FaceColor','Interp')
+        surf(X,Y,reshape(Zplot,size(X)),'EdgeColor','Interp','FaceColor','Interp')
+        xlabel(xname)
+        ylabel(yname)
+        view([0,90])
+        axis equal
+        xlim([min(x),max(x)])
+        ylim([min(y), max(y)])
+        colorbar
+        title([FF.polBase, ', ',FF.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
+    case 'cartesian'
+        lw = LineWidth;   % Can maybe chance to be accessed form outside later...
+        if isempty(cutValue)
+            % Find the principle cuts
+            iph0 = find(abs(FF.ph - 0) < eps);
+            iph45 = find(abs(FF.ph - deg2rad(45)) < eps);
+            iph90 = find(abs(FF.ph - deg2rad(90)) < eps);
+            iph135 = find(abs(FF.ph - deg2rad(135)) < eps);
+            iph180 = find(abs(FF.ph - deg2rad(180)) < eps);
+            iph225 = find(abs(FF.ph - deg2rad(225)) < eps);
+            iph270 = find(abs(FF.ph - deg2rad(270)) < eps);
+            iph315 = find(abs(FF.ph - deg2rad(315)) < eps);
+            
+            plot(rad2deg(FF.th(iph0)),Zplot(iph0),[LineStyle,'k'],'lineWidth',lw), grid on, hold on
+            plot(rad2deg(FF.th(iph45)),Zplot(iph45),[LineStyle,'b'],'lineWidth',lw)
+            plot(rad2deg(FF.th(iph90)),Zplot(iph90),[LineStyle,'r'],'lineWidth',lw)
+            plot(rad2deg(FF.th(iph135)),Zplot(iph135),[LineStyle,'g'],'lineWidth',lw)
+            plot(-rad2deg(FF.th(iph180)),Zplot(iph180),[LineStyle,'k'],'lineWidth',lw)
+            plot(-rad2deg(FF.th(iph225)),Zplot(iph225),[LineStyle,'b'],'lineWidth',lw)
+            plot(-rad2deg(FF.th(iph270)),Zplot(iph270),[LineStyle,'r'],'lineWidth',lw)
+            plot(-rad2deg(FF.th(iph315)),Zplot(iph315),[LineStyle,'g'],'lineWidth',lw)
+            lg = legend('\phi = 0^\circ','\phi = 45^\circ','\phi = 90^\circ','\phi = 135^\circ');
+            xlabel('\theta (deg)')
+            ylabel([outputType,'(', compName, ') (',unit,')'])
+            %                 lg.String = lg.String(1:4); % Just keep the first four legend entries
+        else
+            if cutConstant == 'x'
+                iCut = find(abs(x - cutValue) < eps);
+                plot(y(iCut),Zplot(iCut),LineStyle,'lineWidth',lw), grid on, hold on
+                xlabel(yname)
+            elseif cutConstant == 'y'
+                iCut = find(abs(y - cutValue) < eps);
+                plot(x(iCut),Zplot(iCut),LineStyle,'lineWidth',lw), grid on, hold on
+                xlabel(xname)
+            end
+            ylabel([outputType,'(', compName, ') (',unit,')'])
+            % ToDo
+        end
+        title([FF.polBase, ', ',FF.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit])
+
+end
+
+
+% end
 
 end
