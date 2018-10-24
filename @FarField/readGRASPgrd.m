@@ -18,8 +18,13 @@ while 1
     a = fgetl(fid);
     if strncmp(a,freqMarker,11) % Read the frequencies info
         freqUnit = regexp(a, '(?<=\[)[^)]*(?=\])', 'match', 'once');
-        a = fgetl(fid);
-        freq = str2num(a);
+        % Keep reading lines until all frequencies read
+        freq = [];
+        while 1
+            a = fgetl(fid);
+            if strcmp(a,startMarker), break; end
+            freq = [freq,str2num(a)];
+        end
     end
     if strcmp(a,startMarker)
         a = fgetl(fid);

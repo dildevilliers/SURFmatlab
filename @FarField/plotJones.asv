@@ -1,0 +1,26 @@
+function [] = plotJones(FF1,FF2,varargin)
+
+% function [] = plotJones(FF1,FF2,varargin)
+% plots the Jones matrix type representation of the farfields specified in
+% FF1 and FF2, where it is assumed they are calculated in the same basis
+% and represent the 2 polarizations
+% name, value are name value pairs, and can be the following:
+%
+% freqIndex is the index of the frequency to be plotted (default 1)
+
+if ~isGridEqual(obj1,obj2)
+    error
+
+figure
+subplot(2,2,1)
+plot(FF1,'output','E2','outputType','mag','plotType','2D','scaleMag','dB')
+title('J_{11}')
+subplot(2,2,2)
+plot(FF1,'output','E1','outputType','mag','plotType','2D','scaleMag','dB')
+title('J_{12}')
+subplot(2,2,3)
+plot(FF2,'output','E1','outputType','mag','plotType','2D','scaleMag','dB')
+title('J_{21}')
+subplot(2,2,4)
+plot(FF2,'output','E2','outputType','mag','plotType','2D','scaleMag','dB')
+title('J_{22}')

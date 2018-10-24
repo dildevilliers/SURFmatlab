@@ -53,8 +53,7 @@ classdef FarField
         
     end
         
-    
-    properties (Constant = true, Hidden = true)
+        properties (Constant = true, Hidden = true)
         c0 = physconst('Lightspeed');
         eps0 = 8.854187817000001e-12;
         mu0 = 1.256637061435917e-06;
@@ -187,13 +186,25 @@ classdef FarField
             G = bsxfun(@times,getDirectivity(obj),obj.radEff);
         end
         
-        function [AR,ARinv] = getAxialRatio(obj)
+        function [AR] = getAxialRatio(obj)
             % function [AR, ARinv] = getAxialRatio(obj)
             % returns the Axial Ratio (linear) in AR and the inverted Axial Ratio in ARinv [Nang x Nf]
            AR = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2)));
+        end
+        
+        function [ARinv] = getAxialRatioInv(obj)
+            % function [AR, ARinv] = getAxialRatio(obj)
+            % returns the Axial Ratio (linear) in AR and the inverted Axial Ratio in ARinv [Nang x Nf]
            ARinv = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2)));
         end
         
+        function [Xpol] = getCO_XP(obj)
+            Xpol = (abs(obj.E2)./abs(obj.E1)).^2;
+        end
+        
+        function [Xpol] = getXP_CO(obj)
+            Xpol = (abs(obj.E1)./abs(obj.E2)).^2;
+        end
         %% Grid getters
               
         function [u, v, w] = getUV(obj)
@@ -553,9 +564,70 @@ classdef FarField
             end
         end
         
-        %% Plotting methods
-        plot(obj,varargin)
+        %%
+        function obj = resetToBase(obj)
+            coorHandle = str2func(['coor2',obj.coorSysBase]);
+            obj = coorHandle(obj);
+            polHandle = str2func(['pol2',obj.polTypeBase]);
+            obj = polHandle(obj);
+            gridHandle = str2func(['grid2',obj.gridTypeBase]);
+            obj = gridHandle(obj);
+        end
         
+        
+        %% Plotting and interpolation methods
+        plot(obj,varargin)
+        plotJones(obj1,obj2,varargin)  % Much to do here still...
+        [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
+        
+        %% Maths
+        function obj = plus(obj1,obj2)
+            obj1 = resetToBase(obj1);
+            obj2 = resetToBase(obj2);
+            
+            if isGridEqual(obj1,obj2)
+                obj = obj1;
+                obj.E1 = obj1.E1 + obj2.E1;
+                obj.E2 = obj1.E2 + obj2.E2;
+                obj.E3 = obj1.E3 + obj2.E3;
+                obj.Prad = obj1.Prad + obj2.Prad;
+                Pt = obj1.Prad./obj1.radEff + obj2.Prad./obj2.radEff;
+                obj.radEff = obj.Prad./Pt;
+                obj.radEff_dB = dB10(obj.radEff);
+                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
+                obj.Gain_dB = dB10(max(obj.getGain()));
+            else 
+                error('Can only add FarFields with equal base grids')
+            end
+        end
+        
+        function obj = times(obj1,obj2)
+            obj1 = resetToBase(obj1);
+            obj2 = resetToBase(obj2);
+            
+            if isGridEqual(obj1,obj2)
+                obj = obj1;
+                obj.E1 = obj1.E1.*obj2.E1;
+                obj.E2 = obj1.E2.*obj2.E2;
+                obj.E3 = obj1.E3.*obj2.E3;
+                % ToDo - calculate power through field integration
+                % For now just normalise to 4pi
+                obj.Prad = ones(size(obj.Prad)).*4*pi;
+                obj.radEff = ones(size(obj.Prad));
+                obj.radEff_dB = dB10(obj.radEff);
+                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
+                obj.Gain_dB = dB10(max(obj.getGain()));
+            else 
+                error('Can only multiply FarFields with equal base grids')
+            end
+        end
+        
+        function y = isGridEqual(obj1,obj2)
+            xEqual = isequal(obj1.x,obj2.x);
+            yEqual = isequal(obj1.y,obj2.y);
+            gridEqual = strcmp(obj1.gridType,obj2.gridType);
+            y = xEqual && yEqual && gridEqual;
+        end
         
     end
     
@@ -568,6 +640,12 @@ classdef FarField
             u = real(sin(th).*cos(ph));
             v = real(sin(th).*sin(ph));
             w = real(cos(th));
+        end
+        
+        function [u,v,w] = UV2UV(u,v,w)
+            if nargin < 3
+                w = sqrt(1 - u.^2 - v.^2);
+            end
         end
         
         function [u,v,w] = AzEl2UV(az,el)
