@@ -44,7 +44,7 @@ classdef FarField
         % a UV projection and back...
         xBase   
         yBase 
-        gridBase
+        gridTypeBase
         E1Base
         E2Base
         E3Base
@@ -197,33 +197,21 @@ classdef FarField
         %% Grid getters
               
         function [u, v, w] = getUV(obj)
-            switch obj.gridBase
+            switch obj.gridTypeBase
                 case 'PhTh'
-                    u = real(sin(obj.yBase).*cos(obj.xBase));
-                    v = real(sin(obj.yBase).*sin(obj.xBase));
-                    w = real(cos(obj.yBase));
+                    [u,v,w] = FarField.PhTh2UV(obj.xBase,obj.yBase);
                 case 'UV'
                     u = obj.xBase;
                     v = obj.yBase;
                     w = sqrt(1 - u.^2 - v.^2);
                 case 'AzEl'
-                    u = real(sin(obj.xBase).*cos(obj.yBase));
-                    v = real(sin(obj.yBase));
-                    w = real(cos(obj.xBase).*cos(obj.yBase));
+                    [u,v,w] = FarField.AzEl2UV(obj.xBase,obj.yBase);
                 case 'ElAz'
-                    u = real(sin(obj.yBase));
-                    v = real(cos(obj.yBase).*sin(obj.xBase));
-                    w = real(cos(obj.yBase).*cos(obj.xBase));
+                    [u,v,w] = FarField.ElAz2UV(obj.xBase,obj.yBase);
                 case 'TrueView'
-                    Th = sqrt(obj.xBase.^2 + obj.yBase.^2);
-                    Ph = atan2(obj.yBase,obj.xBase);
-                    u = real(sin(Th).*cos(Ph));
-                    v = real(sin(Th).*sin(Ph));
-                    w = real(cos(Th));
+                    [u,v,w] = FarField.TrueView2UV(obj.xBase,obj.yBase);
                 case 'ArcSin'
-                    u = sin(obj.xBase);
-                    v = sin(obj.yBase);
-                    w = real(sqrt(sin(obj.xBase).^2 + sin(obj.yBase).^2));
+                    [u,v,w] = FarField.ArcSin2UV(obj.xBase,obj.yBase);
             end
         end
         
@@ -234,8 +222,7 @@ classdef FarField
                     th = obj.y;
                 otherwise
                     [u,v,w] = getUV(obj);
-                    ph = real(atan2(v,u));
-                    th = real(acos(w));
+                    [ph,th] = FarField.UV2PhTh(u,v,w);
             end
         end
         
@@ -246,8 +233,7 @@ classdef FarField
                     az = obj.x;
                 otherwise
                     [u,v,w] = getUV(obj);
-                    el = real(asin(v));
-                    az = real(atan2(u,w));
+                    [az,el] = FarField.UV2AzEl(u,v,w);
             end
         end
         
@@ -258,8 +244,7 @@ classdef FarField
                     al = obj.y;
                 otherwise
                     [u,v,w] = getUV(obj);
-                    al = real(asin(u));
-                    ep = real(atan2(v,w));
+                    [ep,al] = FarField.UV2ElAz(u,v,w);
             end
         end
         
@@ -270,10 +255,7 @@ classdef FarField
                     Yg = obj.x;
                 otherwise
                     [u,v,w] = getUV(obj);
-                    Ph = atan2(v,u);
-                    Th = acos(w);
-                    Xg = real(Th.*cos(Ph));
-                    Yg = real(Th.*sin(Ph));
+                    [Xg,Yg] = FarField.UV2TrueView(u,v,w);
             end
         end
         
@@ -284,8 +266,7 @@ classdef FarField
                     asinv = obj.x;
                 otherwise
                     [u,v,~] = getUV(obj);
-                    asinu = real(asin(u));
-                    asinv = real(asin(v));
+                    [asinu,asinv] = FarField.UV2ArcSin(u,v,w);
             end
         end
         
@@ -573,11 +554,74 @@ classdef FarField
         end
         
         %% Plotting methods
-        
         plot(obj,varargin)
         
-        %% 
         
+    end
+    
+    methods (Static = true)
+       %% Farfield reading methods
+        obj = readGRASPgrd(pathName); 
+        
+        %% Coordinate transformers
+        function [u,v,w] = PhTh2UV(x,y)
+            u = real(sin(th).*cos(x));
+            v = real(sin(y).*sin(x));
+            w = real(cos(y));
+        end
+        
+        function [u,v,w] = AzEl2UV(x,y)
+            u = real(sin(x).*cos(y));
+            v = real(sin(y));
+            w = real(cos(x).*cos(y));
+        end
+        
+        function [u,v,w] = ElAz2UV(x,y)
+            u = real(sin(y));
+            v = real(cos(y).*sin(x));
+            w = real(cos(y).*cos(x));
+        end
+        
+        function [u,v,w] = TrueView2UV(x,y)
+            Th = sqrt(x.^2 + y.^2);
+            Ph = atan2(y,x);
+            u = real(sin(Th).*cos(Ph));
+            v = real(sin(Th).*sin(Ph));
+            w = real(cos(Th));
+        end
+        
+        function [u,v,w] = ArcSin2UV(x,y)
+            u = sin(x);
+            v = sin(y);
+            w = real(sqrt(sin(x).^2 + sin(y).^2));
+        end
+        
+        function [ph,th] = UV2PhTh(u,v,w)
+            ph = real(atan2(v,u));
+            th = real(acos(w));
+        end
+        
+        function [az,el] = UV2AzEl(u,v,w)
+            el = real(asin(v));
+            az = real(atan2(u,w));
+        end
+        
+        function [ep,al] = UV2ElAz(u,v,w)
+            al = real(asin(u));
+            ep = real(atan2(v,w));
+        end
+        
+        function [Xg,Yg] = UV2TrueView(u,v,w)
+            Ph = atan2(v,u);
+            Th = acos(w);
+            Xg = real(Th.*cos(Ph));
+            Yg = real(Th.*sin(Ph));
+        end
+
+        function [asinu,asinv] = UV2ArcSin(u,v,w)
+            asinu = real(asin(u));
+            asinv = real(asin(v));
+        end
     end
     
     % Internal helper functions
@@ -586,7 +630,7 @@ classdef FarField
         function obj = setBase(obj)
             obj.xBase = obj.x;
             obj.yBase = obj.y;
-            obj.gridBase = obj.gridType;
+            obj.gridTypeBase = obj.gridType;
             obj.E1Base = obj.E1;
             obj.E2Base = obj.E2;
             obj.E3Base = obj.E3;
