@@ -1,8 +1,8 @@
-% function [] = plot(FF,freqIndex,plotType,varargin)
-function [] = plot(FF,varargin)
+% function [] = plot(obj,freqIndex,plotType,varargin)
+function [] = plot(obj,varargin)
 
-% function plot(FF,name,value)
-% Plots a representation of the farfield object in FF
+% function plot(obj,name,value)
+% Plots a representation of the farfield object in obj
 % name, value are name value pairs, and can be the following:
 %
 % freqIndex is the index of the frequency to be plotted (default 1)
@@ -31,11 +31,6 @@ function [] = plot(FF,varargin)
 % freqUnit can be:
 %   ('GHz') | 'Hz' | 'kHz' | 'MHz' | 'THz'
 %
-% projection can be:
-%   ('std') | 'TrueView' | 'DirCosine' | 'ArcSin'
-%    See Masters and Gregson paper for details.  'std' just uses the
-%    standard angle definitions of the polBase
-%
 % cutConstant can be (used only for polar and cartesian plots):
 %   ('x') | 'y'  (x = [ph|az|ep|u|Xg|asin(u)]; y = [th|el|al|Yg|asin(v)]
 %
@@ -54,8 +49,8 @@ narginchk(1,20);
 parseobj = inputParser;
 parseobj.FunctionName = 'plot';
 
-typeValidationObj = @(x) validateattributes(x,{'FarField'},{'numel',1},'plot','FF',1);
-addRequired(parseobj,'FF',typeValidationObj);
+typeValidationObj = @(x) validateattributes(x,{'FarField'},{'numel',1},'plot','obj',1);
+addRequired(parseobj,'obj',typeValidationObj);
 
 typeValidationFreq = @(x) validateattributes(x,{'numeric'},{'real','nonempty','integer'},'plot','freqIndex');
 addParameter(parseobj,'freqIndex',1,typeValidationFreq);
@@ -84,9 +79,6 @@ addParameter(parseobj,'scalePhase','deg', @(x) any(validatestring(x,expectedscal
 expectedfreqUnit = {'Hz','kHz','MHz','GHz','THz'};
 addParameter(parseobj,'freqUnit','GHz', @(x) any(validatestring(x,expectedfreqUnit)));
 
-expectedprojection = {'std','TrueView','DirCosine','ArcSin'};
-addParameter(parseobj,'projection','std', @(x) any(validatestring(x,expectedprojection)));
-
 expectedcutConstant = {'x','y'};
 addParameter(parseobj,'cutConstant','x', @(x) any(validatestring(x,expectedcutConstant)));
 
@@ -99,9 +91,9 @@ addParameter(parseobj,'step',[],typeValidationstep);
 typeValidationLineWidth = @(x) validateattributes(x,{'numeric'},{'real'},'plot','LineWidth');
 addParameter(parseobj,'LineWidth',1,typeValidationLineWidth);
 
-addParameter(parseobj,'LineStyle',[]);
+addParameter(parseobj,'LineStyle','-');
 
-parse(parseobj, FF, varargin{:});
+parse(parseobj, obj, varargin{:});
 
 freqIndex = parseobj.Results.freqIndex;
 output = parseobj.Results.output;
@@ -112,7 +104,6 @@ plotType = parseobj.Results.plotType;
 scaleMag = parseobj.Results.scaleMag;
 scalePhase = parseobj.Results.scalePhase;
 freqUnit = parseobj.Results.freqUnit;
-projection = parseobj.Results.projection;
 cutConstant = parseobj.Results.cutConstant;
 cutValue = parseobj.Results.cutValue;
 step = parseobj.Results.step;
@@ -126,26 +117,26 @@ switch output
     case {'Directivity','Gain','AxialRatio','AxialRatioInv','CO/XP','XP/CO'}
         dr = lin10(-dynamicRange_dB);
         if strcmp(output,'Directivity')
-            Zmat = getDirectivity(FF);
+            Zmat = getDirectivity(obj);
             compName = 'Directivity';
         elseif strcmp(output,'Gain')
-            Zmat = getGain(FF);
+            Zmat = getGain(obj);
             compName = 'Gain (IEEE)';
         elseif strcmp(output,'AxialRatio')
-            [Zmat,~] = getAxialRatio(FF);
+            [Zmat,~] = getAxialRatio(obj);
             compName = 'Axial Ratio';
         elseif strcmp(output,'AxialRatioInv')
-            [~,Zmat] = getAxialRatio(FF);
+            [~,Zmat] = getAxialRatio(obj);
             compName = 'Inverse Axial Ratio';
         elseif strcmp(output,'CO/XP') || strcmp(output,'XP/CO')
             switch output
                 case 'CO/XP'
-                    num = abs(FF.E2);
-                    den = abs(FF.E1);
+                    num = abs(obj.E2);
+                    den = abs(obj.E1);
                     compName = 'Co-pol/Cross-pol';
                 case 'XP/CO'
-                    num = abs(FF.E1);
-                    den = abs(FF.E2);
+                    num = abs(obj.E1);
+                    den = abs(obj.E2);
                     compName = 'Cross-pol/Co-pol';
             end
             % Sort out dynamic range here to avoid divide by zero
@@ -164,11 +155,11 @@ switch output
     case {'E1','E2'}
         dr = lin20(-dynamicRange_dB);
         if strcmp(output,'E1')
-            [Zmat,~,~] = getEfield(FF);
-            compName = FF.E1name;
+            [Zmat,~,~] = getEfield(obj);
+            compName = obj.E1name;
         elseif strcmp(output,'E2')
-            [~,Zmat,~] = getEfield(FF);
-            compName = FF.E2name;
+            [~,Zmat,~] = getEfield(obj);
+            compName = obj.E2name;
         end
         if strcmp(outputType,'mag')
             Zmat = abs(Zmat);
@@ -177,7 +168,7 @@ switch output
                 Zmat = dB20(Zmat); unit = 'dBV/m';
                 if norm, unit = 'dB'; end
             else
-                if norm, unit = ''; else unit = 'V/m'; end
+                if norm, unit = ''; else, unit = 'V/m'; end
             end
         elseif strcmp(outputType,'phase')
             Zmat = angle(Zmat);
@@ -187,47 +178,22 @@ switch output
         end
 end
 
-Z = Zmat(:,freqIndex);
-% freqVect = FF.freq(freqIndex);
+% Z = Zmat(:,freqIndex);
+% freqVect = obj.freq(freqIndex);
 
-%% Extract some angles
-switch projection
-    case 'std'
-        switch FF.polBase
-            case {'spherical','Ludwig1','Ludwig3'}
-                x = rad2deg(FF.ph);
-                y = rad2deg(FF.th);
-                xname = '\phi (deg)';
-                yname = '\theta (deg)';
-            case 'Ludwig2AE'
-                [y,x] = getElAz(FF);
-                x = rad2deg(x);
-                y = rad2deg(y);
-                xname = 'Azimuth (deg)';
-                yname = 'Elevation (deg)';
-            case 'Ludwig2EA'
-                [y,x] = getElAz(FF);
-                x = rad2deg(x);
-                y = rad2deg(y);
-                xname = 'Epsilon (deg)';
-                yname = 'Alpha (deg)';
-        end
-    case 'TrueView'
-        [x,y] = getXgYg(FF);
-        x = rad2deg(x);
-        y = rad2deg(y);
-        xname = 'X_g = \theta cos(\phi) (deg)';
-        yname = 'Y_g = \theta sin(\phi) (deg)';
-    case 'DirCosine'
-        [x,y,~] = getUVW(FF);
-        xname = 'u = sin(\theta)cos(\phi)';
-        yname = 'v = sin(\theta)sin(\phi)';
-    case 'ArcSin'
-        [u,v,~] = getUVW(FF);
-        x = rad2deg(asin(u));
-        y = rad2deg(asin(v));
-        xname = 'asin(u) (deg)';
-        yname = 'asin(v) (deg)';
+%% Sort out the plot grid and names
+% {'PhTh','UV','AzEl','ElAz','TrueView','ArcSin'}
+switch obj.gridType
+    case 'UV'
+        x = obj.x;
+        y = obj.y;
+        xname = [obj.xname, ' = sin(\theta)cos(\phi)'];
+        yname = [obj.yname, ' = sin(\theta)sin(\phi)'];
+    otherwise
+        x = rad2deg(obj.x);
+        y = rad2deg(obj.y);
+        xname = [obj.xname, ' (deg)'];
+        yname = [obj.yname, ' (deg)'];
 end
 
 %% Make the plots
@@ -243,8 +209,8 @@ switch freqUnit
     case 'THz'
         freqMult = 1e-12;
 end
-freqPlot = FF.freq(freqIndex)*freqMult;
-Zplot = Z(:,freqIndex);
+freqPlot = obj.freqHz(freqIndex)*freqMult;
+Zplot = Zmat(:,freqIndex);
 % Fix Dynamic Range if required
 if strcmp(outputType,'mag')
     if strcmp(scaleMag,'dB')
@@ -254,17 +220,22 @@ if strcmp(outputType,'mag')
     end
 end
 
-xMat = reshape(x,FF.Nth,FF.Nph);
-yMat = reshape(y,FF.Nth,FF.Nph);
+% keyboard;
+
 if isempty(step)
+    xMat = reshape(x,obj.Ny,obj.Nx);
+    yMat = reshape(y,obj.Ny,obj.Nx);
     X = xMat;
     Y = yMat;
-elseif ~strcmp(plotType,'3D') && ~isempty(cutValue)
+elseif ~strcmp(plotType,'3D') % && ~isempty(cutValue)
+    [xySort,iSort] = unique([x,y],'rows');
+    x = xySort(:,1);
+    y = xySort(:,2);
+    Zplot = Zplot(iSort);
     xvect = min(x):step:max(x);
     yvect = min(y):step:max(y);
     [X,Y] = meshgrid(xvect,yvect);
-    Zplot = griddata(xMat,yMat,reshape(Zplot,FF.Nth,FF.Nph),X,Y);
-    Zplot = Zplot(:);
+    Zplot = griddata(x,y,Zplot,X,Y,'linear');
     x = X(:);
     y = Y(:);
 end
@@ -273,10 +244,9 @@ end
 switch plotType
     case '3D'
         % Use the MATLAB antennas toolbox plotting function
-        patternCustom(Zplot,rad2deg(FF.th),rad2deg(FF.ph));
-        title([FF.polBase, ', ',FF.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
+        patternCustom(Zplot,rad2deg(obj.th),rad2deg(obj.ph));
+        title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
     case '2D'
-%         surf(X,Y,reshape(Zplot,FF.Nth,FF.Nph),'EdgeColor','Interp','FaceColor','Interp')
         surf(X,Y,reshape(Zplot,size(X)),'EdgeColor','Interp','FaceColor','Interp')
         xlabel(xname)
         ylabel(yname)
@@ -285,28 +255,29 @@ switch plotType
         xlim([min(x),max(x)])
         ylim([min(y), max(y)])
         colorbar
-        title([FF.polBase, ', ',FF.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
+        title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
     case 'cartesian'
-        lw = LineWidth;   % Can maybe chance to be accessed form outside later...
+        % ToDo
+        lw = LineWidth;   
         if isempty(cutValue)
             % Find the principle cuts
-            iph0 = find(abs(FF.ph - 0) < eps);
-            iph45 = find(abs(FF.ph - deg2rad(45)) < eps);
-            iph90 = find(abs(FF.ph - deg2rad(90)) < eps);
-            iph135 = find(abs(FF.ph - deg2rad(135)) < eps);
-            iph180 = find(abs(FF.ph - deg2rad(180)) < eps);
-            iph225 = find(abs(FF.ph - deg2rad(225)) < eps);
-            iph270 = find(abs(FF.ph - deg2rad(270)) < eps);
-            iph315 = find(abs(FF.ph - deg2rad(315)) < eps);
+            iph0 = find(abs(obj.ph - 0) < eps);
+            iph45 = find(abs(obj.ph - deg2rad(45)) < eps);
+            iph90 = find(abs(obj.ph - deg2rad(90)) < eps);
+            iph135 = find(abs(obj.ph - deg2rad(135)) < eps);
+            iph180 = find(abs(obj.ph - deg2rad(180)) < eps);
+            iph225 = find(abs(obj.ph - deg2rad(225)) < eps);
+            iph270 = find(abs(obj.ph - deg2rad(270)) < eps);
+            iph315 = find(abs(obj.ph - deg2rad(315)) < eps);
             
-            plot(rad2deg(FF.th(iph0)),Zplot(iph0),[LineStyle,'k'],'lineWidth',lw), grid on, hold on
-            plot(rad2deg(FF.th(iph45)),Zplot(iph45),[LineStyle,'b'],'lineWidth',lw)
-            plot(rad2deg(FF.th(iph90)),Zplot(iph90),[LineStyle,'r'],'lineWidth',lw)
-            plot(rad2deg(FF.th(iph135)),Zplot(iph135),[LineStyle,'g'],'lineWidth',lw)
-            plot(-rad2deg(FF.th(iph180)),Zplot(iph180),[LineStyle,'k'],'lineWidth',lw)
-            plot(-rad2deg(FF.th(iph225)),Zplot(iph225),[LineStyle,'b'],'lineWidth',lw)
-            plot(-rad2deg(FF.th(iph270)),Zplot(iph270),[LineStyle,'r'],'lineWidth',lw)
-            plot(-rad2deg(FF.th(iph315)),Zplot(iph315),[LineStyle,'g'],'lineWidth',lw)
+            plot(rad2deg(obj.th(iph0)),Zplot(iph0),[LineStyle,'k'],'lineWidth',lw), grid on, hold on
+            plot(rad2deg(obj.th(iph45)),Zplot(iph45),[LineStyle,'b'],'lineWidth',lw)
+            plot(rad2deg(obj.th(iph90)),Zplot(iph90),[LineStyle,'r'],'lineWidth',lw)
+            plot(rad2deg(obj.th(iph135)),Zplot(iph135),[LineStyle,'g'],'lineWidth',lw)
+            plot(-rad2deg(obj.th(iph180)),Zplot(iph180),[LineStyle,'k'],'lineWidth',lw)
+            plot(-rad2deg(obj.th(iph225)),Zplot(iph225),[LineStyle,'b'],'lineWidth',lw)
+            plot(-rad2deg(obj.th(iph270)),Zplot(iph270),[LineStyle,'r'],'lineWidth',lw)
+            plot(-rad2deg(obj.th(iph315)),Zplot(iph315),[LineStyle,'g'],'lineWidth',lw)
             lg = legend('\phi = 0^\circ','\phi = 45^\circ','\phi = 90^\circ','\phi = 135^\circ');
             xlabel('\theta (deg)')
             ylabel([outputType,'(', compName, ') (',unit,')'])
@@ -322,9 +293,11 @@ switch plotType
                 xlabel(xname)
             end
             ylabel([outputType,'(', compName, ') (',unit,')'])
-            % ToDo
+            
         end
-        title([FF.polBase, ', ',FF.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit])
+        title([obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit])
+    case 'polar'
+        % ToDo
 
 end
 
