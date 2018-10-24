@@ -6,34 +6,53 @@ classdef FarField
     % all directional polarization types.
     
     properties
-        th      % th angle vector [Nang x 1] - typically in [0,pi] rad
-        ph      % ph angle vector [Nang x 1] - typically in [0,2*pi] rad
-        r = 1;  % radius for E-field calculation in m  
-        E1      % first component of E-field pattern [Nang x Nf] - depends on polBase and polType
-        E2      % second component of E-field pattern [Nang x Nf] - depends on polBase and polType
-        E3      % third component of E-field pattern [Nang x Nf] - only exists for polBase = Ludwig1
-        freq = 1;               % frequency vector in Hz [1 x Nf]
-        Prad = 4*pi;            % radiated power vector in W [1 x Nf]
-        radEff = 1;             % antenna radiation efficiency pu [1 x Nf]
-        polBase = 'spherical';  % polarization base of field [('spherical'), 'Ludwig1', 'Ludwig2AE', 'Ludwig2EA', 'Ludwig3']
-        polType = 'linear';     % polarization type of the field [('linear'), 'circular', 'slant']
-        slant   = 0;            % slant angle in radians - measured between Exp and E1
+        x(:,1) double {mustBeReal, mustBeFinite}
+        y(:,1) double {mustBeReal, mustBeFinite}
+        r(1,1) double {mustBeReal, mustBeFinite} = 1
+        E1(:,:) double {mustBeFinite}
+        E2(:,:) double {mustBeFinite}
+        E3(:,:) double {mustBeFinite}
+        freq(1,:) double {mustBeReal, mustBeFinite} = 1
+        Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
+        radEff(1,:) double {mustBeReal, mustBeFinite} = 1
+        coorSys(1,:) char {mustBeMember(coorSys,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
+        polType(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
+        slant(1,1) double {mustBeReal, mustBeFinite} = 0   % slant angle in radians - measured between Exp and E1
+        gridType(1,:) char {mustBeMember(gridType,{'PhTh','UV','AzEl','ElAz','TrueView','ArcSin'})} = 'PhTh'    
+        freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'    
     end
     
     properties (SetAccess = private)
-        E1name  % ['Eth', 'Ex', 'Eaz', 'Eal', 'Eh', 'Elh', 'Exp'] - depends on polBase and polType
-        E2name  % ['Eph', 'Ey', 'Eel', 'Eep', 'Ev', 'Erh', 'Eco'] - depends on polBase and polType
-%         E1field % E1 electric field strength - E1*exp(-jkr)/r
-%         E2field % E2 electric field strength - E2*exp(-jkr)/r
-%         E3field % E2 electric field strength - E2*exp(-jkr)/r
+        E1name  % ['Eth', 'Ex', 'Eaz', 'Eal', 'Eh', 'Elh', 'Exp'] - depends on coorSys and polType
+        E2name  % ['Eph', 'Ey', 'Eel', 'Eep', 'Ev', 'Erh', 'Eco'] - depends on coorSys and polType
+        xname
+        yname
+        ph
+        th
+        freqHz
         Nf      % number of frequencies
-        Nth     % number of unique theta angles
-        Nph     % number of unique phi angles
-        Nang    % number of angle combinations [Nth x Nph]
+        Nx     % number of unique x angles
+        Ny     % number of unique y angles
+        Nang    % number of angle combinations [Nx x Ny]
         radEff_dB       % radiation efficiency in dB [1 x Nf]
         Directivity_dBi % directivity in dBi [1 x Nf]
         Gain_dB         % Gain in dB [1 x Nf]
     end
+    
+    properties (SetAccess = private, Hidden = true)
+        % Keep the input data here to not lose some info when going through
+        % a UV projection and back...
+        xBase   
+        yBase 
+        gridBase
+        E1Base
+        E2Base
+        E3Base
+        coorSysBase
+        polTypeBase
+        
+    end
+        
     
     properties (Constant = true, Hidden = true)
         c0 = physconst('Lightspeed');
@@ -44,13 +63,13 @@ classdef FarField
     
     methods
         % Make a basic constructor method 
-        function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
+        function obj = FarField(x,y,E1,E2,E3,freq,Prad,radEff)
             
             % function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
             % Constructor method for the FarField object
             % Required inputs:
-            % th: column vector [Nang x 1] of th angles in rad
-            % ph: column vector [Nang x 1] of ph angles in rad
+            % x: column vector [Nang x 1] of ph angles in rad
+            % y: column vector [Nang x 1] of th angles in rad
             % E1: First E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
             % E2: Second E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
             %
@@ -61,18 +80,18 @@ classdef FarField
             % 'radEff': vector [1 x Nf] of radiation efficiencies
             
             % Basic input error checking
-            [Nang_th, Nf_th] = size(th);
-            [Nang_ph, Nf_ph] = size(ph);
+            [Nang_x, Nf_x] = size(x);
+            [Nang_y, Nf_y] = size(y);
             [Nang_E1, Nf_E1] = size(E1);
             [Nang_E2, Nf_E2] = size(E2);
             if nargin < 5 || isempty(E3)
                 E3 = zeros(size(E2));
             end
             [Nang_E3, Nf_E3] = size(E3);
-            if ~isequal(Nang_th,Nang_ph,Nang_E1,Nang_E2,Nang_E3)
+            if ~isequal(Nang_x,Nang_y,Nang_E1,Nang_E2,Nang_E3)
                 error('All inputs must have the same number of rows');
             else
-                Nang = Nang_th;
+                Nang = Nang_x;
             end
             if ~isequal(Nf_E1,Nf_E2,Nf_E3)
                 error('E1, E2, and E3 must have the same number of columns');
@@ -102,13 +121,14 @@ classdef FarField
                     error('radEff must have the same number of columns as E1 and E2');
                 end
             end
-            if Nf_th > 1 || Nf_ph > 1
+            if Nf_x > 1 || Nf_y > 1
                 warning('Only using first column of th and ph since they must be equal for all frequencies anyway');
-                th = th(:,1);
-                ph = ph(:,1);
+                x = x(:,1);
+                y = y(:,1);
             end
-            obj.th = th;
-            obj.ph = ph;
+            obj.x = x;
+            obj.y = y;
+%             [obj.th, obj.ph] = obj.getphth();
             obj.E1 = E1;
             obj.E2 = E2;
             obj.E3 = E3;
@@ -118,11 +138,15 @@ classdef FarField
             obj.radEff_dB = dB10(radEff);
             obj.Nf = Nf;
             obj.Nang = Nang;
-            obj.Nth = length(unique(th));
-            obj.Nph = length(unique(ph));
+            obj.Nx = length(unique(x));
+            obj.Ny = length(unique(y));
             obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
             obj.Gain_dB = dB10(max(obj.getGain()));
             obj = setEnames(obj);
+            obj = setXYnames(obj);
+            obj = setPhTh(obj);
+            obj = setFreq(obj);
+            obj = setBase(obj);
         end
         
         
@@ -170,166 +194,363 @@ classdef FarField
            ARinv = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2)));
         end
         
-        %% Angle and projection getters
-        function [u, v, w] = getUVW(FF)
-            u = sin(FF.th).*cos(FF.ph);
-            v = sin(FF.th).*sin(FF.ph);
-            w = cos(FF.th);
+        %% Grid getters
+              
+        function [u, v, w] = getUV(obj)
+            switch obj.gridBase
+                case 'PhTh'
+                    u = real(sin(obj.yBase).*cos(obj.xBase));
+                    v = real(sin(obj.yBase).*sin(obj.xBase));
+                    w = real(cos(obj.yBase));
+                case 'UV'
+                    u = obj.xBase;
+                    v = obj.yBase;
+                    w = sqrt(1 - u.^2 - v.^2);
+                case 'AzEl'
+                    u = real(sin(obj.xBase).*cos(obj.yBase));
+                    v = real(sin(obj.yBase));
+                    w = real(cos(obj.xBase).*cos(obj.yBase));
+                case 'ElAz'
+                    u = real(sin(obj.yBase));
+                    v = real(cos(obj.yBase).*sin(obj.xBase));
+                    w = real(cos(obj.yBase).*cos(obj.xBase));
+                case 'TrueView'
+                    Th = sqrt(obj.xBase.^2 + obj.yBase.^2);
+                    Ph = atan2(obj.yBase,obj.xBase);
+                    u = real(sin(Th).*cos(Ph));
+                    v = real(sin(Th).*sin(Ph));
+                    w = real(cos(Th));
+                case 'ArcSin'
+                    u = sin(obj.xBase);
+                    v = sin(obj.yBase);
+                    w = real(sqrt(sin(obj.xBase).^2 + sin(obj.yBase).^2));
+            end
         end
         
-        function [el, az] = getElAz(FF)
-            [u,v,w] = getUVW(FF);
-            el = asin(v);
-            az = atan2(u,w);
+        function [ph, th] = getPhTh(obj)
+            switch obj.gridType
+                case 'PhTh'
+                    ph = obj.x;
+                    th = obj.y;
+                otherwise
+                    [u,v,w] = getUV(obj);
+                    ph = real(atan2(v,u));
+                    th = real(acos(w));
+            end
         end
         
-        function [ep, al] = getEpAl(FF)
-            [u,v,w] = getUVW(FF);
-            al = asin(u);
-            ep = atan2(v,w);
+        function [az, el] = getAzEl(obj)
+            switch obj.gridType
+                case 'AzEl'
+                    el = obj.y;
+                    az = obj.x;
+                otherwise
+                    [u,v,w] = getUV(obj);
+                    el = real(asin(v));
+                    az = real(atan2(u,w));
+            end
         end
         
-        function [Xg, Yg] = getXgYg(FF)
-            Xg = FF.th.*cos(FF.ph);
-            Yg = FF.th.*sin(FF.ph);
+        function [ep, al] = getElAz(obj)
+            switch obj.gridType
+                case 'ElAz'
+                    ep = obj.x;
+                    al = obj.y;
+                otherwise
+                    [u,v,w] = getUV(obj);
+                    al = real(asin(u));
+                    ep = real(atan2(v,w));
+            end
         end
         
-        %% Polarization transformation methods
-        % All take the current polarization base of the input object and 
-        % transforms it to the required base
-        % Strategy is to make the spherical components first, and then go
-        % to whatever the requested version is...
-        % First change of polBase
-        function [Eth, Eph] = getEthEph(obj)
-            TH = repmat(obj.th(:,1),1,obj.Nf);
-            PH = repmat(obj.ph(:,1),1,obj.Nf);
-            switch obj.polBase
+        function [Xg, Yg] = getTrueView(obj)
+            switch obj.gridType
+                case 'TrueView'
+                    Xg = obj.x;
+                    Yg = obj.x;
+                otherwise
+                    [u,v,w] = getUV(obj);
+                    Ph = atan2(v,u);
+                    Th = acos(w);
+                    Xg = real(Th.*cos(Ph));
+                    Yg = real(Th.*sin(Ph));
+            end
+        end
+        
+        function [asinu, asinv] = getArcSin(obj)
+            switch obj.gridType
+                case 'ArcSin'
+                    asinu = obj.x;
+                    asinv = obj.x;
+                otherwise
+                    [u,v,~] = getUV(obj);
+                    asinu = real(asin(u));
+                    asinv = real(asin(v));
+            end
+        end
+        
+        %% Grid transformation methods
+        function obj = grid2PhTh(obj)
+            if ~strcmp(obj.gridType,'PhTh')
+                [obj.x,obj.y] = getPhTh(obj);
+                obj.gridType = 'PhTh';
+                obj = setXYnames(obj);
+            end
+        end
+        
+        function obj = grid2UV(obj)
+            if ~strcmp(obj.gridType,'UV')
+                [obj.x,obj.y] = getUV(obj);
+                obj.gridType = 'UV';
+                obj = setXYnames(obj);
+            end
+        end
+        
+        function obj = grid2AzEl(obj)
+            if ~strcmp(obj.gridType,'AzEl')
+                [obj.x,obj.y] = getAzEl(obj);
+                obj.gridType = 'AzEl';
+                obj = setXYnames(obj);
+            end
+        end
+        
+        function obj = grid2ElAz(obj)
+            if ~strcmp(obj.gridType,'ElAz')
+                [obj.x,obj.y] = getElAz(obj);
+                obj.gridType = 'ElAz';
+                obj = setXYnames(obj);
+            end
+        end
+        
+        function obj = grid2TrueView(obj)
+            if ~strcmp(obj.gridType,'TrueView')
+                [obj.x,obj.y] = getTrueView(obj);
+                obj.gridType = 'TrueView';
+                obj = setXYnames(obj);
+            end
+        end
+        
+        function obj = grid2ArcSin(obj)
+            if ~strcmp(obj.gridType,'ArcSin')
+                [obj.x,obj.y] = getArcSin(obj);
+                obj.gridType = 'ArcSin';
+                obj = setXYnames(obj);
+            end
+        end
+        
+        %% Coordinate system getters
+        function [Eth, Eph, Er] = getEspherical(obj)
+            [Ph,Th] = getPhTh(obj);
+            TH = repmat(Th(:,1),1,obj.Nf);
+            PH = repmat(Ph(:,1),1,obj.Nf);
+            % Change to the Base values here....
+            switch obj.coorSysBase
                 case 'spherical'
-                    Eth = obj.E1;
-                    Eph = obj.E2;
+                    Eth = obj.E1Base;
+                    Eph = obj.E2Base;
                 case 'Ludwig1'
-                    Eth = cos(TH).*cos(PH).*obj.E1 + cos(TH).*sin(PH).*obj.E2 - sin(TH).*obj.E3;
-                    Eph = -sin(PH).*obj.E1 + cos(PH).*obj.E2;
+                    Eth = cos(TH).*cos(PH).*obj.E1Base + cos(TH).*sin(PH).*obj.E2Base - sin(TH).*obj.E3Base;
+                    Eph = -sin(PH).*obj.E1Base + cos(PH).*obj.E2Base;
                 case 'Ludwig2AE'
                     cosEl = sqrt(1 - sin(TH).^2.*sin(PH).^2);
                     Del = cos(PH).^2 + cos(TH).^2.*sin(PH).^2;
-                    Eth = (cosEl./Del).*(cos(PH).*obj.E1 + cos(TH).*sin(PH).*obj.E2);
-                    Eph = (cosEl./Del).*(-cos(TH).*sin(PH).*obj.E1 + cos(PH).*obj.E2);
+                    Eth = (cosEl./Del).*(cos(PH).*obj.E1Base + cos(TH).*sin(PH).*obj.E2Base);
+                    Eph = (cosEl./Del).*(-cos(TH).*sin(PH).*obj.E1Base + cos(PH).*obj.E2Base);
                 case 'Ludwig2EA'
                     cosAl = sqrt(1 - sin(TH).^2.*cos(PH).^2);
                     Del = cos(TH).^2.*cos(PH).^2 + sin(PH).^2;
-                    Eth = (cosAl./Del).*(cos(TH).*cos(PH).*obj.E1 + sin(PH).*obj.E2);
-                    Eph = (cosAl./Del).*(-sin(PH).*obj.E1 + cos(TH).*cos(PH).*obj.E2);
+                    Eth = (cosAl./Del).*(cos(TH).*cos(PH).*obj.E1Base + sin(PH).*obj.E2Base);
+                    Eph = (cosAl./Del).*(-sin(PH).*obj.E1Base + cos(TH).*cos(PH).*obj.E2Base);
                 case 'Ludwig3'
                     Del = 1;
-                    Eth = (1./Del).*(cos(PH).*obj.E1 + sin(PH).*obj.E2);
-                    Eph = (1./Del).*(-sin(PH).*obj.E1 + cos(PH).*obj.E2);
-                otherwise
-                    error(['Unknown polBase property: ', obj.polBase]);
+                    Eth = (1./Del).*(cos(PH).*obj.E1Base + sin(PH).*obj.E2Base);
+                    Eph = (1./Del).*(-sin(PH).*obj.E1Base + cos(PH).*obj.E2Base);
             end
+            Er = zeros(size(Eth));
         end
         
-        function obj = pol2spherical(obj)
-            if ~strcmp(obj.polType,'spherical')
-                [Eth, Eph] = getEthEph(obj);
-                obj.E1 = Eth;
-                obj.E2 = Eph;
-                obj.E3 = zeros(size(obj.E1));
-                obj.polBase = 'spherical';
-                obj = setEnames(obj);
-            end
-        end
-        
-        function obj = pol2Ludwig1(obj)
-            if ~strcmp(obj.polType,'Ludwig1')
-                [Eth, Eph] = getEthEph(obj);
-                TH = repmat(obj.th(:,1),1,obj.Nf);
-                PH = repmat(obj.ph(:,1),1,obj.Nf);
-                % Assume farfield so no radial E-field
-                obj.E1 = cos(TH).*cos(PH).*Eth - sin(PH).*Eph;
-                obj.E2 = cos(TH).*sin(PH).*Eth + cos(PH).*Eph;
-                obj.E3 = zeros(size(obj.E1));   % Strict definition in the Ludwig paper
-                obj.polBase = 'Ludwig1';
-                obj = setEnames(obj);
-            end
-        end
-        
-        function obj = pol2Ludwig2AE(obj)
-            if ~strcmp(obj.polType,'Ludwig2AE')
-                [Eth, Eph] = getEthEph(obj);
-                TH = repmat(obj.th(:,1),1,obj.Nf);
-                PH = repmat(obj.ph(:,1),1,obj.Nf);
-                cosEl = sqrt(1 - sin(TH).^2.*sin(PH).^2);
-                obj.E1 = (1./cosEl).*(cos(PH).*Eth - cos(TH).*sin(PH).*Eph);
-                obj.E2 = (1./cosEl).*(cos(TH).*sin(PH).*Eth + cos(PH).*Eph);
-                obj.E3 = zeros(size(obj.E1));
-                obj.polBase = 'Ludwig2AE';
-                obj = setEnames(obj);
-                % Sort out singularities poles
-                [~,iPole] = ismember([deg2rad(90),deg2rad(90);deg2rad(90),deg2rad(270)],[obj.th,obj.ph],'rows');
-                iPole = iPole(iPole>0);
-                [obj.E1(iPole,:),obj.E2(iPole,:),obj.E3(iPole,:)] = deal(0);
-            end
-        end
-        
-        function obj = pol2Ludwig2EA(obj)
-            if ~strcmp(obj.polType,'Ludwig2EA')
-                [Eth, Eph] = getEthEph(obj);
-                TH = repmat(obj.th(:,1),1,obj.Nf);
-                PH = repmat(obj.ph(:,1),1,obj.Nf);
-                cosAl = sqrt(1 - sin(TH).^2.*cos(PH).^2);
-                obj.E1 = (1./cosAl).*(cos(TH).*cos(PH).*Eth - sin(PH).*Eph);
-                obj.E2 = (1./cosAl).*(sin(PH).*Eth + cos(TH).*cos(PH).*Eph);
-                obj.E3 = zeros(size(obj.E1));
-                obj.polBase = 'Ludwig2EA';
-                obj = setEnames(obj);
-                % Sort out singularities poles
-%                 keyboard;
-                [~,iPole] = ismember([deg2rad(90),deg2rad(0);deg2rad(90),deg2rad(180);deg2rad(90),deg2rad(360)],[obj.th,obj.ph],'rows');
-                iPole = iPole(iPole>0);
-                [obj.E1(iPole,:),obj.E2(iPole,:),obj.E3(iPole,:)] = deal(0);
-            end
-        end
-        
-        function obj = pol2Ludwig3(obj)
-            if ~strcmp(obj.polType,'Ludwig3')
-                [Eth, Eph] = getEthEph(obj);
-                PH = repmat(obj.ph(:,1),1,obj.Nf);
-                obj.E1 = cos(PH).*Eth - sin(PH).*Eph;
-                obj.E2 = sin(PH).*Eth + cos(PH).*Eph;
-                obj.E3 = zeros(size(obj.E1));
-                obj.polBase = 'Ludwig3';
-                obj = setEnames(obj);
-            end
-        end
-        
-        % Now change of polType - same idea as above with polBase
-        % First get the linear pol and then go to what's required
-        function [E1lin, E2lin] = getElin(obj)
+        function [Ex, Ey, Ez] = getELudwig1(obj)
             switch obj.polType
+                case 'Ludwig1'
+                    Ex = obj.E1;
+                    Ey = obj.E2;
+                    Ez = obj.E3;
+                otherwise
+                    [Eth, Eph, ~] = getEspherical(obj);
+                    TH = repmat(obj.th(:,1),1,obj.Nf);
+                    PH = repmat(obj.ph(:,1),1,obj.Nf);
+                    % Assume farfield so no radial E-field
+                    Ex = cos(TH).*cos(PH).*Eth - sin(PH).*Eph;
+                    Ey = cos(TH).*sin(PH).*Eth + cos(PH).*Eph;
+                    Ez = zeros(size(Ex));   % Strict definition in the Ludwig paper
+            end
+        end
+        
+        function [Eaz, Eel, E3] = getELudwig2AE(obj)
+            switch obj.polType
+                case 'Ludwig2AE'
+                    Eaz = obj.E1;
+                    Eel = obj.E2;
+                    E3 = obj.E3;
+                otherwise
+                    [Eth, Eph] = getEspherical(obj);
+                    TH = repmat(obj.th(:,1),1,obj.Nf);
+                    PH = repmat(obj.ph(:,1),1,obj.Nf);
+                    cosEl = sqrt(1 - sin(TH).^2.*sin(PH).^2);
+                    Eaz = (1./cosEl).*(cos(PH).*Eth - cos(TH).*sin(PH).*Eph);
+                    Eel = (1./cosEl).*(cos(TH).*sin(PH).*Eth + cos(PH).*Eph);
+                    E3 = zeros(size(Eaz));
+                    % Sort out singularities poles
+                    phPoles = deg2rad([-270,-90,90,270].');
+                    poleMat = [ones(4,1).*deg2rad(90),phPoles]; % [th=90,ph]
+                    [~,iPole] = ismember(poleMat,[obj.th,obj.ph],'rows');
+                    iPole = iPole(iPole>0);
+                    [Eaz(iPole,:),Eel(iPole,:),E3(iPole,:)] = deal(0);
+%                     Eaz(iPole,:) = Eth(iPole,:) + Eph(iPole,:);
+            end
+        end
+        
+        function [Eal, Eep, E3] = getELudwig2EA(obj)
+            switch obj.polType
+                case 'Ludwig2EA'
+                    Eal = obj.E1;
+                    Eep = obj.E2;
+                    E3 = obj.E3;
+                otherwise
+                    [Eth, Eph] = getEspherical(obj);
+                    TH = repmat(obj.th(:,1),1,obj.Nf);
+                    PH = repmat(obj.ph(:,1),1,obj.Nf);
+                    cosAl = sqrt(1 - sin(TH).^2.*cos(PH).^2);
+                    Eal = (1./cosAl).*(cos(TH).*cos(PH).*Eth - sin(PH).*Eph);
+                    Eep = (1./cosAl).*(sin(PH).*Eth + cos(TH).*cos(PH).*Eph);
+                    E3 = zeros(size(Eal));
+                    % Sort out singularities poles
+                    phPoles = deg2rad([-360,-180,0,180,360].');
+                    poleMat = [ones(5,1).*deg2rad(90),phPoles]; % [th=90,ph]
+                    [~,iPole] = ismember(poleMat,[obj.th,obj.ph],'rows');
+                    iPole = iPole(iPole>0);
+                    [Eal(iPole,:),Eep(iPole,:),E3(iPole,:)] = deal(0);
+            end
+        end
+        
+        function [Eh, Ev, E3] = getELudwig3(obj)
+            switch obj.polType
+                case 'Ludwig3'
+                    Eh = obj.E1;
+                    Ev = obj.E2;
+                    E3 = obj.E3;
+                otherwise
+                    [Eth, Eph] = getEspherical(obj);
+                    PH = repmat(obj.ph(:,1),1,obj.Nf);
+                    Eh = cos(PH).*Eth - sin(PH).*Eph;
+                    Ev = sin(PH).*Eth + cos(PH).*Eph;
+                    E3 = zeros(size(Eh));
+            end
+        end
+        
+            
+        %% Coordinate system transformation methods
+        function obj = coor2spherical(obj)
+            if ~strcmp(obj.polType,'spherical')
+                [obj.E1,obj.E2,obj.E3] = getEspherical(obj);
+                obj.E3 = zeros(size(obj.E1));
+                obj.coorSys = 'spherical';
+                obj = setEnames(obj);
+            end
+            obj = obj.grid2PhTh;
+        end
+        
+        function obj = coor2Ludwig1(obj)
+            if ~strcmp(obj.polType,'Ludwig1')
+                [obj.E1,obj.E2,obj.E3] = getELudwig1(obj);
+                obj.coorSys = 'Ludwig1';
+                obj = setEnames(obj);
+            end
+            obj = obj.grid2PhTh;
+        end
+        
+        function obj = coor2Ludwig2AE(obj)
+            if ~strcmp(obj.polType,'Ludwig2AE')
+                [obj.E1,obj.E2,obj.E3] = getELudwig2AE(obj);
+                obj.coorSys = 'Ludwig2AE';
+                obj = setEnames(obj);
+            end
+            obj = obj.grid2AzEl;
+        end
+        
+        function obj = coor2Ludwig2EA(obj)
+            if ~strcmp(obj.polType,'Ludwig2EA')
+                [obj.E1,obj.E2,obj.E3] = getELudwig2EA(obj);
+                obj.coorSys = 'Ludwig2EA';
+                obj = setEnames(obj);
+            end
+            obj = obj.grid2ElAz;
+        end
+        
+        function obj = coor2Ludwig3(obj)
+            if ~strcmp(obj.polType,'Ludwig3')
+                [obj.E1,obj.E2,obj.E3] = getELudwig3(obj);
+                obj.coorSys = 'Ludwig3';
+                obj = setEnames(obj);
+            end
+            obj = obj.grid2PhTh;
+        end
+        
+        %% Polarization type getters
+        function [E1lin, E2lin, E3lin] = getElin(obj)
+            switch obj.polTypeBase
                 case 'linear'
-                    E1lin = obj.E1;
-                    E2lin = obj.E2;
+                    E1lin = obj.E1Base;
+                    E2lin = obj.E2Base;
                 case 'circular'
                     Del = 2*1i;
-                    E1lin = sqrt(2)./Del.*(1i.*obj.E1 + 1i.*obj.E2);
-                    E2lin = sqrt(2)./Del.*(-obj.E1 + obj.E2);
+                    E1lin = sqrt(2)./Del.*(1i.*obj.E1Base + 1i.*obj.E2Base);
+                    E2lin = sqrt(2)./Del.*(-obj.E1Base + obj.E2Base);
                 case 'slant'
-                    PSI = ones(size(obj.E1)).*obj.slant;
+                    PSI = ones(size(obj.E1Base)).*obj.slant;
                     Del = 1;
-                    E1lin = 1./Del.*(cos(PSI).*obj.E1 + sin(PSI).*obj.E2);
-                    E2lin = 1./Del.*(-sin(PSI).*obj.E1 + cos(PSI).*obj.E2);
+                    E1lin = 1./Del.*(cos(PSI).*obj.E1Base + sin(PSI).*obj.E2Base);
+                    E2lin = 1./Del.*(-sin(PSI).*obj.E1Base + cos(PSI).*obj.E2Base);
+            end
+            E3lin = zeros(size(E1lin));
+        end
+        
+        function [Elh, Erh, E3circ] = getEcircular(obj)
+            switch obj.polType
+                case 'circular'
+                    Elh = obj.E1;
+                    Erh = obj.E2;
+                    E3circ = obj.E3;
                 otherwise
-                    error(['Unknown polType property: ', obj.polType])
+                    [E1lin, E2lin] = getElin(obj);
+                    Elh = 1/sqrt(2).*(E1lin - 1i.*E2lin);
+                    Erh = 1/sqrt(2).*(E1lin + 1i.*E2lin);
+                    E3circ = zeros(size(Elh));
             end
         end
         
+        function [Exp, Eco, E3slant] = getEslant(obj)
+            switch obj.polType
+                case 'slant'
+                    Exp = obj.E1;
+                    Eco = obj.E2;
+                    E3slant = obj.E3;
+                otherwise
+                    [E1lin, E2lin] = getElin(obj);
+                    PSI = ones(size(obj.E1)).*obj.slant;
+                    Exp = cos(PSI).*E1lin - sin(PSI).*E2lin;
+                    Eco = sin(PSI).*E1lin + cos(PSI).*E2lin;
+                    E3slant = zeros(size(Exp));
+            end
+        end
+        
+        % Now change of polType - same idea as above with coorSys
+        % First get the linear pol and then go to what's required
+        
+        %% Polarisation type transformation methods
         function obj = pol2linear(obj)
             if ~strcmp(obj.polType,'linear')
-                [E1lin, E2lin] = getElin(obj);
-                obj.E1 = E1lin;
-                obj.E2 = E2lin;
-                obj.E3 = zeros(size(obj.E1));
+                [obj.E1, obj.E2, obj.E3] = getElin(obj);
                 obj.polType = 'linear';
                 obj = setEnames(obj);
             end
@@ -337,9 +558,7 @@ classdef FarField
         
         function obj = pol2circular(obj)
             if ~strcmp(obj.polType,'circular')
-                [E1lin, E2lin] = getElin(obj);
-                obj.E1 = 1/sqrt(2).*(E1lin - 1i.*E2lin);
-                obj.E2 = 1/sqrt(2).*(E1lin + 1i.*E2lin);
+                [obj.E1,obj.E2,obj.E3] = getEcircular(obj);
                 obj.polType = 'circular';
                 obj = setEnames(obj);
             end
@@ -347,23 +566,80 @@ classdef FarField
         
         function obj = pol2slant(obj)
             if ~strcmp(obj.polType,'slant')
-                [E1lin, E2lin] = getElin(obj);
-                PSI = ones(size(obj.E1)).*obj.slant;
-                obj.E1 = cos(PSI).*E1lin - sin(PSI).*E2lin;
-                obj.E2 = sin(PSI).*E1lin + cos(PSI).*E2lin;
+                [obj.E1,obj.E2,obj.E3] = getEslant(obj);
                 obj.polType = 'slant';
                 obj = setEnames(obj);
             end
         end
         
         %% Plotting methods
+        plot(obj,varargin)
         
-        plot(FF,varargin)
         
+    end
+    
+    methods (Static = true)
+       %% Farfield reading methods
+        obj = readGRASPgrd(pathName); 
     end
     
     % Internal helper functions
     methods (Access = private)
+
+        function obj = setBase(obj)
+            obj.xBase = obj.x;
+            obj.yBase = obj.y;
+            obj.gridBase = obj.gridType;
+            obj.E1Base = obj.E1;
+            obj.E2Base = obj.E2;
+            obj.E3Base = obj.E3;
+            obj.coorSysBase = obj.coorSys;
+            obj.polTypeBase = obj.polType;
+        end
+        
+        function obj = setFreq(obj)
+            switch obj.freqUnit
+                case 'Hz'
+                    freqMult = 1;
+                case 'kHz'
+                    freqMult = 1e3;
+                case 'MHz'
+                    freqMult = 1e6;
+                case 'GHz'
+                    freqMult = 1e9;
+                case 'THz'
+                    freqMult = 1e12;
+            end
+            obj.freqHz = obj.freq*freqMult;
+        end
+        
+        function obj = setPhTh(obj)
+            [obj.ph, obj.th] = getPhTh(obj);
+        end
+        
+        % Set the names of the 2 grid components 
+        function obj = setXYnames(obj)
+            switch obj.gridType
+                case 'PhTh'
+                    obj.xname = '\phi';
+                    obj.yname = '\theta';
+                case 'UV'
+                    obj.xname = 'u';
+                    obj.yname = 'v';
+                case 'AzEl'
+                    obj.xname = 'az';
+                    obj.yname = 'el';
+                case 'ElAz'
+                    obj.xname = '\epsilon';
+                    obj.yname = '\alpha';
+                case 'TrueView'
+                    obj.xname = 'Xg=\theta cos(\phi)';
+                    obj.yname = 'Yg=\theta sin(\phi)';
+                case 'ArcSin'
+                    obj.xname = 'Xg=asin(u)';
+                    obj.yname = 'Yg=asin(v)';
+            end
+        end
         
         % Set the names of the 2 farfield components based on the
         % polarization type.  Names used for info and plotting.
@@ -376,7 +652,7 @@ classdef FarField
                     obj.E1name = 'Exp';
                     obj.E2name = 'Eco';
                 case 'linear'
-                    switch obj.polBase
+                    switch obj.coorSys
                         case 'spherical'
                             obj.E1name = 'Eth';
                             obj.E2name = 'Eph';
@@ -392,8 +668,6 @@ classdef FarField
                         case 'Ludwig3'
                             obj.E1name = 'Eh';
                             obj.E2name = 'Ev';
-                        otherwise
-                            error(['Unknown polBase property: ', obj.polBase]);
                     end
                     
                 otherwise
