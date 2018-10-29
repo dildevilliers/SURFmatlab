@@ -37,10 +37,15 @@ function [] = plot(obj,varargin)
 % principle plane cuts will be attempted...
 %
 % step is the plot step size.  Can be empty - then the available data will
-% be used.  If not, a griddata interpolant will be made.
+% be used and no surface will be plotted.  If not, a griddata interpolant will be made.
 %
 % plotProperties can be a variety of name, value pairs including:
 %   LineWidth, LineStyle (like '-k.')
+%
+% showGrid is a boolean (false) to show the 2D grid where the data is
+% calculated before interpolation.
+
+
 
 narginchk(1,20);
 
@@ -54,7 +59,7 @@ addRequired(parseobj,'obj',typeValidationObj);
 typeValidationFreq = @(x) validateattributes(x,{'numeric'},{'real','nonempty','integer'},'plot','freqIndex');
 addParameter(parseobj,'freqIndex',1,typeValidationFreq);
 
-typeValidationnorm = @(x) validateattributes(x,{'numeric'},{'binary','nonempty','numel',1},'plot','norm');
+typeValidationnorm = @(x) validateattributes(x,{'logical','numeric'},{'binary','nonempty','numel',1},'plot','norm');
 addParameter(parseobj,'norm',false,typeValidationnorm );
 
 typeValidationDR = @(x) validateattributes(x,{'numeric'},{'real','positive','nonempty','numel',1},'plot','dynamicRange_dB');
@@ -84,13 +89,16 @@ addParameter(parseobj,'cutConstant','x', @(x) any(validatestring(x,expectedcutCo
 typeValidationcutValue = @(x) validateattributes(x,{'numeric'},{'real'},'plot','cutValue');
 addParameter(parseobj,'cutValue',[],typeValidationcutValue);
 
-typeValidationstep = @(x) validateattributes(x,{'numeric'},{'real'S},'plot','step');
+typeValidationstep = @(x) validateattributes(x,{'numeric'},{'real'},'plot','step');
 addParameter(parseobj,'step',[],typeValidationstep);     % In degrees
 
 typeValidationLineWidth = @(x) validateattributes(x,{'numeric'},{'real'},'plot','LineWidth');
 addParameter(parseobj,'LineWidth',1,typeValidationLineWidth);
 
 addParameter(parseobj,'LineStyle','-');
+
+typeValidationshowGrid = @(x) validateattributes(x,{'logical','numeric'},{'binary','nonempty','numel',1},'plot','showGrid');
+addParameter(parseobj,'showGrid',false,typeValidationshowGrid );
 
 parse(parseobj, obj, varargin{:});
 
@@ -108,116 +116,128 @@ cutValue = parseobj.Results.cutValue;
 step = parseobj.Results.step;
 LineWidth = parseobj.Results.LineWidth;
 LineStyle = parseobj.Results.LineStyle;
+showGrid = parseobj.Results.showGrid;
 
 %% Sort out the plot grid and names
 
-if isempty(step)
-    xi = obj.x;
-    yi = obj.y;
-    NxPlot = obj.Nx;
-    NyPlot = obj.Ny;
-    X = reshape(xi,NyPlot,NxPlot);
-    Y = reshape(yi,NyPlot,NxPlot);
-    
-    % Extract the outputs on the base grid
-    if strcmp(output,'E1')
-        [Zi,~,~] = getEfield(obj);
-    elseif strcmp(output,'E2')
-        [~,Zi,~] = getEfield(obj);
-    elseif strcmp(output,'E3')
-        [~,~,Zi] = getEfield(obj);
-    else
-        outputHandle = str2func(['get',output]);
-        Zi = outputHandle(obj);
-    end
-    Zi = Zi(:,freqIndex);
-
+% Get the original grid and output
+X = reshape(obj.x,obj.Ny,obj.Nx);
+Y = reshape(obj.y,obj.Ny,obj.Nx);
+if strcmp(output,'E1')
+    [Z,~,~] = getEfield(obj);
+elseif strcmp(output,'E2')
+    [~,Z,~] = getEfield(obj);
+elseif strcmp(output,'E3')
+    [~,~,Z] = getEfield(obj);
 else
-    % Get the plot points from the step information
+    outputHandle = str2func(['get',output]);
+    Z = outputHandle(obj);
+end
+Z = Z(:,freqIndex);
+
+if isempty(step)
+    if strcmp(plotType,'cartesian') || strcmp(plotType,'cartesian')
+        error('Cant do 1D plot with empty step size - this is reserved for making 2D grids etc.')
+    else
+        Xi = X;
+        Yi = Y;
+        xi = obj.x;
+        yi = obj.y;
+        NxPlot = obj.Nx;
+        NyPlot = obj.Ny;
+        Zi = Z;
+    end
+else
+    % Get the interpolated plot points from the step information
     if strcmp(obj.gridType,'UV') || strcmp(obj.gridType,'ArcSin')
         step = sind(step);
     else
         step = deg2rad(step);
     end
-    xvect = min(obj.x):step:max(obj.x);
-    yvect = min(obj.y):step:max(obj.y);
-    [X,Y] = meshgrid(xvect,yvect);
-    NxPlot = numel(xvect);
-    NyPlot = numel(yvect);
+    xivect = min(obj.x):step:max(obj.x);
+    yivect = min(obj.y):step:max(obj.y);
+    [Xi,Yi] = meshgrid(xivect,yivect);
+    NxPlot = numel(xivect);
+    NyPlot = numel(yivect);
     switch plotType
         case {'3D','2D'}
-            xi = X(:);
-            yi = Y(:);
+            xi = Xi(:);
+            yi = Yi(:);
         case {'cartesian','polar'}
             switch cutConstant
                 case 'x'
-                    xi = Y(:);
+                    yi = yivect;
+                    xi = ones(size(yi)).*cutValue;
                 case 'y'
-                    xi = X(:);
+                    xi = xivect;
+                    yi = ones(size(xi)).*cutValue;
             end
     end
+    [Zi] = interpolateGrid(obj,output,xi,yi,freqIndex);
 end
 
 % Assign axis names
 switch obj.gridType
-    case 'UV'
-        xplot = xi;
-        yplot = yi;
+    case 'DirCos'
+%         xplot = obj.x;
+%         yplot = obj.y;
+        xiplot = xi;
+        yiplot = yi;
         xname = [obj.xname, ' = sin(\theta)cos(\phi)'];
         yname = [obj.yname, ' = sin(\theta)sin(\phi)'];
     otherwise
 %         xvect = rad2deg(xvect);
 %         yvect = rad2deg(yvect);
+%         xplot = rad2deg(obj.x);
+%         yplot = rad2deg(obj.y);
         X = rad2deg(X);
         Y = rad2deg(Y);
-        xplot = rad2deg(xi);
-        yplot = rad2deg(yi);
+        Xi = rad2deg(Xi);
+        Yi = rad2deg(Yi);
+        xiplot = rad2deg(xi);
+        yiplot = rad2deg(yi);
         xname = [obj.xname, ' (deg)'];
         yname = [obj.yname, ' (deg)'];
 end
 
-%% Get the outputs
-
-
-
-% Condition outputs
+%% Condition outputs
 % Phase results
 if (strcmp(output,'E1') || strcmp(output,'E2') || strcmp(output,'E3')) && strcmp(outputType,'phase')
-    Zplot = angle(Zi);
-    if norm, Zplot = Zplot - max(Zplot); end
+    Zplot = angle(Z);
+    Ziplot = angle(Zi);
+    if norm
+        Zplot = Zplot - max(Zplot); 
+        Ziplot = Ziplot - max(Ziplot); 
+    end
     unit = 'V/m (rad)';
     if strcmp(scalePhase,'deg')
-        Zplot = rad2deg(Zplot); 
+        Zplot = rad2deg(Zplot);
+        Ziplot = rad2deg(Ziplot); 
         unit = 'V/m (deg)';
     end
+    compName = strrep(obj.([output,'name']),'_','\');
 else    % Power results
-    Zplot = abs(Zi);
+    Zplot = abs(Z);
+    Ziplot = abs(Zi);
     switch output
         case {'Directivity','Gain','AxialRatio','AxialRatioInv','CO_XP','XP_CO','W','U'}
             dBscale = 10;
             unit = '';
-            compName = output;
+            compName = strrep(output,'_','/');
         case {'E1','E2','E3'}
             dBscale = 20;
             unit = 'V/m ';
-            compName = obj.([output,'name']);
+            compName = strrep(obj.([output,'name']),'_','\');
     end
-    linHandle = str2func(['lin',num2str(dBscale)]);
-    dr = linHandle(dynamicRange_dB);
-    if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
-        minVal = min(Zplot);
-        maxVal = dr*minVal;
-        Zplot(Zplot > maxVal) = maxVal;
-    else
-        maxVal = max(Zplot);
-        minVal = maxVal/dr;
-        Zplot(Zplot < minVal) = minVal;
+    if norm
+        Zplot = Zplot./max(Zplot);
+        Ziplot = Ziplot./max(Ziplot);
     end
-    if norm, Zplot = Zplot./maxVal; end
     if strcmp(scaleMag,'dB')
         dBHandle = str2func(['dB',num2str(dBscale)]);
-        Zplot = dBHandle(Zplot); 
-        unit = [unit, '(dB)'];
+        Zplot = dBHandle(Zplot);
+        Ziplot = dBHandle(Ziplot);
+        unit = [unit, 'dB'];
     end
 end
 
@@ -238,48 +258,83 @@ freqPlot = obj.freqHz(freqIndex)*freqMult;
 
 switch plotType
     case '3D'
-        % Use the MATLAB antennas toolbox plotting function
+        % ToDo:
+        % Doesn't work with AzEl/ElAz grids +-90 y-axis breaks the plot
         
-        % Need the th and ph angles for this so get them
-        if strcmp(obj.gridType,obj.gridTypeBase)
-            phplot = xplot;
-            thplot = yplot;
+        % Use the MATLAB antennas toolbox plotting function
+        if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
+            % Handle dynamic range here: ToDo
+            if strcmp(outputType,'mag')
+                maxVal = max(Zplot(:));
+                switch scaleMag
+                    case 'dB'
+                        if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
+                            maxVal = (1-norm).*dynamicRange_dB;
+                            minVal = norm.*dynamicRange_dB;
+                        else
+                            minVal = maxVal-dynamicRange_dB;
+                        end
+%                         keyboard;
+                        Ziplot(Ziplot<minVal) = minVal;
+                        Ziplot(Ziplot>maxVal) = maxVal;
+                    case 'lin'
+                        linHandle = str2func(['lin',num2str(dBscale)]);
+                        if ~norm
+                            dr = linHandle(dynamicRange_dB);
+                            if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
+                                caxis([0,dr]);
+                            else
+                                caxis([maxVal/dr,maxVal]);
+                            end
+                        end
+                end
+            end
+            iVal = ~isnan(Ziplot);
+            patternCustom(Ziplot(iVal),Yi(iVal),Xi(iVal));
+            title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
         else
-            grid2UVhandle = str2func(['FarField.',obj.gridType,'2UV']);
-            [u,v,w] = grid2UVhandle(xi,yi);
-            [phi,thi] = FarField.UV2PhTh(u,v,w);
-            [angMat,IA] = unique([phi,thi],'rows');
-            phplot = rad2deg(angMat(:,1));
-            thplot = rad2deg(angMat(:,2));
-            Zplot = Zplot(IA);
+            error(['gridType must be PhTh for 3D plots: found gridType = ', obj.gridType])
         end
-        patternCustom(Zplot,thplot,phplot);
-        title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
         
     case '2D'
-%         keyboard;
-%         Xplot = reshape(xplot,NxPlot,NyPlot);
-%         Yplot = reshape(yplot,NxPlot,NyPlot);
-%         [Zplot] = griddata(reshape(xplot,NxPlot,NyPlot),reshape(yplot,NxPlot,NyPlot),reshape(Zplot,NxPlot,NyPlot),X,Y);
-%         Xplot = X;
-%         Yplot = Y;
-%         iInvisible = find((Xplot.^2 + Yplot.^2) > 1);
-%         Zplot(iInvisible) = NaN;
-%         surf(Xplot,Yplot,reshape(Zplot,size(Xplot)),'EdgeColor','Interp','FaceColor','Interp')
-Xplot = X;
-Yplot = Y;
-Zplot = reshape(Zplot,NyPlot,NxPlot);
-% keyboard;
-        surf(Xplot,Yplot,Zplot,'EdgeColor','Interp','FaceColor','Interp')
-%         figure
-%         plot3(xplot,yplot,Zplot,'.')
+        Ziplot = reshape(Ziplot,NyPlot,NxPlot);
+        if ~isempty(step)
+            surf(Xi,Yi,Ziplot,'EdgeColor','Interp','FaceColor','Interp')
+            colorbar
+        end
+        if showGrid || isempty(step)
+            hold on
+            plot3(X(:),Y(:),Zplot(:),'k.')
+            hold off
+        end
         xlabel(xname)
         ylabel(yname)
         view([0,90])
         axis equal
-        xlim([min(xplot),max(xplot)])
-        ylim([min(yplot), max(yplot)])
-        colorbar
+        xlim([min(xiplot),max(xiplot)])
+        ylim([min(yiplot), max(yiplot)])
+        % Handle dynamic range here
+        if strcmp(outputType,'mag')
+            maxVal = max(Zplot(:));
+            switch scaleMag
+                case 'dB'
+                    if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
+                        caxis([0,dynamicRange_dB] - norm.*dynamicRange_dB);
+                    else
+                        caxis([maxVal-dynamicRange_dB,maxVal]);
+                    end
+                case 'lin'
+                    linHandle = str2func(['lin',num2str(dBscale)]);
+                    if ~norm
+                        dr = linHandle(dynamicRange_dB);
+                        if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
+                            caxis([0,dr]);
+                        else
+                            caxis([maxVal/dr,maxVal]);
+                        end
+                    end
+            end
+        end
         title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
     case 'cartesian'
         % ToDo
@@ -295,32 +350,47 @@ Zplot = reshape(Zplot,NyPlot,NxPlot);
             iph270 = find(abs(obj.ph - deg2rad(270)) < eps);
             iph315 = find(abs(obj.ph - deg2rad(315)) < eps);
             
-            plot(rad2deg(obj.th(iph0)),Zplot(iph0),[LineStyle,'k'],'lineWidth',lw), grid on, hold on
-            plot(rad2deg(obj.th(iph45)),Zplot(iph45),[LineStyle,'b'],'lineWidth',lw)
-            plot(rad2deg(obj.th(iph90)),Zplot(iph90),[LineStyle,'r'],'lineWidth',lw)
-            plot(rad2deg(obj.th(iph135)),Zplot(iph135),[LineStyle,'g'],'lineWidth',lw)
-            plot(-rad2deg(obj.th(iph180)),Zplot(iph180),[LineStyle,'k'],'lineWidth',lw)
-            plot(-rad2deg(obj.th(iph225)),Zplot(iph225),[LineStyle,'b'],'lineWidth',lw)
-            plot(-rad2deg(obj.th(iph270)),Zplot(iph270),[LineStyle,'r'],'lineWidth',lw)
-            plot(-rad2deg(obj.th(iph315)),Zplot(iph315),[LineStyle,'g'],'lineWidth',lw)
+            plot(rad2deg(obj.th(iph0)),Ziplot(iph0),[LineStyle,'k'],'lineWidth',lw), grid on, hold on
+            plot(rad2deg(obj.th(iph45)),Ziplot(iph45),[LineStyle,'b'],'lineWidth',lw)
+            plot(rad2deg(obj.th(iph90)),Ziplot(iph90),[LineStyle,'r'],'lineWidth',lw)
+            plot(rad2deg(obj.th(iph135)),Ziplot(iph135),[LineStyle,'g'],'lineWidth',lw)
+            plot(-rad2deg(obj.th(iph180)),Ziplot(iph180),[LineStyle,'k'],'lineWidth',lw)
+            plot(-rad2deg(obj.th(iph225)),Ziplot(iph225),[LineStyle,'b'],'lineWidth',lw)
+            plot(-rad2deg(obj.th(iph270)),Ziplot(iph270),[LineStyle,'r'],'lineWidth',lw)
+            plot(-rad2deg(obj.th(iph315)),Ziplot(iph315),[LineStyle,'g'],'lineWidth',lw)
             lg = legend('\phi = 0^\circ','\phi = 45^\circ','\phi = 90^\circ','\phi = 135^\circ');
             xlabel('\theta (deg)')
             ylabel([outputType,'(', compName, ') (',unit,')'])
             %                 lg.String = lg.String(1:4); % Just keep the first four legend entries
         else
-            if cutConstant == 'x'
-                iCut = find(abs(x - cutValue) < eps);
-                plot(y(iCut),Zplot(iCut),LineStyle,'lineWidth',lw), grid on, hold on
-                xlabel(yname)
-            elseif cutConstant == 'y'
-                iCut = find(abs(y - cutValue) < eps);
-                plot(x(iCut),Zplot(iCut),LineStyle,'lineWidth',lw), grid on, hold on
-                xlabel(xname)
+            switch cutConstant
+                case 'x'
+                    plot(yiplot,Ziplot), grid on
+                    xlabel(yname)
+                    cutName = xname;
+                case 'y'
+                    plot(xiplot,Ziplot), grid on
+                    xlabel(xname)
+                    cutName = yname;
             end
             ylabel([outputType,'(', compName, ') (',unit,')'])
             
+%             keyboard;
+            
+            
+%             if cutConstant == 'x'
+%                 iCut = find(abs(x - cutValue) < eps);
+%                 plot(y(iCut),Ziplot(iCut),LineStyle,'lineWidth',lw), grid on, hold on
+%                 xlabel(yname)
+%             elseif cutConstant == 'y'
+%                 iCut = find(abs(y - cutValue) < eps);
+%                 plot(x(iCut),Ziplot(iCut),LineStyle,'lineWidth',lw), grid on, hold on
+%                 xlabel(xname)
+%             end
+%             
+            
         end
-        title([obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit])
+        title([obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',unit])
     case 'polar'
         % ToDo
 
