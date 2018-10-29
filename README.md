@@ -3,8 +3,10 @@ A range of MATLAB functions used in the RF group for general interfacing with si
 
 /utils
     General utility functions
+    
 /GRASPtoolbox
     Files related to calculations using GRASP specifically
-/fieldFuncs
-    Files related to manipulation of (far)field patterns
+    
+/@FarField
+    FarField pattern class.  Has plotting functionality, as well as a range of other useful things to do with fields
 
