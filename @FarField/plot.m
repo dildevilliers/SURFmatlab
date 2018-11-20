@@ -365,45 +365,27 @@ switch plotType
             end
         end
         title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
-    case 'cartesian'
-        % ToDo
-        lw = LineWidth;   
-        if isempty(cutValue)
-            % Find the principle cuts
-            iph0 = find(abs(obj.ph - 0) < eps);
-            iph45 = find(abs(obj.ph - deg2rad(45)) < eps);
-            iph90 = find(abs(obj.ph - deg2rad(90)) < eps);
-            iph135 = find(abs(obj.ph - deg2rad(135)) < eps);
-            iph180 = find(abs(obj.ph - deg2rad(180)) < eps);
-            iph225 = find(abs(obj.ph - deg2rad(225)) < eps);
-            iph270 = find(abs(obj.ph - deg2rad(270)) < eps);
-            iph315 = find(abs(obj.ph - deg2rad(315)) < eps);
-            
-            plot(rad2deg(obj.th(iph0)),Ziplot(iph0),[LineStyle,'k'],'lineWidth',lw), grid on, hold on
-            plot(rad2deg(obj.th(iph45)),Ziplot(iph45),[LineStyle,'b'],'lineWidth',lw)
-            plot(rad2deg(obj.th(iph90)),Ziplot(iph90),[LineStyle,'r'],'lineWidth',lw)
-            plot(rad2deg(obj.th(iph135)),Ziplot(iph135),[LineStyle,'g'],'lineWidth',lw)
-            plot(-rad2deg(obj.th(iph180)),Ziplot(iph180),[LineStyle,'k'],'lineWidth',lw)
-            plot(-rad2deg(obj.th(iph225)),Ziplot(iph225),[LineStyle,'b'],'lineWidth',lw)
-            plot(-rad2deg(obj.th(iph270)),Ziplot(iph270),[LineStyle,'r'],'lineWidth',lw)
-            plot(-rad2deg(obj.th(iph315)),Ziplot(iph315),[LineStyle,'g'],'lineWidth',lw)
-            lg = legend('\phi = 0^\circ','\phi = 45^\circ','\phi = 90^\circ','\phi = 135^\circ');
-            xlabel('\theta (deg)')
-            ylabel([outputType,'(', compName, ') (',unit,')'])
-            %                 lg.String = lg.String(1:4); % Just keep the first four legend entries
-        else
-            switch cutConstant
-                case 'x'
-                    plot(yiplot,Ziplot), grid on
-                    xlabel(yname)
-                    cutName = obj.xname;
-                case 'y'
-                    plot(xiplot,Ziplot), grid on
-                    xlabel(xname)
-                    cutName = obj.yname;
-            end
-            ylabel([outputType,'(', compName, ') (',unit,')'])
-            
+    case {'cartesian','polar'}
+        % Initial bookkeeping to seperate the two options
+        if strcmp(plotType,'cartesian')
+            plotHandle = str2func(['plot']);
+            limitHandle = str2func(['ylim']);
+            xscale = 1;
+        elseif strcmp(plotType,'polar')
+            assert(~strcmp(obj.gridType,'DirCos'),'Polar plots not supported for DirCos gridType');
+            plotHandle = str2func(['polarplot']);
+            limitHandle = str2func(['rlim']);
+            xscale = pi/180;
+        end
+        switch cutConstant
+            case 'x'
+                plotHandle(yiplot.*xscale,Ziplot), grid on
+                xlab = yname;
+                cutName = obj.xname;
+            case 'y'
+                plotHandle(xiplot.*xscale,Ziplot), grid on
+                xlab = xname;
+                cutName = obj.yname;
         end
         % Handle dynamic range here
         if strcmp(outputType,'mag')
@@ -411,18 +393,18 @@ switch plotType
             switch scaleMag
                 case 'dB'
                     if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
-                        ylim([0,dynamicRange_dB] - norm.*dynamicRange_dB);
+                        limitHandle([0,dynamicRange_dB] - norm.*dynamicRange_dB);
                     else
-                        ylim([maxVal-dynamicRange_dB,maxVal]);
+                        limitHandle([maxVal-dynamicRange_dB,maxVal]);
                     end
                 case 'lin'
                     linHandle = str2func(['lin',num2str(dBscale)]);
                     if ~norm
                         dr = linHandle(dynamicRange_dB);
                         if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
-                            ylim([0,dr]);
+                            limitHandle([0,dr]);
                         else
-                            ylim([maxVal/dr,maxVal]);
+                            limitHandle([maxVal/dr,maxVal]);
                         end
                     end
             end
@@ -430,10 +412,126 @@ switch plotType
         if ~strcmp(obj.gridType,'DirCos')
             cutValue = rad2deg(cutValue);
         end
-        title([obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',axisUnit])
-    case 'polar'
-        % ToDo
+        titText = [obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',axisUnit];
 
+        % Final bookkeeping to seperate the two options
+        ax = gca;
+        ylab = [outputType,'(', compName, ') (',unit,')'];
+        if strcmp(plotType,'cartesian')
+            xlabel(xlab)
+            ylabel(ylab)
+            title(titText)
+        elseif strcmp(plotType,'polar')
+            title([ylab,'; ',titText])
+            ax.ThetaZeroLocation = 'top';
+            ax.ThetaDir = 'clockwise';
+        end
+        
+%     case 'cartesian'
+%         lw = LineWidth;   
+%         if isempty(cutValue)
+%             % Find the principle cuts
+%             iph0 = find(abs(obj.ph - 0) < eps);
+%             iph45 = find(abs(obj.ph - deg2rad(45)) < eps);
+%             iph90 = find(abs(obj.ph - deg2rad(90)) < eps);
+%             iph135 = find(abs(obj.ph - deg2rad(135)) < eps);
+%             iph180 = find(abs(obj.ph - deg2rad(180)) < eps);
+%             iph225 = find(abs(obj.ph - deg2rad(225)) < eps);
+%             iph270 = find(abs(obj.ph - deg2rad(270)) < eps);
+%             iph315 = find(abs(obj.ph - deg2rad(315)) < eps);
+%             
+%             plot(rad2deg(obj.th(iph0)),Ziplot(iph0),[LineStyle,'k'],'lineWidth',lw), grid on, hold on
+%             plot(rad2deg(obj.th(iph45)),Ziplot(iph45),[LineStyle,'b'],'lineWidth',lw)
+%             plot(rad2deg(obj.th(iph90)),Ziplot(iph90),[LineStyle,'r'],'lineWidth',lw)
+%             plot(rad2deg(obj.th(iph135)),Ziplot(iph135),[LineStyle,'g'],'lineWidth',lw)
+%             plot(-rad2deg(obj.th(iph180)),Ziplot(iph180),[LineStyle,'k'],'lineWidth',lw)
+%             plot(-rad2deg(obj.th(iph225)),Ziplot(iph225),[LineStyle,'b'],'lineWidth',lw)
+%             plot(-rad2deg(obj.th(iph270)),Ziplot(iph270),[LineStyle,'r'],'lineWidth',lw)
+%             plot(-rad2deg(obj.th(iph315)),Ziplot(iph315),[LineStyle,'g'],'lineWidth',lw)
+%             lg = legend('\phi = 0^\circ','\phi = 45^\circ','\phi = 90^\circ','\phi = 135^\circ');
+%             xlabel('\theta (deg)')
+%             ylabel([outputType,'(', compName, ') (',unit,')'])
+%             %                 lg.String = lg.String(1:4); % Just keep the first four legend entries
+%         else
+%             switch cutConstant
+%                 case 'x'
+%                     plot(yiplot,Ziplot), grid on
+%                     xlabel(yname)
+%                     cutName = obj.xname;
+%                 case 'y'
+%                     plot(xiplot,Ziplot), grid on
+%                     xlabel(xname)
+%                     cutName = obj.yname;
+%             end
+%             ylabel([outputType,'(', compName, ') (',unit,')'])
+%             
+%         end
+%         % Handle dynamic range here
+%         if strcmp(outputType,'mag')
+%             maxVal = max(Zplot(:));
+%             switch scaleMag
+%                 case 'dB'
+%                     if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
+%                         ylim([0,dynamicRange_dB] - norm.*dynamicRange_dB);
+%                     else
+%                         ylim([maxVal-dynamicRange_dB,maxVal]);
+%                     end
+%                 case 'lin'
+%                     linHandle = str2func(['lin',num2str(dBscale)]);
+%                     if ~norm
+%                         dr = linHandle(dynamicRange_dB);
+%                         if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
+%                             ylim([0,dr]);
+%                         else
+%                             ylim([maxVal/dr,maxVal]);
+%                         end
+%                     end
+%             end
+%         end
+%         if ~strcmp(obj.gridType,'DirCos')
+%             cutValue = rad2deg(cutValue);
+%         end
+%         title([obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',axisUnit])
+%     case 'polar'
+%         if ~strcmp(obj.gridType,'DirCos')
+%             switch cutConstant
+%                 case 'x'
+%                     polarplot(deg2rad(yiplot),Ziplot), grid on
+%                     cutName = obj.xname;
+%                 case 'y'
+%                     polarplot(deg2rad(xiplot),Ziplot), grid on
+%                     cutName = obj.yname;
+%             end
+%             % Handle dynamic range here
+%             if strcmp(outputType,'mag')
+%                 maxVal = max(Zplot(:));
+%                 switch scaleMag
+%                     case 'dB'
+%                         if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
+%                             rlim([0,dynamicRange_dB] - norm.*dynamicRange_dB);
+%                         else
+%                             rlim([maxVal-dynamicRange_dB,maxVal]);
+%                         end
+%                     case 'lin'
+%                         linHandle = str2func(['lin',num2str(dBscale)]);
+%                         if ~norm
+%                             dr = linHandle(dynamicRange_dB);
+%                             if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
+%                                 rlim([0,dr]);
+%                             else
+%                                 rlim([maxVal/dr,maxVal]);
+%                             end
+%                         end
+%                 end
+%             end
+%             % Sort ou the axis
+%             ax = gca;
+%             ax.ThetaZeroLocation = 'top';
+%             ax.ThetaDir = 'clockwise';
+%         else
+%             error(['Polar plots not supported for DirCos gridType'])
+%         end
+        
 end
 
 
