@@ -41,28 +41,28 @@ gridType = obj.gridType;
 % Evaluate the field on the base grid - this is where the output function
 % should be best suited for interpolation
 obj = obj.grid2Base;
+% Shift to -180:180 range (if applicable) - this is where the DirCos spits
+% everything out after transforming
+obj = obj.xRange180180;
 
-keyboard;
-
-% Get xi and yi in the base gridType
-if ~strcmp(obj.gridType,gridType)
-    % Shift to -180:180 range (if applicable)
-    obj = obj.xRange180180;
-    
-    grid2DirCoshandle = str2func(['FarField.',gridType,'2DirCos']);
-    [ui,vi,wi] = grid2DirCoshandle(xi,yi);
-    DirCos2baseHandle = str2func(['FarField.DirCos2',obj.gridTypeBase]);
-    [xi_bGT,yi_bGT] = DirCos2baseHandle(ui,vi,wi);
-else    % We are already in the baseGrid domain
-    xi_bGT = xi;
-    yi_bGT = yi;
+% Get xi and yi in the base gridType, and on the [-180,1]
+grid2DirCoshandle = str2func(['FarField.',gridType,'2DirCos']);
+[ui,vi,wi] = grid2DirCoshandle(xi,yi);
+valAngi = sqrt(ui.^2 + vi.^2) <= 1;
+% Check for bottom hemisphere plot - fix the w to be the negative root
+if (strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin')) && strcmp(hemisphere,'bot')
+    wi = -wi;
 end
+DirCos2baseHandle = str2func(['FarField.DirCos2',obj.gridType]);
+[xi_bGT,yi_bGT] = DirCos2baseHandle(ui,vi,wi);
 
-% Get the valid angle positions - already in baseGrid here
-% Get the indexes only - no later reshaping done
+% Get the valid angle positions - already in baseGrid here, but shifted to
+% +- 180 degrees
+% Get the indexes only, no later reshaping done, different from the grids
+% required for plotting in plot.m
 if strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin')
     grid2DirCoshandleBase = str2func(['FarField.',obj.gridType,'2DirCos']);
-    [u,v,w] = grid2DirCoshandleBase(obj.x,obj.y);
+    [~,~,w] = grid2DirCoshandleBase(obj.x,obj.y);
     if strcmp(hemisphere,'top')
         valAng = find(w >= 0);
     elseif strcmp(hemisphere,'bot')
@@ -87,11 +87,9 @@ end
 % Select frequency of interest
 Z = Zfreq(:,freqIndex);
 
-
 % Build the interpolant on the base grid at the valid angles
-% Zf = scatteredInterpolant(obj.x,obj.y,Z,'natural');
-Zf = scatteredInterpolant(obj.x(valAng),obj.y(valAng),Z(valAng),'natural');
+Zf = scatteredInterpolant(obj.x(valAng),obj.y(valAng),Z(valAng),'linear');
 % Get the values on the scattered set of inputs
 Zi = Zf(xi_bGT,yi_bGT);
-
+Zi(~valAngi) = NaN;
 end

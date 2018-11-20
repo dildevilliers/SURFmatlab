@@ -39,7 +39,7 @@ function [] = plot(obj,varargin)
 % be used and no surface will be plotted.  If not, a griddata interpolant will be made.
 %
 % plotProperties can be a variety of name, value pairs including:
-%   LineWidth, LineStyle (like '-k.')
+%   LineWidth, LineStyle, Color (like '-.')
 %
 % showGrid is a boolean (false) to show the 2D grid where the data is
 % calculated before interpolation.
@@ -49,7 +49,7 @@ function [] = plot(obj,varargin)
 
 
 
-narginchk(1,20);
+narginchk(1,22);
 
 %% Parsing through the inputs
 parseobj = inputParser;
@@ -97,7 +97,11 @@ addParameter(parseobj,'step',[],typeValidationstep);     % In degrees
 typeValidationLineWidth = @(x) validateattributes(x,{'numeric'},{'real'},'plot','LineWidth');
 addParameter(parseobj,'LineWidth',1,typeValidationLineWidth);
 
-addParameter(parseobj,'LineStyle','-');
+typeValidationLineStyle = @(x) validateattributes(x,{'char'},{'nonempty'},'plot','LineStyle');
+addParameter(parseobj,'LineStyle','-',typeValidationLineStyle);     % In degrees
+
+typeValidationColor = @(x) validateattributes(x,{'numeric','char'},{'nonempty'},'plot','Color');
+addParameter(parseobj,'Color','k',typeValidationColor);     % In degrees
 
 typeValidationshowGrid = @(x) validateattributes(x,{'logical','numeric'},{'binary','nonempty','numel',1},'plot','showGrid');
 addParameter(parseobj,'showGrid',false,typeValidationshowGrid );
@@ -121,6 +125,7 @@ cutValue = parseobj.Results.cutValue;
 step = parseobj.Results.step;
 LineWidth = parseobj.Results.LineWidth;
 LineStyle = parseobj.Results.LineStyle;
+Color = parseobj.Results.Color;
 showGrid = parseobj.Results.showGrid;
 hemisphere = parseobj.Results.hemisphere;
 
@@ -379,7 +384,7 @@ switch plotType
         end
         switch cutConstant
             case 'x'
-                plotHandle(yiplot.*xscale,Ziplot), grid on
+                plotHandle(yiplot.*xscale,Ziplot,'LineStyle',LineStyle,'LineWidth',LineWidth,'Color',Color), grid on
                 xlab = yname;
                 cutName = obj.xname;
             case 'y'
@@ -415,6 +420,7 @@ switch plotType
         titText = [obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',axisUnit];
 
         % Final bookkeeping to seperate the two options
+        hold on
         ax = gca;
         ylab = [outputType,'(', compName, ') (',unit,')'];
         if strcmp(plotType,'cartesian')

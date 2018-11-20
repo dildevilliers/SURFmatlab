@@ -37,6 +37,9 @@ classdef FarField
         radEff_dB       % radiation efficiency in dB [1 x Nf]
         Directivity_dBi % directivity in dBi [1 x Nf]
         Gain_dB         % Gain in dB [1 x Nf]
+        xRangeType     % 'sym' or 'pos' 
+        yRangeType     % '180' or '360' 
+
     end
     
     properties (SetAccess = private, Hidden = true)
@@ -50,7 +53,6 @@ classdef FarField
         E3Base
         coorSysBase
         polTypeBase
-        
     end
         
         properties (Constant = true, Hidden = true)
@@ -146,6 +148,7 @@ classdef FarField
             obj = setBase(obj);
             obj = setFreq(obj);
             obj = setPhTh(obj);
+            obj = setRangeTypes(obj);
         end
         
         
@@ -209,8 +212,8 @@ classdef FarField
             % returns the XP/CO ratio (linear) [Nang x Nf]
             Xpol = (abs(obj.E1)./abs(obj.E2)).^2;
         end
+        
         %% Grid getters
-              
         function [u, v, w] = getDirCos(obj)
             handle2DirCos = str2func(['FarField.',obj.gridTypeBase,'2DirCos']);
             [u,v,w] = handle2DirCos(obj.xBase,obj.yBase);
@@ -271,54 +274,97 @@ classdef FarField
             end
         end
         
-        %% Grid transformation methods
+        %% Grid transformation setters
         function obj = grid2PhTh(obj)
+            obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'PhTh')
                 [obj.x,obj.y] = getPhTh(obj);
                 obj.gridType = 'PhTh';
                 obj = setXYnames(obj);
+                obj = setRangeTypes(obj);
             end
         end
         
         function obj = grid2DirCos(obj)
+            obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'DirCos')
                 [obj.x,obj.y] = getDirCos(obj);
                 obj.gridType = 'DirCos';
                 obj = setXYnames(obj);
+                obj = setRangeTypes(obj);
             end
         end
         
         function obj = grid2AzEl(obj)
+            obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'AzEl')
                 [obj.x,obj.y] = getAzEl(obj);
                 obj.gridType = 'AzEl';
                 obj = setXYnames(obj);
+                obj = setRangeTypes(obj);
             end
         end
         
         function obj = grid2ElAz(obj)
+            obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'ElAz')
                 [obj.x,obj.y] = getElAz(obj);
                 obj.gridType = 'ElAz';
                 obj = setXYnames(obj);
+                obj = setRangeTypes(obj);
             end
         end
         
         function obj = grid2TrueView(obj)
+            obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'TrueView')
                 [obj.x,obj.y] = getTrueView(obj);
                 obj.gridType = 'TrueView';
                 obj = setXYnames(obj);
+                obj = setRangeTypes(obj);
             end
         end
         
         function obj = grid2ArcSin(obj)
+            obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'ArcSin')
                 [obj.x,obj.y] = getArcSin(obj);
                 obj.gridType = 'ArcSin';
                 obj = setXYnames(obj);
+                obj = setRangeTypes(obj);
             end
         end
+        
+        %% Grid range shifters
+        function obj = sortGrid(obj)
+            [~,iSort] = sortrows([obj.x,obj.y],[1 2]);
+            obj.x = obj.x(iSort);
+            obj.y = obj.y(iSort);
+            obj.E1 = obj.E1(iSort);
+            obj.E2 = obj.E2(iSort);
+            obj.E3 = obj.E3(iSort);
+        end
+        
+        function obj = setRangeTypes(obj)
+            % Try to figure out what the current rangeType is.
+            % Not much error checking is done - assume somewhat
+            % sensible inputs are provided most of the time.
+            obj.xRangeType = 'sym';
+            if (strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz'))
+                if min(obj.x) >= 0
+                    obj.xRangeType = 'pos';
+                end
+                if max(obj.y) - min(obj.y) <= pi
+                    obj.yRangeType = '180';
+                else
+                    obj.yRangeType = '360';
+                end
+            else
+                obj.yRangeType = [];
+            end
+        end
+        
+        obj = setXrange(obj,type)
         
         %% Coordinate system getters
         function [Eth, Eph, Er] = getEspherical(obj)
@@ -580,6 +626,7 @@ classdef FarField
             obj.polType = obj.polTypeBase;
             obj = setEnames(obj);
             obj = setXYnames(obj);
+            obj = setRangeTypes(obj);
         end
         
         function obj = grid2Base(obj)
@@ -730,42 +777,7 @@ classdef FarField
     %% Internal helper functions
     methods (Access = private)
         
-        function obj = xRange180180(obj)
-            if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
-                % Transform to the standard -180:180 domain since this is
-                % where everything ends up from the ...2DirCos transforms
-                % First remove the ph=360 from the matrix...
-                not360 = find(obj.x ~= 2*pi);
-                i180 = find(obj.x == pi);
-                if numel(not360) < obj.Nang && numel(i180) > 0
-                    obj.x = obj.x(not360);
-                    obj.y = obj.y(not360);
-                    obj.E1 = obj.E1(not360);
-                    obj.E2 = obj.E2(not360);
-                    obj.E3 = obj.E3(not360);
-                end
-                % Now shift the x values
-                lt180 = find(obj.x > pi);
-                obj.x(lt180) = obj.x(lt180) - 2*pi;
-                % if the 360 was removed, add a -180 cut
-                if numel(not360) < obj.Nang && numel(i180) > 0
-                    obj.x = [obj.x;ones(numel(i180),1).*-pi];
-                    obj.y = [obj.y;obj.y(i180)];
-                    obj.E1 = [obj.E1;obj.E1(i180)];
-                    obj.E2 = [obj.E2;obj.E2(i180)];
-                    obj.E3 = [obj.E3;obj.E3(i180)];
-                end
-                % Sort
-                [~,iSort] = unique([obj.x,obj.y],'rows');
-                obj.x = obj.x(iSort);
-                obj.y = obj.y(iSort);
-                obj.E1 = obj.E1(iSort);
-                obj.E2 = obj.E2(iSort);
-                obj.E3 = obj.E3(iSort);
-            else
-                warning(['Cant shift a polar grid like ', obj.gridType, ' on a cartesian grid']);
-            end
-        end
+        
         
         function obj = setBase(obj)
             obj.xBase = obj.x;

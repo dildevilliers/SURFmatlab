@@ -41,24 +41,25 @@ gridType = obj.gridType;
 % Evaluate the field on the base grid - this is where the output function
 % should be best suited for interpolation
 obj = obj.grid2Base;
-valAngi = ones(size(xi));
-% Get xi and yi in the base gridType
-if ~strcmp(obj.gridType,gridType)
-    % Shift to -180:180 range (if applicable)
-    obj = obj.xRange180180;
-    
-    grid2DirCoshandle = str2func(['FarField.',gridType,'2DirCos']);
-    [ui,vi,wi] = grid2DirCoshandle(xi,yi);
-    valAngi = sqrt(ui.^2 + vi.^2) <= 1;
-    % Check for bottom hemisphere plot - fix the w to be the negative root
-    if (strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin')) && strcmp(hemisphere,'bot')
-        wi = -wi;
-    end
-    DirCos2baseHandle = str2func(['FarField.DirCos2',obj.gridType]);
-    [xi_bGT,yi_bGT] = DirCos2baseHandle(ui,vi,wi);
-else    % We are already in the baseGrid domain
-    xi_bGT = xi;
-    yi_bGT = yi;
+% Shift to -180:180 range (if applicable) - this is where the DirCos spits
+% everything out after transforming
+obj = obj.setXrange('sym');
+
+% Get xi and yi in the base gridType, and on the [-180,180] x-domain for the
+% angular grids
+grid2DirCoshandle = str2func(['FarField.',gridType,'2DirCos']);
+[ui,vi,wi] = grid2DirCoshandle(xi,yi);
+% Check for bottom hemisphere plot - fix the w to be the negative root
+if (strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin')) && strcmp(hemisphere,'bot')
+    wi = -wi;
+end
+DirCos2baseHandle = str2func(['FarField.DirCos2',obj.gridType]);
+[xi_bGT,yi_bGT] = DirCos2baseHandle(ui,vi,wi);
+% Find the invalid points included by the external meshgrid 
+valAngi = sqrt(ui.^2 + vi.^2) <= 1;
+% Sort out the TrueView special case invalid points
+if strcmp(gridType,'TrueView')
+    valAngi = sqrt((xi./pi).^2 + (yi./pi).^2) <= 1;
 end
 
 % Get the valid angle positions - already in baseGrid here, but shifted to

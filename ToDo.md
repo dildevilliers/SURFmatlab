@@ -1,10 +1,7 @@
 # ToDo list for new code
 
 ## @Farfield
-- Test and rework interpolated plots for the DirCos case.  It currently interpolates outside the valid range. Need to do a fundamental rework of the plotting grid/interpolation scheme for this case.
-- Add polar 1D plots
 - Add better principle plane cuts method for cartesian/polar
-- Plot on -180:180 or 0:360 in x
 - Plot on 0:180 or -180:180 in y (then x in -90:90)
 - Fix 3D plot for negative y-(th)axis cases
 - readGRASPcut
@@ -35,3 +32,4 @@
 - Typical pattern parameters calculator
 - Gaussian pattern fitter
 - Generate FarField from specified gain pattern
+- Add real and imag e-field plots
