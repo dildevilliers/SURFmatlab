@@ -196,18 +196,24 @@ else
                     yi = ones(size(xi)).*cutValue;
             end
     end
-    [Zi] = interpolateGrid(obj,output,xi,yi,freqIndex,hemisphere);
+    [Zi] = interpolateGrid(obj,output,xi,yi,freqIndex,'hemisphere',hemisphere);
 end
 
 % Assign axis names
 switch obj.gridType
     case 'DirCos'
+%         xplot = obj.x;
+%         yplot = obj.y;
         xiplot = xi;
         yiplot = yi;
         xname = [obj.xname, ' = sin(\theta)cos(\phi)'];
         yname = [obj.yname, ' = sin(\theta)sin(\phi)'];
         axisUnit = '';
     otherwise
+%         xvect = rad2deg(xvect);
+%         yvect = rad2deg(yvect);
+%         xplot = rad2deg(obj.x);
+%         yplot = rad2deg(obj.y);
         X = rad2deg(X);
         Y = rad2deg(Y);
         Xi = rad2deg(Xi);
@@ -223,7 +229,6 @@ end
 % Phase results
 if (strcmp(output,'E1') || strcmp(output,'E2') || strcmp(output,'E3')) && strcmp(outputType,'phase')
     Zplot = angle(Z);
-    Zplot(~valAng) = NaN;
     Ziplot = angle(Zi);
     if norm
         Zplot = Zplot - max(Zplot); 
@@ -238,7 +243,6 @@ if (strcmp(output,'E1') || strcmp(output,'E2') || strcmp(output,'E3')) && strcmp
     compName = strrep(obj.([output,'name']),'_','\');
 else    % Power results
     Zplot = abs(Z);
-    Zplot(~valAng) = NaN;
     Ziplot = abs(Zi);
     switch output
         case {'Directivity','Gain','AxialRatio','AxialRatioInv','CO_XP','XP_CO','W','U'}
@@ -295,6 +299,7 @@ switch plotType
                         else
                             minVal = maxVal-dynamicRange_dB;
                         end
+%                         keyboard;
                         Ziplot(Ziplot<minVal) = minVal;
                         Ziplot(Ziplot>maxVal) = maxVal;
                     case 'lin'
@@ -324,7 +329,7 @@ switch plotType
         end
         if showGrid || isempty(step)
             hold on
-            Zplot(valAng == 0) = NaN;
+            keyboard
             plot3(X(:),Y(:),Zplot(:),'k.')
             hold off
         end
@@ -340,26 +345,18 @@ switch plotType
             switch scaleMag
                 case 'dB'
                     if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
-                        rangeZ = [0,dynamicRange_dB] - norm.*dynamicRange_dB;
-                        caxis(rangeZ);
-%                         zlim(rangeZ);
+                        caxis([0,dynamicRange_dB] - norm.*dynamicRange_dB);
                     else
-                        rangeZ = [maxVal-dynamicRange_dB,maxVal];
-                        caxis(rangeZ);
-%                         zlim(rangeZ);
+                        caxis([maxVal-dynamicRange_dB,maxVal]);
                     end
                 case 'lin'
                     linHandle = str2func(['lin',num2str(dBscale)]);
                     if ~norm
                         dr = linHandle(dynamicRange_dB);
                         if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
-                            rangeZ = [0,dr];
-                            caxis(rangeZ);
-%                             zlim(rangeZ);
+                            caxis([0,dr]);
                         else
-                            rangeZ = [maxVal/dr,maxVal];
-                            caxis(rangeZ);
-%                             zlim([rangeZ]);
+                            caxis([maxVal/dr,maxVal]);
                         end
                     end
             end

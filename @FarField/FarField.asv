@@ -199,14 +199,14 @@ classdef FarField
         end
         
         function [Xpol] = getCO_XP(obj)
-            % function [Xpol] = getCO_XP(obj)
+            % function [Xpol] = getCo_XP(obj)
             % returns the CO/XP ratio (linear) [Nang x Nf]
             Xpol = (abs(obj.E2)./abs(obj.E1)).^2;
         end
         
         function [Xpol] = getXP_CO(obj)
-            % function [Xpol] = getXP_CO(obj)
-            % returns the XP/CO ratio (linear) [Nang x Nf]
+            % function [Xpol] = getCo_XP(obj)
+            % returns the CO/XP ratio (linear) [Nang x Nf]
             Xpol = (abs(obj.E1)./abs(obj.E2)).^2;
         end
         %% Grid getters
@@ -696,8 +696,7 @@ classdef FarField
         function [u,v,w] = ArcSin2DirCos(x,y)
             u = sin(x);
             v = sin(y);
-%             w = real(sqrt(sin(x).^2 + sin(y).^2));
-            w = real(sqrt(1 - (sin(x).^2 + sin(y).^2)));
+            w = real(sqrt(sin(x).^2 + sin(y).^2));
         end
         
         function [ph,th] = DirCos2PhTh(u,v,w)

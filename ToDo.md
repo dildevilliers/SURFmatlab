@@ -13,6 +13,7 @@
 - readFITS
 - readMeasurements
 - Subtraction of fields (for error calculations and comparisons)
+- Norm of fields (for error calculations and comparisons)
 - Stokes getter
 - Stokes plotter
 - Field rotations
@@ -21,8 +22,9 @@
 - Resample of SWE results on different grid
 - Use above resample for interpolation when plotting
 - CBFP expansion
-- CBFP interpoltion in freq
-- Single frequency getter
+- CBFP interpolation in freq
+- Single frequency getter (from index)
+- Multiple frequency concat
 - Array pattern adder
 - Normalise to isotropic
 - Calculate power through field integration
