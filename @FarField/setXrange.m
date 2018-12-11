@@ -29,6 +29,10 @@ if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.grid
     % Truncate the indexes to the shortest length
     iout = iout(1:Nredun);
     iin = iin(1:Nredun);
+    yAdd = obj.y(iin);
+    E1Add = obj.E1(iin,:);
+    E2Add = obj.E2(iin,:);
+    E3Add = obj.E3(iin,:);
     redunFound = Nredun > 0;
     % First remove the ph=-180 from the matrix...
     if redunFound
@@ -49,14 +53,15 @@ if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.grid
     % if the -180 was removed, add a 360 cut
     if redunFound
         if t == 'p'
-            obj.x = [obj.x;ones(numel(iin),1).*2.*pi];
+            xAdd = ones(numel(iin),1).*2.*pi;
         elseif t == 's'
-            obj.x = [obj.x;ones(numel(iin),1).*-pi];
+            xAdd = ones(numel(iin),1).*-pi;
         end
-        obj.y = [obj.y;obj.y(iin)];
-        obj.E1 = [obj.E1;obj.E1(iin,:)];
-        obj.E2 = [obj.E2;obj.E2(iin,:)];
-        obj.E3 = [obj.E3;obj.E3(iin,:)];
+        obj.x = [obj.x;xAdd(1:Nredun)];
+        obj.y = [obj.y;yAdd(1:Nredun)];
+        obj.E1 = [obj.E1;E1Add(1:Nredun,:)];
+        obj.E2 = [obj.E2;E2Add(1:Nredun,:)];
+        obj.E3 = [obj.E3;E3Add(1:Nredun,:)];
     end
     % Sort
     obj = obj.sortGrid;
