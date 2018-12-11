@@ -337,9 +337,16 @@ classdef FarField
         
         %% Grid range shifters
         function obj = sortGrid(obj)
-            [~,iSort] = sortrows([obj.x,obj.y],[1 2]);
-            obj.x = obj.x(iSort);
-            obj.y = obj.y(iSort);
+            % Round to some significant digits for sorting (some issues can
+            % arise in deg2rad and rad2deg
+            nSigDig = 10;
+            xRound = round(obj.x*10^nSigDig)/10^nSigDig;
+            yRound = round(obj.y*10^nSigDig)/10^nSigDig;
+            [~,iSort] = sortrows([xRound,yRound],[1 2]);
+%             obj.x = obj.x(iSort);
+%             obj.y = obj.y(iSort);
+            obj.x = xRound(iSort);
+            obj.y = yRound(iSort);
             obj.E1 = obj.E1(iSort);
             obj.E2 = obj.E2(iSort);
             obj.E3 = obj.E3(iSort);
@@ -365,6 +372,7 @@ classdef FarField
         end
         
         obj = setXrange(obj,type)
+        obj = setYrange(obj,type)
         
         %% Coordinate system getters
         function [Eth, Eph, Er] = getEspherical(obj)

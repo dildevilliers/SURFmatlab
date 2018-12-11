@@ -3,6 +3,7 @@
 ## @Farfield
 - Add better principle plane cuts method for cartesian/polar
 - Plot on 0:180 or -180:180 in y (then x in -90:90)
+- Add real and imag e-field plots
 - Fix 3D plot for negative y-(th)axis cases
 - readGRASPcut
 - readCSTffs
@@ -19,7 +20,9 @@
 - Resample of SWE results on different grid
 - Use above resample for interpolation when plotting
 - CBFP expansion
-- CBFP interpolation in freq
+- CBFP/SWE/Zernike interpolation in freq
+- General CBFP/SWE/Zernike interpolation over parameters
+- Zernike expansion
 - Single frequency getter (from index)
 - Multiple frequency concat
 - Array pattern adder
@@ -32,4 +35,3 @@
 - Typical pattern parameters calculator
 - Gaussian pattern fitter
 - Generate FarField from specified gain pattern
-- Add real and imag e-field plots
