@@ -15,7 +15,6 @@
 - Stokes getter
 - Stokes plotter
 - Field rotations
-- Resample fields into new object (feature based interpolation)
 - SWE of a given field
 - Resample of SWE results on different grid
 - Use above resample for interpolation when plotting

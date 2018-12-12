@@ -67,7 +67,7 @@ end
 % +- 180 degrees
 % Get the indexes only, no later reshaping done, different from the grids
 % required for plotting in plot.m
-if strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin')  
+if strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin') || 
     grid2DirCoshandleBase = str2func(['FarField.',obj.gridType,'2DirCos']);
     [~,~,w] = grid2DirCoshandleBase(obj.x,obj.y);
     if strcmp(hemisphere,'top')

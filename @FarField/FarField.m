@@ -9,9 +9,9 @@ classdef FarField
         x(:,1) double {mustBeReal, mustBeFinite}
         y(:,1) double {mustBeReal, mustBeFinite}
         r(1,1) double {mustBeReal, mustBeFinite} = 1
-        E1(:,:) double {mustBeFinite}
-        E2(:,:) double {mustBeFinite}
-        E3(:,:) double {mustBeFinite}
+        E1(:,:) double %{mustBeFinite}
+        E2(:,:) double %{mustBeFinite}
+        E3(:,:) double %{mustBeFinite}
         freq(1,:) double {mustBeReal, mustBeFinite} = 1
         Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
@@ -406,7 +406,7 @@ classdef FarField
         end
         
         function [Ex, Ey, Ez] = getELudwig1(obj)
-            switch obj.polTypeBase
+            switch obj.coorSysBase
                 case 'Ludwig1'
                     Ex = obj.E1Base;
                     Ey = obj.E2Base;
@@ -423,7 +423,7 @@ classdef FarField
         end
         
         function [Eaz, Eel, E3] = getELudwig2AE(obj)
-            switch obj.polTypeBase
+            switch obj.coorSysBase
                 case 'Ludwig2AE'
                     Eaz = obj.E1Base;
                     Eel = obj.E2Base;
@@ -447,7 +447,7 @@ classdef FarField
         end
         
         function [Eal, Eep, E3] = getELudwig2EA(obj)
-            switch obj.polTypeBase
+            switch obj.coorSysBase
                 case 'Ludwig2EA'
                     Eal = obj.E1Base;
                     Eep = obj.E2Base;
@@ -470,7 +470,7 @@ classdef FarField
         end
         
         function [Eh, Ev, E3] = getELudwig3(obj)
-            switch obj.polTypeBase
+            switch obj.coorSysBase
                 case 'Ludwig3'
                     Eh = obj.E1Base;
                     Ev = obj.E2Base;
@@ -488,7 +488,7 @@ classdef FarField
         %% Coordinate system transformation methods
         function obj = coor2spherical(obj,setStdGrid)
             if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.polType,'spherical')
+            if ~strcmp(obj.coorSys,'spherical')
                 [obj.E1,obj.E2,obj.E3] = getEspherical(obj);
                 obj.E3 = zeros(size(obj.E1));
                 obj.coorSys = 'spherical';
@@ -501,7 +501,7 @@ classdef FarField
         
         function obj = coor2Ludwig1(obj,setStdGrid)
             if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.polType,'Ludwig1')
+            if ~strcmp(obj.coorSys,'Ludwig1')
                 [obj.E1,obj.E2,obj.E3] = getELudwig1(obj);
                 obj.coorSys = 'Ludwig1';
                 obj = setEnames(obj);
@@ -513,7 +513,7 @@ classdef FarField
         
         function obj = coor2Ludwig2AE(obj,setStdGrid)
             if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.polType,'Ludwig2AE')
+            if ~strcmp(obj.coorSys,'Ludwig2AE')
                 [obj.E1,obj.E2,obj.E3] = getELudwig2AE(obj);
                 obj.coorSys = 'Ludwig2AE';
                 obj = setEnames(obj);
@@ -525,7 +525,7 @@ classdef FarField
         
         function obj = coor2Ludwig2EA(obj,setStdGrid)
             if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.polType,'Ludwig2EA')
+            if ~strcmp(obj.coorSys,'Ludwig2EA')
                 [obj.E1,obj.E2,obj.E3] = getELudwig2EA(obj);
                 obj.coorSys = 'Ludwig2EA';
                 obj = setEnames(obj);
@@ -537,7 +537,7 @@ classdef FarField
         
         function obj = coor2Ludwig3(obj,setStdGrid)
             if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.polType,'Ludwig3')
+            if ~strcmp(obj.coorSys,'Ludwig3')
                 [obj.E1,obj.E2,obj.E3] = getELudwig3(obj);
                 obj.coorSys = 'Ludwig3';
                 obj = setEnames(obj);
@@ -650,13 +650,76 @@ classdef FarField
             obj = setEnames(obj);
         end
         
+        function objNew = currentForm2Base(obj,stepDeg,hemisphere)
+            % Sets the base to the current format. Resamples the field on a
+            % regular plaid grid, and makes this the new base grid. This is
+            % typically then not where actual samples where, but instead
+            % interpolated values.
+            nSigDig = 10;
+            if nargin < 2
+                % Get a step from the current object
+                if strcmp(obj.gridTypeBase,'DirCos') || strcmp(obj.gridType,'ArcSin')
+                    stepX = asin(min(abs(diff(unique(obj.xBase)))));
+                    stepY = asin(min(abs(diff(unique(obj.yBase)))));
+                else
+                    % Sort out rounding errors for degrees
+                    stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj.xBase)))))*10^nSigDig)/10^nSigDig);
+                    stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj.yBase)))))*10^nSigDig)/10^nSigDig);
+                end
+                hemisphere = 'top';
+            elseif nargin < 3
+                hemisphere = 'top';
+                if numel(stepDeg) == 1
+                    [stepX,stepY] = deal(deg2rad(stepDeg));
+                elseif numel(stepDeg) == 2
+                    stepX = deg2rad(stepDeg(1));
+                    stepY = deg2rad(stepDeg(2));
+                end
+            end
+            
+            if strcmp(obj.gridType,'DirCos') || strcmp(obj.gridType,'ArcSin')
+                stepX = sin(stepX);
+                stepY = sin(stepY);
+            end
+            
+            % Build the new grid
+            xivect = min(obj.x):stepX:max(obj.x);
+            yivect = min(obj.y):stepY:max(obj.y);
+            [Xi,Yi] = meshgrid(xivect,yivect);
+            xi = Xi(:);
+            yi = Yi(:);
+            Nxi = numel(xivect);
+            Nyi = numel(yivect);
+            % Interpolate the fields
+            [E1grid,E2grid,E3grid] = deal(zeros(Nxi*Nyi,obj.Nf));
+            for ff = 1:obj.Nf
+                E1grid(:,ff) = interpolateGrid(obj,'E1',xi,yi,ff,hemisphere);
+                E2grid(:,ff) = interpolateGrid(obj,'E2',xi,yi,ff,hemisphere);
+                E3grid(:,ff) = interpolateGrid(obj,'E3',xi,yi,ff,hemisphere);
+            end
+            % Populate the new farField object
+            objNew = obj;
+            objNew.x = xi(:);
+            objNew.y = yi(:);
+            objNew.Nx = Nxi;
+            objNew.Ny = Nyi;
+            objNew.Nang = Nxi*Nyi;
+            objNew.E1 = E1grid;
+            objNew.E2 = E2grid;
+            objNew.E3 = E3grid;
+            objNew = setBase(objNew);
+            % Update the current form to the base form
+            objNew = reset2Base(objNew);
+        end
+        
         
         %% Plotting methods
         plot(obj,varargin)
         plotJones(obj1,obj2,varargin)  % Much to do here still...
         
         %% Interpolation methods
-        [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
+%         [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
+        [Z] = interpolateGrid(obj,output,xi,yi,varargin)
         
         %% Maths
         function obj = plus(obj1,obj2)
@@ -784,8 +847,6 @@ classdef FarField
     
     %% Internal helper functions
     methods (Access = private)
-        
-        
         
         function obj = setBase(obj)
             obj.xBase = obj.x;

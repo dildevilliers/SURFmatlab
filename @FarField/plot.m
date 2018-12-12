@@ -338,7 +338,7 @@ switch plotType
         view([0,90])
         axis equal
         xlim([min(xiplot),max(xiplot)])
-        ylim([min(yiplot), max(yiplot)])
+        ylim([min(yiplot),max(yiplot)])
         % Handle dynamic range here
         if strcmp(outputType,'mag')
             maxVal = max(Zplot(:));
