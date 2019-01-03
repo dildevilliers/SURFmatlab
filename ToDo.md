@@ -1,8 +1,10 @@
 # ToDo list for new code
 
 ## @Farfield
+- Major Rework: Change angle base to degrees and not radians (for angular grids - not DirCos type grids)
 - Add better principle plane cuts method for cartesian/polar
-- Plot on 0:180 or -180:180 in y (then x in -90:90)
+- Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
+- Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
 - Add real and imag e-field plots
 - Fix 3D plot for negative y-(th)axis cases
 - readGRASPcut

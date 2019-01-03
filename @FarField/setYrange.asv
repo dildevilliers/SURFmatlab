@@ -141,20 +141,17 @@ elseif strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
             obj.x(outOfRangeInd2) = obj.x(outOfRangeInd2) + pi;
             obj.y(outOfRangeInd2) = pi - obj.y(outOfRangeInd2);
         elseif strcmp(obj.xRangeType,'sym')
-%             iout = unique(find(abs(obj.y - pi) < eps | (abs(abs(obj.x) - pi/2) < eps & abs(obj.y) >= (pi/2-eps))));   % Redundant
-            iout = find(abs(obj.y - pi) < eps | (abs(abs(obj.x) - pi/2) < eps & abs(obj.y) >= (pi/2-eps)));   % Redundant
-            iin1 = find(abs(obj.x - 0) < eps & (obj.y >= (pi/2 - eps) | (obj.y <= -(pi/2 - eps) & obj.y > -(pi-eps))));
+            iout = find(abs(obj.y - pi) < eps | (abs(abs(obj.x) - pi/2) < eps & abs(obj.y) > (pi/2+eps)));   % Redundant
+            iin1 = find(abs(obj.x - 0) < eps & abs(obj.y) >= (pi/2 - eps));
             iin2 = find(abs(abs(obj.y) - pi/2) < eps);
             iin = [iin1;iin2];
-            signPos1 = sign(obj.x(iin1));
-            signPos1(signPos1 == 0) = -1; % Add these to the x = 180 cut...
-            xAdd1 = obj.x(iin1) - signPos1.*pi;
-            signPos2 = sign(obj.x(iin2));
-            signPos2(signPos2 == 0) = 1; 
-            xAdd2 = obj.x(iin2) - signPos2.*pi;
-            xAdd = [xAdd1;xAdd2];
-            yAdd = sign(obj.y(iin)).*pi - obj.y(iin);
-            obj = shiftRedun(obj,iout,iin,xAdd,yAdd);
+            sortPos = sign(obj.x(iin));
+            signPos(signPos == 0) = 1;
+            %             xAdd1 = -pi - obj.x(iin1);
+%             xAdd2 = pi - obj.x(iin2);
+%             xAdd = [xAdd1;xAdd2];
+%             yAdd = obj.y(iin);
+%             obj = shiftRedun(obj,iout,iin,xAdd,yAdd);
             % Apply shift
             outOfRangeInd = find(obj.y > (pi/2 + eps) | obj.y < (-pi/2 - eps));
             signPos = sign(obj.x(outOfRangeInd));

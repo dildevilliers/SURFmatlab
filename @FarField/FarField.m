@@ -337,19 +337,27 @@ classdef FarField
         
         %% Grid range shifters
         function obj = sortGrid(obj)
-            % Round to some significant digits for sorting (some issues can
-            % arise in deg2rad and rad2deg
-            nSigDig = 10;
-            xRound = round(obj.x*10^nSigDig)/10^nSigDig;
-            yRound = round(obj.y*10^nSigDig)/10^nSigDig;
-            [~,iSort] = sortrows([xRound,yRound],[1 2]);
-%             obj.x = obj.x(iSort);
-%             obj.y = obj.y(iSort);
-            obj.x = xRound(iSort);
-            obj.y = yRound(iSort);
+            obj = roundGrid(obj);
+            [~,iSort] = sortrows([obj.x,obj.y],[1 2]);
+            obj.x = obj.x(iSort);
+            obj.y = obj.y(iSort);
+            obj.Nx = numel(unique(obj.x));
+            obj.Ny = numel(unique(obj.y));
             obj.E1 = obj.E1(iSort);
             obj.E2 = obj.E2(iSort);
             obj.E3 = obj.E3(iSort);
+        end
+        
+        function obj = roundGrid(obj,nSigDig)
+            % Round to some significant digits for sorting (some issues can
+            % arise in deg2rad and rad2deg
+            if nargin < 2
+                nSigDig = 10;
+            end
+            xRound = round(obj.x*10^nSigDig)/10^nSigDig;
+            yRound = round(obj.y*10^nSigDig)/10^nSigDig;
+            obj.x = xRound;
+            obj.y = yRound;
         end
         
         function obj = setRangeTypes(obj)
