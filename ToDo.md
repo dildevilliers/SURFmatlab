@@ -1,19 +1,30 @@
 # ToDo list for new code
 
 ## @Farfield
-- Major Rework: Change angle base to degrees and not radians (for angular grids - not DirCos type grids)
 - Add better principle plane cuts method for cartesian/polar
-- Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
-- Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
-- Add real and imag e-field plots
-- Fix 3D plot for negative y-(th)axis cases
-- readGRASPcut
 - readCSTffs
-- readFEKOfft
 - readFITS
-- readMeasurements
+- Calculate power through field integration
+- Normalise to isotropic
 - Subtraction of fields (for error calculations and comparisons)
 - Norm of fields (for error calculations and comparisons)
+- Single frequency getter (from index)
+- Multiple frequency concat
+- Shift field in 3D space - phase change
+- Typical pattern parameters calculator
+- readGRASPcut
+- readFEKOfft
+- writeCSTffs
+- writeFEKOfft
+- writeGRASPcut
+- Gaussian pattern fitter
+- Generate FarField from specified gain pattern
+- Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
+- Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
+- Array pattern adder
+- Add real and imag e-field plots
+- Fix 3D plot for negative y-(th)axis cases
+- readMeasurements
 - Stokes getter
 - Stokes plotter
 - Field rotations
@@ -24,15 +35,4 @@
 - CBFP/SWE/Zernike interpolation in freq
 - General CBFP/SWE/Zernike interpolation over parameters
 - Zernike expansion
-- Single frequency getter (from index)
-- Multiple frequency concat
-- Array pattern adder
-- Normalise to isotropic
-- Calculate power through field integration
-- Shift field in 3D space - phase change
-- writeCSTffs
-- writeFEKOfft
-- writeGRASPcut
-- Typical pattern parameters calculator
-- Gaussian pattern fitter
-- Generate FarField from specified gain pattern
+- Major Rework: Change angle base to degrees and not radians (for angular grids - not DirCos type grids)
