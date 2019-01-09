@@ -666,11 +666,6 @@ classdef FarField
             % regular plaid grid, and makes this the new base grid. This is
             % typically then not where actual samples where, but instead
             % interpolated values.
-            
-            % Due to the interpolation only operating on the y in 180 range
-            % from the Direction Cosine transforms...
-            assert(~isequal(obj.yRangeType,'360'),'yRangeType cannot be 360 for the base representation')
-            
             nSigDig = 10;
             if nargin < 2
                 % Get a step from the current object

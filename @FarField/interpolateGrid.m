@@ -78,6 +78,7 @@ if strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin')
 else
     valAng = 1:obj.Nang;
 end
+valAng = valAng(:);
 
 % Extract the outputs on the base grid
 if strcmp(output,'E1')

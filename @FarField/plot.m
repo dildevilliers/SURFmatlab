@@ -11,7 +11,7 @@ function [] = plot(obj,varargin)
 %
 % output can be:
 %   ('Directivity') | 'Gain' | 'E1' | 'E2' | 'AxialRatio' | 'AxialRatioInv'
-%   'CO_XP' | 'XP_CO'
+%   'CO_XP' | 'XP_CO' | 'W' | 'U'
 %
 % outputType can be:
 %   ('mag') | 'phase' | 'real' | 'imag' last 3 only used for on E-field plots
@@ -49,7 +49,7 @@ function [] = plot(obj,varargin)
 
 
 
-narginchk(1,22);
+narginchk(1,40);
 
 %% Parsing through the inputs
 parseobj = inputParser;
@@ -98,10 +98,10 @@ typeValidationLineWidth = @(x) validateattributes(x,{'numeric'},{'real'},'plot',
 addParameter(parseobj,'LineWidth',1,typeValidationLineWidth);
 
 typeValidationLineStyle = @(x) validateattributes(x,{'char'},{'nonempty'},'plot','LineStyle');
-addParameter(parseobj,'LineStyle','-',typeValidationLineStyle);     % In degrees
+addParameter(parseobj,'LineStyle','-',typeValidationLineStyle);     
 
 typeValidationColor = @(x) validateattributes(x,{'numeric','char'},{'nonempty'},'plot','Color');
-addParameter(parseobj,'Color','k',typeValidationColor);     % In degrees
+addParameter(parseobj,'Color','k',typeValidationColor);     
 
 typeValidationshowGrid = @(x) validateattributes(x,{'logical','numeric'},{'binary','nonempty','numel',1},'plot','showGrid');
 addParameter(parseobj,'showGrid',false,typeValidationshowGrid );
@@ -397,7 +397,7 @@ switch plotType
                 xlab = yname;
                 cutName = obj.xname;
             case 'y'
-                plotHandle(xiplot.*xscale,Ziplot), grid on
+                plotHandle(xiplot.*xscale,Ziplot,'LineStyle',LineStyle,'LineWidth',LineWidth,'Color',Color), grid on
                 xlab = xname;
                 cutName = obj.yname;
         end

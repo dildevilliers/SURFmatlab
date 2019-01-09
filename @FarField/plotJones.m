@@ -7,19 +7,22 @@ function [] = plotJones(FF1,FF2,varargin)
 % name, value are name value pairs, and can be the following:
 %
 % freqIndex is the index of the frequency to be plotted (default 1)
+%
+% dynamicRange_dB is a (positive) dB value for the magnitude plot dynamic
+% range (40)
 
 %% Parse input
 parseobj = inputParser;
 parseobj.FunctionName = 'plotJones';
 
-typeValidationObj = @(x) validateattributes(x,{'FarField'},{'numel',1},'plot','obj',1);
+typeValidationObj = @(x) validateattributes(x,{'FarField'},{'numel',1},'plotJones','obj',1);
 addRequired(parseobj,'FF1',typeValidationObj);
 addRequired(parseobj,'FF2',typeValidationObj);
 
 typeValidationFreq = @(x) validateattributes(x,{'numeric'},{'real','nonempty','integer'},'plotJones','freqIndex');
 addParameter(parseobj,'freqIndex',1,typeValidationFreq);
 
-typeValidationDR = @(x) validateattributes(x,{'numeric'},{'real','positive','nonempty','numel',1},'plot','dynamicRange_dB');
+typeValidationDR = @(x) validateattributes(x,{'numeric'},{'real','positive','nonempty','numel',1},'plotJones','dynamicRange_dB');
 addParameter(parseobj,'dynamicRange_dB',40,typeValidationDR );
 
 parse(parseobj, FF1, FF2, varargin{:});
