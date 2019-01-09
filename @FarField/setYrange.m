@@ -173,22 +173,6 @@ obj = setRangeTypes(obj);
 end
 
 
-% % Function to remove the redundant values
-% function [objSmall,Nredun] = removeRedun(objFull,iout,iin)
-% objSmall = objFull;
-% Nredun = min(numel(iout),numel(iin));    % How many we have to remove/add
-% % Truncate the indexes to the shortest length
-% iout = iout(1:Nredun);
-% % iinSmall = iin(1:Nredun);
-% if Nredun > 0
-%     objSmall.x(iout) = [];
-%     objSmall.y(iout) = [];
-%     objSmall.E1(iout,:) = [];
-%     objSmall.E2(iout,:) = [];
-%     objSmall.E3(iout,:) = [];
-% end
-% end
-
 function objNew = shiftRedun(obj,iout,iin,xAdd,yAdd)
 objNew = obj;
 Nredun = min(numel(iout),numel(iin));    % How many we have to remove/add

@@ -226,34 +226,27 @@ end
 
 %% Condition outputs
 % Phase results
-if (strcmp(output,'E1') || strcmp(output,'E2') || strcmp(output,'E3')) && strcmp(outputType,'phase')
-            Zplot = angle(Z);
-            Zplot(~valAng) = NaN;
-            Ziplot = angle(Zi);
-            if norm
-                Zplot = Zplot - max(Zplot);
-                Ziplot = Ziplot - max(Ziplot);
-            end
-            unit = 'V/m (rad)';
-            if strcmp(scalePhase,'deg')
-                Zplot = rad2deg(Zplot);
-                Ziplot = rad2deg(Ziplot);
-                unit = 'V/m (deg)';
-            end
-            compName = strrep(obj.([output,'name']),'_','\');
-else    % Magnitude/Component results
-    switch outputType
-        case 'mag'
-            Zplot = abs(Z);
-            Ziplot = abs(Zi);
-        case 'real'
-            Zplot = real(Z);
-            Ziplot = real(Zi);
-        case 'imag'
-            Zplot = imag(Z);
-            Ziplot = imag(Zi);
+if (strcmp(output,'E1') || strcmp(output,'E2') || strcmp(output,'E3')) && ~str
+    if strcmp(outputType,'phase')
+        Zplot = angle(Z);
+        Zplot(~valAng) = NaN;
+        Ziplot = angle(Zi);
+        if norm
+            Zplot = Zplot - max(Zplot);
+            Ziplot = Ziplot - max(Ziplot);
+        end
+        unit = 'V/m (rad)';
+        if strcmp(scalePhase,'deg')
+            Zplot = rad2deg(Zplot);
+            Ziplot = rad2deg(Ziplot);
+            unit = 'V/m (deg)';
+        end
+        compName = strrep(obj.([output,'name']),'_','\');
     end
+else    % Power results
+    Zplot = abs(Z);
     Zplot(~valAng) = NaN;
+    Ziplot = abs(Zi);
     switch output
         case {'Directivity','Gain','AxialRatio','AxialRatioInv','CO_XP','XP_CO','W','U'}
             dBscale = 10;
