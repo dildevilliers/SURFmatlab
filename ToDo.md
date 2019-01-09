@@ -1,7 +1,6 @@
 # ToDo list for new code
 
 ## @Farfield
-- Add better principle plane cuts method for cartesian/polar
 - readCSTffs
 - readFITS
 - Calculate power through field integration
