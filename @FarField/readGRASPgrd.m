@@ -136,11 +136,11 @@ end
 % keyboard;
 Prad = ones(size(freq)).*4*pi;
 radEff = ones(size(freq));
-FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff);
-FF.polType = polType;
-FF.coorSys = coorSys;
-FF.gridType = gridType;
-FF.freqUnit = freqUnit;
+FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
+% FF.polType = polType;
+% FF.coorSys = coorSys;
+% FF.gridType = gridType;
+% FF.freqUnit = freqUnit;
 FF = setEnames(FF);
 FF = setXYnames(FF);
 FF = setPhTh(FF);

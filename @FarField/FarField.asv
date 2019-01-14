@@ -17,9 +17,9 @@ classdef FarField
         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
         coorSys(1,:) char {mustBeMember(coorSys,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
         polType(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
-        slant(1,1) double {mustBeReal, mustBeFinite} = 0   % slant angle in radians - measured between Exp and E1
         gridType(1,:) char {mustBeMember(gridType,{'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin'})} = 'PhTh'    
         freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'    
+        slant(1,1) double {mustBeReal, mustBeFinite} = 0   % slant angle in radians - measured between Exp and E1
     end
     
     properties (SetAccess = private)
@@ -64,7 +64,7 @@ classdef FarField
     
     methods
         % Make a basic constructor method 
-        function obj = FarField(x,y,E1,E2,E3,freq,Prad,radEff)
+        function obj = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit,slant)
             
             % function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
             % Constructor method for the FarField object
@@ -100,26 +100,70 @@ classdef FarField
             Nf = Nf_E1;
             if nargin < 6
                 freq = ones(1,Nf).*obj.freq;
-                warning('freq not specified - using default for all columns');
+%                 warning('freq not specified - using default for all columns');
             else
-                if Nf ~= length(freq(1,:))
+                if isempty(freq)
+                    freq = ones(1,Nf).*obj.freq;
+%                     warning('freq not specified - using default for all columns');
+                elseif Nf ~= length(freq(1,:))
                     error('freq must have the same number of columns as E1 and E2');
                 end
             end
             if nargin < 7
                 Prad = ones(1,Nf).*obj.Prad;
-                warning('Prad not specified - using default for all columns');
+%                 warning('Prad not specified - using default for all columns');
             else
-                if Nf ~= length(Prad(1,:))
+                if isempty(Prad)
+                    Prad = ones(1,Nf).*obj.Prad;
+%                     warning('Prad not specified - using default for all columns');
+                elseif Nf ~= length(Prad(1,:))
                     error('Prad must have the same number of columns as E1 and E2');
                 end
             end
             if nargin < 8
                 radEff = ones(1,Nf).*obj.radEff;
-                warning('radEff not specified - using default for all columns');
+%                 warning('radEff not specified - using default for all columns');
             else
-                if Nf ~= length(radEff(1,:))
+                if isempty(radEff)
+                    radEff = ones(1,Nf).*obj.radEff;
+%                     warning('radEff not specified - using default for all columns');
+                elseif Nf ~= length(radEff(1,:))
                     error('radEff must have the same number of columns as E1 and E2');
+                end
+            end
+            if nargin < 9
+                coorSys = obj.coorSys;
+            else
+                if isempty(coorSys)
+                    coorSys = obj.coorSys;
+                end
+            end
+            if nargin < 10
+                polType = obj.polType;
+            else
+                if isempty(polType)
+                    polType = obj.polType;
+                end
+            end
+            if nargin < 11
+                gridType = obj.gridType;
+            else
+                if isempty(gridType)
+                    gridType = obj.gridType;
+                end
+            end
+            if nargin < 12
+                freqUnit = obj.freqUnit;
+            else
+                if isempty(freqUnit)
+                    freqUnit = obj.freqUnit;
+                end
+            end
+            if nargin < 13
+                slant = obj.slant;
+            else
+                if isempty(slant)
+                    slant = obj.slant;
                 end
             end
             if Nf_x > 1 || Nf_y > 1
@@ -137,6 +181,11 @@ classdef FarField
             obj.Prad = Prad;
             obj.radEff = radEff;
             obj.radEff_dB = dB10(radEff);
+            obj.coorSys = coorSys;
+            obj.polType = polType;
+            obj.gridType = gridType;
+            obj.freqUnit = freqUnit;
+            obj.slant = slant;
             obj.Nf = Nf;
             obj.Nang = Nang;
             obj.Nx = length(unique(x));
@@ -666,6 +715,11 @@ classdef FarField
             % regular plaid grid, and makes this the new base grid. This is
             % typically then not where actual samples where, but instead
             % interpolated values.
+            
+            % Due to the interpolation only operating on the y in 180 range
+            % from the Direction Cosine transforms...
+            assert(~isequal(obj.yRangeType,'360'),'yRangeType cannot be 360 for the base representation')
+            
             nSigDig = 10;
             if nargin < 2
                 % Get a step from the current object
@@ -774,6 +828,19 @@ classdef FarField
                 error('Can only multiply FarFields with equal base grids')
             end
         end
+        
+        %% Frequency modifications
+        function obj = getFi(obj1,freqIndex)
+            % Returns an object only containing the results in freqIndex
+            obj = obj1;
+            obj.E1 = obj1.E1(freqIndex);
+            obj.E2 = obj1.E2(freqIndex);
+            obj.E3 = obj1.E3(freqIndex);
+            obj.freq = obj1.freq(freqIndex);
+            obj.Prad = obj1.Prad(freqIndex);
+            obj.radEff = obj1.radEff(freqIndex);
+            obj.radEff_dB = obj1.radEff(freqIndex);
+            
         
         %% Format and other testers
         function y = isGridEqual(obj1,obj2)

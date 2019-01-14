@@ -7,7 +7,6 @@
 - Normalise to isotropic
 - Subtraction of fields (for error calculations and comparisons)
 - Norm of fields (for error calculations and comparisons)
-- Single frequency getter (from index)
 - Multiple frequency concat
 - Shift field in 3D space - phase change
 - Typical pattern parameters calculator
@@ -23,6 +22,8 @@
 - Array pattern adder
 - Fix 3D plot for negative y-(th)axis cases
 - readMeasurements
+- Jones getter
+- Jones plotter (fix up)
 - Stokes getter
 - Stokes plotter
 - Field rotations
