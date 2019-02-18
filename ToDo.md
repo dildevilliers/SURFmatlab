@@ -2,8 +2,10 @@
 
 ## @Farfield
 - readCSTffs
-- readFITS
+- Generate FarField from specified gain pattern
 - Calculate power through field integration
+- Make empty constructor
+- readFITS
 - Normalise to isotropic
 - Subtraction of fields (for error calculations and comparisons)
 - Norm of fields (for error calculations and comparisons)
@@ -16,7 +18,6 @@
 - writeFEKOfft
 - writeGRASPcut
 - Gaussian pattern fitter
-- Generate FarField from specified gain pattern
 - Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
 - Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
 - Array pattern adder
