@@ -976,6 +976,7 @@ classdef FarField
         %% Farfield reading methods
         obj = readGRASPgrd(pathName);
         obj = readFEKOffe(pathName);
+        obj = readCSTffs(pathName);
         
         %% Coordinate transformers
         function [u,v,w] = PhTh2DirCos(ph,th)
