@@ -10,6 +10,10 @@ function [] = plotJones(FF1,FF2,varargin)
 %
 % dynamicRange_dB is a (positive) dB value for the magnitude plot dynamic
 % range (40)
+%
+% step is the plot step size.  Can be empty - then the available data will
+% be used and no surface will be plotted.  If not, a griddata interpolant will be made.
+
 
 %% Parse input
 parseobj = inputParser;
@@ -25,10 +29,15 @@ addParameter(parseobj,'freqIndex',1,typeValidationFreq);
 typeValidationDR = @(x) validateattributes(x,{'numeric'},{'real','positive','nonempty','numel',1},'plotJones','dynamicRange_dB');
 addParameter(parseobj,'dynamicRange_dB',40,typeValidationDR );
 
+typeValidationstep = @(x) validateattributes(x,{'numeric'},{'real'},'plot','step');
+addParameter(parseobj,'step',[],typeValidationstep);     % In degrees
+
 parse(parseobj, FF1, FF2, varargin{:});
 
 freqIndex = parseobj.Results.freqIndex;
 dynamicRange_dB = parseobj.Results.dynamicRange_dB;
+step = parseobj.Results.step;
+
 
 
 %% Plot the result
@@ -37,15 +46,15 @@ if ~isGridEqual(FF1,FF2)
     error('Base grids should be identical for the two input fields');
 else
     subplot(2,2,1)
-    plot(FF1,'output','E2','outputType','mag','plotType','2D','scaleMag','dB','norm',1,'dynamicRange_dB',dynamicRange_dB,'freqIndex',freqIndex)
+    plot(FF1,'output','E1','outputType','mag','plotType','2D','scaleMag','dB','norm',0,'step',step,'dynamicRange_dB',dynamicRange_dB,'freqIndex',freqIndex)
     title('J_{11}')
     subplot(2,2,2)
-    plot(FF1,'output','E1','outputType','mag','plotType','2D','scaleMag','dB','norm',1,'dynamicRange_dB',dynamicRange_dB,'freqIndex',freqIndex)
+    plot(FF1,'output','E2','outputType','mag','plotType','2D','scaleMag','dB','norm',0,'step',step,'dynamicRange_dB',dynamicRange_dB,'freqIndex',freqIndex)
     title('J_{12}')
     subplot(2,2,3)
-    plot(FF2,'output','E1','outputType','mag','plotType','2D','scaleMag','dB','norm',1,'dynamicRange_dB',dynamicRange_dB,'freqIndex',freqIndex)
+    plot(FF2,'output','E1','outputType','mag','plotType','2D','scaleMag','dB','norm',0,'step',step,'dynamicRange_dB',dynamicRange_dB,'freqIndex',freqIndex)
     title('J_{21}')
     subplot(2,2,4)
-    plot(FF2,'output','E2','outputType','mag','plotType','2D','scaleMag','dB','norm',1,'dynamicRange_dB',dynamicRange_dB,'freqIndex',freqIndex)
+    plot(FF2,'output','E2','outputType','mag','plotType','2D','scaleMag','dB','norm',0,'step',step,'dynamicRange_dB',dynamicRange_dB,'freqIndex',freqIndex)
     title('J_{22}')
 end

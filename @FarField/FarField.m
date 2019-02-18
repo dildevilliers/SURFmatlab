@@ -803,6 +803,28 @@ classdef FarField
                 obj.radEff_dB = dB10(obj.radEff);
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
                 obj.Gain_dB = dB10(max(obj.getGain()));
+                obj = setBase(obj);
+            else 
+                error('Can only add FarFields with equal base grids')
+            end
+        end
+        
+        function obj = minus(obj1,obj2)
+            obj1 = reset2Base(obj1);
+            obj2 = reset2Base(obj2);
+            
+            if isGridEqual(obj1,obj2)
+                obj = obj1;
+                obj.E1 = obj1.E1 - obj2.E1;
+                obj.E2 = obj1.E2 - obj2.E2;
+                obj.E3 = obj1.E3 - obj2.E3;
+                obj.Prad = obj1.Prad + obj2.Prad;
+                Pt = obj1.Prad./obj1.radEff + obj2.Prad./obj2.radEff;
+                obj.radEff = obj.Prad./Pt;
+                obj.radEff_dB = dB10(obj.radEff);
+                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
+                obj.Gain_dB = dB10(max(obj.getGain()));
+                obj = setBase(obj);
             else 
                 error('Can only add FarFields with equal base grids')
             end
@@ -824,9 +846,29 @@ classdef FarField
                 obj.radEff_dB = dB10(obj.radEff);
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
                 obj.Gain_dB = dB10(max(obj.getGain()));
+                obj = setBase(obj);
             else 
                 error('Can only multiply FarFields with equal base grids')
             end
+        end
+        
+        function obj = abs(obj1)
+            obj1 = reset2Base(obj1);
+            obj = obj1;
+            obj.E1 = abs(obj1.E1);
+            obj.E2 = abs(obj1.E2);
+            obj.E3 = abs(obj1.E3);
+            obj = setBase(obj);
+        end
+        
+        function obj = scale(obj1,scaleFactor)
+            % Scale the FarField object E-fields by the scaleFactor
+            obj1 = reset2Base(obj1);
+            obj = obj1;
+            obj.E1 = obj1.E1.*scaleFactor;
+            obj.E2 = obj1.E2.*scaleFactor;
+            obj.E3 = obj1.E3.*scaleFactor;
+            obj = setBase(obj);
         end
         
         %% Frequency modifications

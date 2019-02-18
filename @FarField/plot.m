@@ -23,7 +23,7 @@ function [] = plot(obj,varargin)
 %
 % scaleMag can be:
 %   ('dB') | 'lin' - only used for magnitude plots
-
+%
 % scalePhase can be:
 %   ('deg') | 'rad' - only used for phase plots
 %
