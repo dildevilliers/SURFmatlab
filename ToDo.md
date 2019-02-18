@@ -32,7 +32,7 @@
 - General CBFP/SWE/Zernike interpolation over parameters
 - Zernike expansion
 - Major Rework: Change angle base to degrees and not radians (for angular grids - not DirCos type grids)
-~~- readCSTffs~~
-~~- readFEKOffe~~
-~~- Calculate power through field integration~~
-~~- Subtraction of fields (for error calculations and comparisons)~~
+-~~readCSTffs~~
+-~~readFEKOffe~~
+-~~Calculate power through field integration~~
+-~~Subtraction of fields (for error calculations and comparisons)~~
