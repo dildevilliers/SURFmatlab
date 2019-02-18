@@ -13,7 +13,7 @@
 - Shift field in 3D space - phase change
 - Typical pattern parameters calculator
 - readGRASPcut
-- readFEKOfft
+~~- readFEKOffe~~
 - writeCSTffs
 - writeFEKOfft
 - writeGRASPcut

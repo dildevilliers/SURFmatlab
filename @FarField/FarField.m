@@ -2,7 +2,7 @@ classdef FarField
     % Based largely on information in CST help file: Farfield Calculation
     % Overview, and the AMTA paper in this folder 'COORDINATE SYSTEM
     % PLOTTING FOR ANTENNA MEASUREMENTS', GF Masters and SF Gregson
-    % Currently assumes direction of propagation is the global z-axis for 
+    % Currently assumes direction of propagation is the global z-axis for
     % all directional polarization types.
     
     properties
@@ -17,8 +17,8 @@ classdef FarField
         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
         coorSys(1,:) char {mustBeMember(coorSys,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
         polType(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
-        gridType(1,:) char {mustBeMember(gridType,{'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin'})} = 'PhTh'    
-        freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'    
+        gridType(1,:) char {mustBeMember(gridType,{'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin'})} = 'PhTh'
+        freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
         slant(1,1) double {mustBeReal, mustBeFinite} = 0   % slant angle in radians - measured between Exp and E1
     end
     
@@ -37,16 +37,16 @@ classdef FarField
         radEff_dB       % radiation efficiency in dB [1 x Nf]
         Directivity_dBi % directivity in dBi [1 x Nf]
         Gain_dB         % Gain in dB [1 x Nf]
-        xRangeType     % 'sym' or 'pos' 
-        yRangeType     % '180' or '360' 
-
+        xRangeType     % 'sym' or 'pos'
+        yRangeType     % '180' or '360'
+        
     end
     
     properties (SetAccess = private, Hidden = true)
         % Keep the input data here to not lose some info when going through
         % a DirCos projection and back...
-        xBase   
-        yBase 
+        xBase
+        yBase
         gridTypeBase
         E1Base
         E2Base
@@ -54,8 +54,8 @@ classdef FarField
         coorSysBase
         polTypeBase
     end
-        
-        properties (Constant = true, Hidden = true)
+    
+    properties (Constant = true, Hidden = true)
         c0 = physconst('Lightspeed');
         eps0 = 8.854187817000001e-12;
         mu0 = 1.256637061435917e-06;
@@ -63,7 +63,7 @@ classdef FarField
     end
     
     methods
-        % Make a basic constructor method 
+        % Make a basic constructor method
         function obj = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit,slant)
             
             % function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
@@ -80,100 +80,118 @@ classdef FarField
             % 'Prad': vector [1 x Nf] of radiated powers in W
             % 'radEff': vector [1 x Nf] of radiation efficiencies
             
-            % Basic input error checking
-            [Nang_x, Nf_x] = size(x);
-            [Nang_y, Nf_y] = size(y);
-            [Nang_E1, Nf_E1] = size(E1);
-            [Nang_E2, Nf_E2] = size(E2);
-            if nargin < 5 || isempty(E3)
-                E3 = zeros(size(E2));
-            end
-            [Nang_E3, Nf_E3] = size(E3);
-            if ~isequal(Nang_x,Nang_y,Nang_E1,Nang_E2,Nang_E3)
-                error('All inputs must have the same number of rows');
+            if nargin == 0 %No-inputs case - generate a Gaussian beam pattern
+                
+                %code here
+                th = linspace(0,pi,37);
+                ph = linspace(0,2*pi,73);
+                [TH, PH] = meshgrid(th,ph);
+                x = PH(:);
+                y = TH(:);
+                
+                
+                
+                
+                
             else
-                Nang = Nang_x;
-            end
-            if ~isequal(Nf_E1,Nf_E2,Nf_E3)
-                error('E1, E2, and E3 must have the same number of columns');
-            end
-            Nf = Nf_E1;
-            if nargin < 6
-                freq = ones(1,Nf).*obj.freq;
-%                 warning('freq not specified - using default for all columns');
-            else
-                if isempty(freq)
+                
+                % Basic input error checking
+                [Nang_x, Nf_x] = size(x);
+                [Nang_y, Nf_y] = size(y);
+                [Nang_E1, Nf_E1] = size(E1);
+                [Nang_E2, Nf_E2] = size(E2);
+                if nargin < 5 || isempty(E3)
+                    E3 = zeros(size(E2));
+                end
+                [Nang_E3, Nf_E3] = size(E3);
+                if ~isequal(Nang_x,Nang_y,Nang_E1,Nang_E2,Nang_E3)
+                    error('All inputs must have the same number of rows');
+                else
+                    Nang = Nang_x;
+                end
+                if ~isequal(Nf_E1,Nf_E2,Nf_E3)
+                    error('E1, E2, and E3 must have the same number of columns');
+                end
+                Nf = Nf_E1;
+                if nargin < 6
                     freq = ones(1,Nf).*obj.freq;
-%                     warning('freq not specified - using default for all columns');
-                elseif Nf ~= length(freq(1,:))
-                    error('freq must have the same number of columns as E1 and E2');
+                    %                 warning('freq not specified - using default for all columns');
+                else
+                    if isempty(freq)
+                        freq = ones(1,Nf).*obj.freq;
+                        %                     warning('freq not specified - using default for all columns');
+                    elseif Nf ~= length(freq(1,:))
+                        error('freq must have the same number of columns as E1 and E2');
+                    end
                 end
-            end
-            if nargin < 7
-                Prad = ones(1,Nf).*obj.Prad;
-%                 warning('Prad not specified - using default for all columns');
-            else
-                if isempty(Prad)
+                if nargin < 7
                     Prad = ones(1,Nf).*obj.Prad;
-%                     warning('Prad not specified - using default for all columns');
-                elseif Nf ~= length(Prad(1,:))
-                    error('Prad must have the same number of columns as E1 and E2');
+                    %                 warning('Prad not specified - using default for all columns');
+                else
+                    if isempty(Prad)
+                        Prad = ones(1,Nf).*obj.Prad;
+                        %                     warning('Prad not specified - using default for all columns');
+                    elseif Nf ~= length(Prad(1,:))
+                        error('Prad must have the same number of columns as E1 and E2');
+                    end
                 end
-            end
-            if nargin < 8
-                radEff = ones(1,Nf).*obj.radEff;
-%                 warning('radEff not specified - using default for all columns');
-            else
-                if isempty(radEff)
+                if nargin < 8
                     radEff = ones(1,Nf).*obj.radEff;
-%                     warning('radEff not specified - using default for all columns');
-                elseif Nf ~= length(radEff(1,:))
-                    error('radEff must have the same number of columns as E1 and E2');
+                    %                 warning('radEff not specified - using default for all columns');
+                else
+                    if isempty(radEff)
+                        radEff = ones(1,Nf).*obj.radEff;
+                        %                     warning('radEff not specified - using default for all columns');
+                    elseif Nf ~= length(radEff(1,:))
+                        error('radEff must have the same number of columns as E1 and E2');
+                    end
                 end
-            end
-            if nargin < 9
-                coorSys = obj.coorSys;
-            else
-                if isempty(coorSys)
+                if nargin < 9
                     coorSys = obj.coorSys;
+                else
+                    if isempty(coorSys)
+                        coorSys = obj.coorSys;
+                    end
                 end
-            end
-            if nargin < 10
-                polType = obj.polType;
-            else
-                if isempty(polType)
+                if nargin < 10
                     polType = obj.polType;
+                else
+                    if isempty(polType)
+                        polType = obj.polType;
+                    end
                 end
-            end
-            if nargin < 11
-                gridType = obj.gridType;
-            else
-                if isempty(gridType)
+                if nargin < 11
                     gridType = obj.gridType;
+                else
+                    if isempty(gridType)
+                        gridType = obj.gridType;
+                    end
                 end
-            end
-            if nargin < 12
-                freqUnit = obj.freqUnit;
-            else
-                if isempty(freqUnit)
+                if nargin < 12
                     freqUnit = obj.freqUnit;
+                else
+                    if isempty(freqUnit)
+                        freqUnit = obj.freqUnit;
+                    end
                 end
-            end
-            if nargin < 13
-                slant = obj.slant;
-            else
-                if isempty(slant)
+                if nargin < 13
                     slant = obj.slant;
+                else
+                    if isempty(slant)
+                        slant = obj.slant;
+                    end
                 end
+                if Nf_x > 1 || Nf_y > 1
+                    warning('Only using first column of th and ph since they must be equal for all frequencies anyway');
+                    x = x(:,1);
+                    y = y(:,1);
+                end
+                
             end
-            if Nf_x > 1 || Nf_y > 1
-                warning('Only using first column of th and ph since they must be equal for all frequencies anyway');
-                x = x(:,1);
-                y = y(:,1);
-            end
+            
             obj.x = x;
             obj.y = y;
-%             [obj.th, obj.ph] = obj.getphth();
+            %             [obj.th, obj.ph] = obj.getphth();
             obj.E1 = E1;
             obj.E2 = E2;
             obj.E3 = E3;
@@ -241,13 +259,13 @@ classdef FarField
         function [AR] = getAxialRatio(obj)
             % function [AR] = getAxialRatio(obj)
             % returns the Axial Ratio (linear) [Nang x Nf]
-           AR = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2)));
+            AR = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2)));
         end
         
         function [ARinv] = getAxialRatioInv(obj)
             % function [ARinv] = getAxialRatioInv(obj)
             % returns the inverted Axial Ratio in ARinv [Nang x Nf]
-           ARinv = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2)));
+            ARinv = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2)));
         end
         
         function [Xpol] = getCO_XP(obj)
@@ -499,7 +517,7 @@ classdef FarField
                     [~,iPole] = ismember(poleMat,[obj.th,obj.ph],'rows');
                     iPole = iPole(iPole>0);
                     [Eaz(iPole,:),Eel(iPole,:),E3(iPole,:)] = deal(0);
-%                     Eaz(iPole,:) = Eth(iPole,:) + Eph(iPole,:);
+                    %                     Eaz(iPole,:) = Eth(iPole,:) + Eph(iPole,:);
             end
         end
         
@@ -541,7 +559,7 @@ classdef FarField
             end
         end
         
-            
+        
         %% Coordinate system transformation methods
         function obj = coor2spherical(obj,setStdGrid)
             if nargin < 2, setStdGrid = true; end
@@ -784,7 +802,7 @@ classdef FarField
         plotPrincipleCuts(obj,varargin)
         
         %% Interpolation methods
-%         [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
+        %         [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
         [Z] = interpolateGrid(obj,output,xi,yi,varargin)
         
         %% Maths
@@ -804,7 +822,7 @@ classdef FarField
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
                 obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setBase(obj);
-            else 
+            else
                 error('Can only add FarFields with equal base grids')
             end
         end
@@ -825,7 +843,7 @@ classdef FarField
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
                 obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setBase(obj);
-            else 
+            else
                 error('Can only add FarFields with equal base grids')
             end
         end
@@ -847,7 +865,7 @@ classdef FarField
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
                 obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setBase(obj);
-            else 
+            else
                 error('Can only multiply FarFields with equal base grids')
             end
         end
@@ -908,7 +926,7 @@ classdef FarField
             obj.Nf = length(freqIndex);
             obj = setBase(obj);
         end
-            
+        
         
         %% Format and other testers
         function y = isGridEqual(obj1,obj2)
@@ -955,8 +973,9 @@ classdef FarField
     end
     
     methods (Static = true)
-       %% Farfield reading methods
-        obj = readGRASPgrd(pathName); 
+        %% Farfield reading methods
+        obj = readGRASPgrd(pathName);
+        obj = readFEKOffe(pathName);
         
         %% Coordinate transformers
         function [u,v,w] = PhTh2DirCos(ph,th)
@@ -1026,7 +1045,7 @@ classdef FarField
             Xg = real(Th.*cos(Ph));
             Yg = real(Th.*sin(Ph));
         end
-
+        
         function [asinu,asinv] = DirCos2ArcSin(u,v,w)
             asinu = real(asin(u));
             asinv = real(asin(v));
@@ -1067,7 +1086,7 @@ classdef FarField
             [obj.ph, obj.th] = getPhTh(obj);
         end
         
-        % Set the names of the 2 grid components 
+        % Set the names of the 2 grid components
         function obj = setXYnames(obj)
             switch obj.gridType
                 case 'PhTh'
