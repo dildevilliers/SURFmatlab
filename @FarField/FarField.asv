@@ -83,15 +83,8 @@ classdef FarField
             if nargin == 0 %No-inputs case - generate a Gaussian beam pattern
                 
                 %code here
-                th = linspace(0,pi,37);
-                ph = linspace(0,2*pi,73);
+                th =
                 [TH, PH] = meshgrid(th,ph);
-                x = PH(:);
-                y = TH(:);
-                
-                
-                
-                
                 
             else
                 
