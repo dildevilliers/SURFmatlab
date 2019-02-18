@@ -83,7 +83,7 @@ switch output
     case 'CO_XP'
         Emain = 'CO_XP';
         plotSec = false;
-        ylabText = ['|XP/CO| (dB)' ];
+        ylabText = ['|CO/XP| (dB)' ];
     case 'XP_CO'
         Emain = 'XP_CO';
         plotSec = false;

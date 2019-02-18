@@ -1,19 +1,16 @@
 # ToDo list for new code
 
 ## @Farfield
-- readCSTffs
-- Generate FarField from specified gain pattern
-- Calculate power through field integration
-- Make empty constructor
-- readFITS
-- Normalise to isotropic
-- Subtraction of fields (for error calculations and comparisons)
-- Norm of fields (for error calculations and comparisons)
+- Generate FarField from specified gain pattern (Brandt)
+- Make empty constructor (Brandt)
+- readFITS (DdV)
+- readGRASPcut (DdV)
+- Normalise to isotropic (DdV)
+- Norm of fields (for error calculations and comparisons) (DdV)
+- CBFP expansion (Fahmi)
 - Multiple frequency concat
 - Shift field in 3D space - phase change
 - Typical pattern parameters calculator
-- readGRASPcut
-~~- readFEKOffe~~
 - writeCSTffs
 - writeFEKOfft
 - writeGRASPcut
@@ -31,8 +28,11 @@
 - SWE of a given field
 - Resample of SWE results on different grid
 - Use above resample for interpolation when plotting
-- CBFP expansion
 - CBFP/SWE/Zernike interpolation in freq
 - General CBFP/SWE/Zernike interpolation over parameters
 - Zernike expansion
 - Major Rework: Change angle base to degrees and not radians (for angular grids - not DirCos type grids)
+~~- readCSTffs~~
+~~- readFEKOffe~~
+~~- Calculate power through field integration~~
+~~- Subtraction of fields (for error calculations and comparisons)~~
