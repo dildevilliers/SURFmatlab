@@ -878,13 +878,11 @@ classdef FarField
             assert(obj.isGridUniform,'Must have a plaid, monotonic, uniform grid for power calculation through integration');
             switch obj.gridType
                 case 'PhTh'
-                    PH = reshape(obj.x,obj.Ny,obj.Nx);
-                    TH = reshape(obj.y,obj.Ny,obj.Nx);
+                    X = reshape(obj.x,obj.Ny,obj
                     U = obj.getU;
                     P = zeros(1,obj.Nf);
                     for ff = 1:obj.Nf
-                        integrand = reshape(U(:,ff),obj.Ny,obj.Nx).*sin(TH);
-                        P(ff) = integral2D(PH,TH,integrand);
+                        P(ff) = 
                     end
                 otherwise
                     error(['pradInt not implemented for gridType = ',obj.gridType])
