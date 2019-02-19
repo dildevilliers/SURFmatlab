@@ -857,9 +857,7 @@ classdef FarField
                 obj.E1 = obj1.E1.*obj2.E1;
                 obj.E2 = obj1.E2.*obj2.E2;
                 obj.E3 = obj1.E3.*obj2.E3;
-                % ToDo - calculate power through field integration
-                % For now just normalise to 4pi
-                obj.Prad = ones(size(obj.Prad)).*4*pi;
+                obj.Prad = obj.pradInt;
                 obj.radEff = ones(size(obj.Prad));
                 obj.radEff_dB = dB10(obj.radEff);
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
@@ -886,13 +884,28 @@ classdef FarField
             obj.E1 = obj1.E1.*scaleFactor;
             obj.E2 = obj1.E2.*scaleFactor;
             obj.E3 = obj1.E3.*scaleFactor;
+            obj.Prad = obj1.Prad.*(scaleFactor.^2);
             obj = setBase(obj);
+        end
+        
+        function [normE] = norm(obj,Ntype)
+           % Calculate the vector norm of the three E-field components - overloads the MATLAB norm function
+           % This is used for error checking mostly - when comparing
+           % different fields for instance...
+           if nargin == 1
+               Ntype = 2;
+           end
+           nE1 = norm(obj.E1,Ntype);
+           nE2 = norm(obj.E2,Ntype);
+           nE3 = norm(obj.E3,Ntype);
+           normE = [nE1,nE2,nE3];
         end
         
         %% Field normalization
         function P = pradInt(obj)
             % Returns the total power in the field integrated over the
             % full available grid
+            obj = reset2Base(obj);
             assert(obj.isGridUniform,'Must have a plaid, monotonic, uniform grid for power calculation through integration');
             switch obj.gridType
                 case 'PhTh'
@@ -907,6 +920,30 @@ classdef FarField
                 otherwise
                     error(['pradInt not implemented for gridType = ',obj.gridType])
             end
+        end
+        
+        function obj = setPower(obj1,powerWatt)
+            % Normalizes the FarField object obj1 to have the a total
+            % radiated power specified in powerWatt (in Watts, of course)
+            % powerWatt can be a vector of length obj.Nf or scalar.
+            % The field need not be specified over the full sphere - the
+            % total intercepted power in the specified sector will be set
+            % to powerWatt.  Default value of 4*pi W will be used for one
+            % argument.
+            % The grid should be the standard plaid, montonic, uniform grid.
+            obj1 = reset2Base(obj1);
+            if nargin == 1
+                powerWatt = 4*pi;
+            end
+            if length(powerWatt) == 1
+                powerWatt = repmat(powerWatt,1,obj1.Nf);
+            elseif length(powerWatt) ~= obj1.Nf
+                error('powerWatt should be scalar or of length obj1.Nf');
+            end
+            P = obj1.Prad;
+            Cn = powerWatt./(P);
+            obj = obj1;
+            obj = scale(obj,sqrt(Cn));
         end
         
         %% Frequency modifications
