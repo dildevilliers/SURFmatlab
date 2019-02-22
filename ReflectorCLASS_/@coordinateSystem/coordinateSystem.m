@@ -96,6 +96,42 @@ classdef coordinateSystem
            psi = alpha + gamma;
            obj = rotGRASP(obj,theta,phi,psi);
        end
+       
+       function Q = dirCosine(coor_new,coor_base)
+           % Calculates the 3x3 direction cosine matrix between coordinate
+           % systems.  For only one argument, the global coordinate system
+           % is assumed as the second system. 
+           % coor_new indicates the rotated system and coor_base the base system.
+           % So, a point in the rotated system, which was specified in the
+           % bases system, is calculated as A_rotate = inv(Q)*A_base
+           % See the note: http://homepages.engineering.auckland.ac.nz/~pkel015/SolidMechanicsBooks/Part_III/Chapter_1_Vectors_Tensors/Vectors_Tensors_05_Coordinate_Transformation_Vectors.pdf
+           if nargin == 1
+               coor_base = coordinateSystem();
+           end
+           Q = [dot(coor_base.x_axis,coor_new.x_axis), dot(coor_base.x_axis,coor_new.y_axis), dot(coor_base.x_axis,coor_new.z_axis);...
+                dot(coor_base.y_axis,coor_new.x_axis), dot(coor_base.y_axis,coor_new.y_axis), dot(coor_base.y_axis,coor_new.z_axis);...
+                dot(coor_base.z_axis,coor_new.x_axis), dot(coor_base.z_axis,coor_new.y_axis), dot(coor_base.z_axis,coor_new.z_axis)];
+       end
+       
+       function Uprime = changeBase(U,coor_new,coor_base)
+           % Provides the points defined in the [3xN] matrix U, which are
+           % defined in the coordiante system coor_base, in the new
+           % coordinate system coor_new through translation and rotation.
+           if nargin == 2
+               coor_base = coordinateSystem();
+           end
+           [N3,~] = size(U);
+           if N3 ~= 3
+               error('U must have 3 rows indictaed [x;y;z] coordinates')
+           end
+           % Move points to origin reference
+           Uorigin = U - coor_base.origin;
+           % Raotate the points in the origin reference
+           Q = dirCosine(coor_new,coor_base);
+           UoriginPrime = Q*Uorigin;
+           % Move to new coordinate base
+           Uprime = UoriginPrime + coor_new.origin;
+       end
               
        %% Plotting
        function plot(obj,scale)

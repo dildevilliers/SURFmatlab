@@ -1,5 +1,4 @@
 classdef paraboloid
-    
    properties
       vertex(3,1) double {mustBeReal, mustBeFinite} = [0;0;0] % [x,y,z] in (m) of vertex
       focalLength(1,1) double {mustBeReal, mustBeFinite} = 1 % in (m) 

@@ -31,6 +31,9 @@ classdef ellipticalRim
        end
        
        function V = cartRim(obj,N)
+           if nargin == 1
+               N = 101;
+           end
            % Return cartesian vectors, of size [2xN], along the rim [x,y].'
            [Rx,Ry,Cx,Cy,alpha] = unpackEll(obj);
            ph = linspace(0,2*pi,N);
@@ -40,6 +43,9 @@ classdef ellipticalRim
        end
        
        function V = polarRim(obj,N)
+           if nargin == 1
+               N = 101;
+           end
            % Return polar vectors, of size [2xN], along the rim [ph,rho].'
            Vc = cartRim(obj,N);
            [ph,rho] = cart2pol(Vc(1,:),Vc(2,:));
