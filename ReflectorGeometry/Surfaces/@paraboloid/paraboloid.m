@@ -18,7 +18,11 @@ classdef paraboloid
            z = ((x - obj.vertex(1)).^2 + (y - obj.vertex(2)).^2)./(4.*obj.focalLength) + obj.vertex(3);
        end
        function n = getNorm(obj,x,y)
-           
+           nx = (x - obj.vertex(1))./(2*obj.focalLength);
+           ny = (y - obj.vertex(2))./(2*obj.focalLength);
+           nz = ones(size(nx)).*(-1);  
+           n = [nx;ny;nz];
+           n = -n./norm(n); % Change sign for inward facing normal vectors
        end
        function C = getCurvature(obj,x,y)
            

@@ -95,6 +95,27 @@ classdef reflector
            zlabel('z-axis (m)')
        end
        
+       function plotNorms(obj,Nsurf,Nnorm)
+           if nargin == 1
+               Nsurf = 101;
+               Nnorm = Nsurf/5;
+           elseif nargin == 2 
+               Nnorm = Nsurf/5;
+           end
+           % First just plot the surface
+           obj.plot(Nsurf);
+           % Now add the normal vectors
+           [surfPoints] = getPointCloud(obj,Nnorm);
+           normalVects = obj.surface.getNorm(surfPoints(1,:),surfPoints(2,:));
+           x0 = surfPoints(1,:);
+           y0 = surfPoints(2,:);
+           z0 = surfPoints(3,:);
+           x1 = surfPoints(1,:) + normalVects(1,:);
+           y1 = surfPoints(2,:) + normalVects(2,:);
+           z1 = surfPoints(3,:) + normalVects(3,:);
+           plot3([x0;x1],[y0;y1],[z0;z1],'k')
+       end
+       
    end
    
    methods (Access = private)
