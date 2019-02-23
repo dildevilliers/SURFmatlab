@@ -41,6 +41,17 @@ classdef symmetricParaboloid
             obj.P_PR0 = PRcoor.origin;
         end
         
+        function rho = getThRhMapping(obj,th)
+            
+        end
+        
+        function pathLengthStruct = getPathLength(obj,th,ph)
+            % Calculate path length from:
+            % feed to PR: FP
+            % from PR to aperture: PA
+            % from feed to aperture: FA
+        end
+        
         %% Plotting
         function plot(obj,N)
             if nargin == 1
@@ -66,6 +77,9 @@ classdef symmetricParaboloid
             if coorFlag(1), obj.feedCoor.plot(obj.D/10); end
             if coorFlag(2), obj.apertureCoor.plot(obj.D/10); end
             if coorFlag(3), obj.PR.coor.plot(obj.D/10); end
+            xlabel('x-axis (m)')
+            ylabel('y-axis (m)')
+            zlabel('z-axis (m)')
         end
         
     end

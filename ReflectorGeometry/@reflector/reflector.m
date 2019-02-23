@@ -89,6 +89,10 @@ classdef reflector
            axis equal
            % Plot the rim
            plot3(rimPoints(1,:),rimPoints(2,:),rimPoints(3,:),'color',rimColor,'LineWidth',rimWidth)
+           view([140,40])
+           xlabel('x-axis (m)')
+           ylabel('y-axis (m)')
+           zlabel('z-axis (m)')
        end
        
    end

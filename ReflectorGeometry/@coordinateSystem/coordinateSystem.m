@@ -73,28 +73,27 @@ classdef coordinateSystem
            obj = obj.setZaxis;
        end
        
-       function obj = rotGRASP(obj,theta,phi,psi)
+       function obj = rotGRASP(obj,angGRASP)
+           % angGRASP = [theta,phi,psi] in radians
+           [th,ph,ps] = unpackGRASP(angGRASP);
            % See the GRASP_Technical_Description section 2.1 - all angles in radians
-           if numel(theta) > 1 || numel(phi) > 1 || numel(psi) > 1
-               error('Only scalar input angles accepted');
+           if numel(angGRASP) > 3
+               error('input vector must be of length 3');
            end
-          th_hat = obj.x_axis.*cos(theta).*cos(phi) + obj.y_axis.*cos(theta).*sin(phi) - obj.z_axis.*sin(theta);
-          ph_hat = -obj.x_axis.*sin(phi) + obj.y_axis.*cos(phi);
-          r_hat = obj.x_axis.*sin(theta).*cos(phi) + obj.y_axis.*sin(theta).*sin(phi) + obj.z_axis.*cos(theta);
-          obj.x_axis = th_hat.*cos(phi - psi) - ph_hat.*sin(phi - psi);
-          obj.y_axis = th_hat.*sin(phi - psi) + ph_hat.*cos(phi - psi);
-          obj.z_axis = r_hat;
+           th_hat = obj.x_axis.*cos(th).*cos(ph) + obj.y_axis.*cos(th).*sin(ph) - obj.z_axis.*sin(th);
+           ph_hat = -obj.x_axis.*sin(ph) + obj.y_axis.*cos(ph);
+           r_hat = obj.x_axis.*sin(th).*cos(ph) + obj.y_axis.*sin(th).*sin(ph) + obj.z_axis.*cos(th);
+           obj.x_axis = th_hat.*cos(ph - ps) - ph_hat.*sin(ph - ps);
+           obj.y_axis = th_hat.*sin(ph - ps) + ph_hat.*cos(ph - ps);
+           obj.z_axis = r_hat;
        end
        
-       function obj = rotEuler(obj,alpha,beta,gamma)
+       function obj = rotEuler(obj,angEuler)
            % See the GRASP_Technical_Description section 2.1 - all angles in radians
-           if numel(alpha) > 1 || numel(beta) > 1 || numel(gamma) > 1
-               error('Only scalar input angles accepted');
+           if numel(angEuler) > 3
+               error('input vector must be of length 3');
            end
-           theta = beta;
-           phi = alpha;
-           psi = alpha + gamma;
-           obj = rotGRASP(obj,theta,phi,psi);
+           obj = rotGRASP(obj,Euler2GRASP(angEuler));
        end
        
        function Q = dirCosine(coor_new,coor_base)
@@ -115,22 +114,111 @@ classdef coordinateSystem
        
        function Uprime = changeBase(U,coor_new,coor_base)
            % Provides the points defined in the [3xN] matrix U, which are
-           % defined in the coordiante system coor_base, in the new
+           % defined in the coordinate system coor_base, in the new
            % coordinate system coor_new through translation and rotation.
+           % U can also be a coordinateSystem type, the Uprime is returned
+           % as the new coordinate system - rotated and translated... 
+           % The base class is deleted in this process.
            if nargin == 2
                coor_base = coordinateSystem();
            end
+           coorClass = false;
+           if isa(U,'coordinateSystem')
+               Ncoor = numel(U); % Handle arrays or ccordinate systems
+               Utemp = zeros(3,3,Ncoor);
+               for ii = 1:Ncoor
+                   Utemp(:,:,ii) = [[0;0;0],U(ii).x_axis,U(ii).y_axis]+U(ii).origin;
+               end
+               U = reshape(Utemp,3,3*Ncoor);
+               coorClass = true;
+           end
            [N3,~] = size(U);
            if N3 ~= 3
-               error('U must have 3 rows indictaed [x;y;z] coordinates')
+               error('U must have 3 rows indicated [x;y;z] coordinates')
            end
+           
            % Move points to origin reference
-           Uorigin = U - coor_base.origin;
-           % Raotate the points in the origin reference
+           Uorigin = bsxfun(@minus,U,coor_base.origin);
+           % Rotate the points in the origin reference
            Q = dirCosine(coor_new,coor_base);
            UoriginPrime = Q*Uorigin;
            % Move to new coordinate base
            Uprime = UoriginPrime + coor_new.origin;
+           if coorClass
+               UprimeTemp = reshape(Uprime,3,3,Ncoor);
+               clear Uprime
+               Uprime(1,Ncoor) = coordinateSystem(); % Initialise an arry of coordinate systems
+               for ii = 1:Ncoor
+                   Uprime(ii) = coordinateSystem(UprimeTemp(:,1,ii),UprimeTemp(:,2,ii)-UprimeTemp(:,1,ii),UprimeTemp(:,3,ii)-UprimeTemp(:,1,ii));
+               end
+           end
+       end
+       
+       function [angGRASP] = getGRASPangBetweenCoors(coor1,coor0)
+           % Returns the GRASP angles (in rad) required to rotate from
+           % coor0 to coor1.  That is coor1 = coor0.rotGRASP(th,ph,ps)
+           % Get the required angles to rotate back to the GC
+           % See the GRASP technical description for details on the
+           % definitions
+           % coor0 corresponds to xyz
+           % coor1 corresponds to x1y1z1
+           % For only one argument, the global system is assumed for coor0
+           
+           if nargin == 1
+               coor0 = coordinateSystem();
+           end
+           
+           x = coor0.x_axis;
+           z = coor0.z_axis;
+           x1 = coor1.x_axis;
+           z1 = coor1.z_axis;
+           
+           % Get th - angles between z and z1
+           th = angBetweenVectors(z,z1);
+           
+           % Now get ph
+           % Get the vector which is x rotated by ph in the x-y plane 
+           Nz = cross(z,z1);
+           Nz = Nz./norm(Nz);
+           x_ph = cross(Nz,z);
+           x_ph = x_ph./norm(x_ph);
+           ph = angBetweenVectors(x,x_ph);
+           % Sort out the sign of ph - compare to the z-axis direction
+           phSign = sign(dot(cross(x,x_ph),z));
+           ph = ph*phSign;
+           
+           % Rotate the system to get to the intermediate coordinate system
+           % xyz_prime
+           coorPrime = coor0.rotGRASP([th,ph,0]);
+           xp = coorPrime.x_axis;
+           % Calculate psi
+           ps = angBetweenVectors(xp,x1);
+           % Sort out the sign of ph - compare to the z1-axis direction
+           psSign = sign(dot(cross(xp,x1),z1));
+           ps = ps*psSign;
+           angGRASP = [th,ph,ps];
+       end
+       
+       % Make a simplified version - this just returns the GRASP angles in
+       % the global coordinate system of a given coordinate system
+       function angGRASP = getGRASPangles(coor)
+           angGRASP = getGRASPangBetweenCoors(coor);
+       end
+       
+       function angEuler = getEulerAngles(coor)
+           angEuler = GRASP2Euler(getGRASPangBetweenCoors(coor));
+       end
+       
+       function  B = isequal(coor1,coor2,tol)
+            % Test for equality - with a tolerance
+            % Does not check the bases...
+           if nargin == 2
+               tol = norm(coor1.origin).*1e-10;
+           end
+           BO = all(abs(coor1.origin - coor2.origin) < tol);
+           Bx = all(abs(coor1.x_axis - coor2.x_axis) < tol);
+           By = all(abs(coor1.y_axis - coor2.y_axis) < tol);
+           B = BO && Bx && By;
        end
               
        %% Plotting
@@ -157,6 +245,7 @@ classdef coordinateSystem
            xlabel('x-axis (m)')
            ylabel('y-axis (m)')
            zlabel('z-axis (m)')
+           view([140,40])
        end
        
    end
