@@ -50,10 +50,15 @@ classdef reflector
            [rimPoints] = changeBase([Rxy;Rz],obj.coor);
        end
        
-       function B = doesIntersect(obj,coorOfSource)
-           % Checks if the z-axis of the coordinate system in coorOfSource
-           % intersects the reflector object - just needs to be in the rim
-           % in the plane of the rim
+       function [th,ph,coorCentre] = getMaskFunction(obj,x)
+           % Returns a th, as a function of ph, in the coordinate system
+           % coorCentre, which points at the apparent centre of the
+           % reflector with (with the its z-axis), and is positioned at the
+           % point x.  This information can be used to determine easily if
+           % a certain direction of radiation, in the coorCentre coordinate
+           % system, is intercepted by the reflector by checking for <th at
+           % ph.
+
        end
        
        function A = projectedArea(obj)
