@@ -64,4 +64,4 @@
 - [ ] include a feed picture for plotting
 
 ## utils
-- [ ] rotation of spherical coordinates
+- [x] rotation of spherical coordinates

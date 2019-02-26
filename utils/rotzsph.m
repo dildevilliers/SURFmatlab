@@ -1,8 +1,8 @@
-function [sphAngOut] = roty3Dsph(sphAngIn,th)
+function [sphAngOut] = rotzsph(sphAngIn,th)
 
-% function [sphAngOut] = roty3Dsph(sphAngIn,angGRASP)
+% function [sphAngOut] = rotzsph(sphAngIn,angGRASP)
 % rotates the spherical angles, specified in sphAngIn [ph;th] (rad) (can have
-% multiple columns), around the y-axis by the angle th in (rad).
+% multiple columns), around the z-axis by the angle th in (rad).
 
 [Ncomp,Nang] = size(sphAngIn);
 if Ncomp ~= 2
@@ -13,7 +13,7 @@ if Ncomp ~= 2
     end
 end
 [x,y,z] = PhTh2DirCos(sphAngIn(1,:),sphAngIn(2,:));
-Xp = roty3D([x;y;z],th);
+Xp = rotz3D([x;y;z],th);
 [php,thp] = DirCos2PhTh(Xp(1,:),Xp(2,:),Xp(3,:));
 sphAngOut = [php;thp];
 

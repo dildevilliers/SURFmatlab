@@ -282,7 +282,7 @@ classdef FarField
         
         %% Grid getters
         function [u, v, w] = getDirCos(obj)
-            handle2DirCos = str2func(['FarField.',obj.gridTypeBase,'2DirCos']);
+            handle2DirCos = str2func([obj.gridTypeBase,'2DirCos']);
             [u,v,w] = handle2DirCos(obj.xBase,obj.yBase);
         end
         
@@ -293,7 +293,7 @@ classdef FarField
                     th = obj.yBase;
                 otherwise
                     [u,v,w] = getDirCos(obj);
-                    [ph,th] = FarField.DirCos2PhTh(u,v,w);
+                    [ph,th] = DirCos2PhTh(u,v,w);
             end
         end
         
@@ -304,7 +304,7 @@ classdef FarField
                     az = obj.xBase;
                 otherwise
                     [u,v,w] = getDirCos(obj);
-                    [az,el] = FarField.DirCos2AzEl(u,v,w);
+                    [az,el] = DirCos2AzEl(u,v,w);
             end
         end
         
@@ -315,7 +315,7 @@ classdef FarField
                     al = obj.yBase;
                 otherwise
                     [u,v,w] = getDirCos(obj);
-                    [ep,al] = FarField.DirCos2ElAz(u,v,w);
+                    [ep,al] = DirCos2ElAz(u,v,w);
             end
         end
         
@@ -326,7 +326,7 @@ classdef FarField
                     Yg = obj.xBase;
                 otherwise
                     [u,v,w] = getDirCos(obj);
-                    [Xg,Yg] = FarField.DirCos2TrueView(u,v,w);
+                    [Xg,Yg] = DirCos2TrueView(u,v,w);
             end
         end
         
@@ -337,7 +337,7 @@ classdef FarField
                     asinv = obj.yBase;
                 otherwise
                     [u,v,w] = getDirCos(obj);
-                    [asinu,asinv] = FarField.DirCos2ArcSin(u,v,w);
+                    [asinu,asinv] = DirCos2ArcSin(u,v,w);
             end
         end
         
@@ -728,46 +728,99 @@ classdef FarField
             obj = setRangeTypes(obj);
         end
         
-        function obj = currentForm2Base(obj1,stepDeg,hemisphere)
+        function obj = currentForm2Base(obj1,stepDeg,xylimsDeg,hemisphere)
             % Sets the base to the current format. Resamples the field on a
             % regular plaid grid, and makes this the new base grid. This is
             % typically then not where actual samples where, but instead
-            % interpolated values.
+            % interpolated values. 
+            % Format of xylimsDeg is [xmin xmax; ymin ymax]
             
             % Due to the interpolation only operating on the y in 180 range
             % from the Direction Cosine transforms...
             assert(~isequal(obj1.yRangeType,'360'),'yRangeType cannot be 360 for the base representation')
             
             nSigDig = 10;
-            if nargin < 2
-                % Get a step from the current object
-                if strcmp(obj1.gridTypeBase,'DirCos') || strcmp(obj1.gridType,'ArcSin')
-                    stepX = asin(min(abs(diff(unique(obj1.xBase)))));
-                    stepY = asin(min(abs(diff(unique(obj1.yBase)))));
-                else
-                    % Sort out rounding errors for degrees
-                    stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^nSigDig)/10^nSigDig);
-                    stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^nSigDig)/10^nSigDig);
-                end
-                hemisphere = 'top';
-            elseif nargin < 3
-                hemisphere = 'top';
+            
+            % Set defaults
+            if strcmp(obj1.gridTypeBase,'DirCos') || strcmp(obj1.gridType,'ArcSin')
+                stepX = asin(min(abs(diff(unique(obj1.xBase)))));
+                stepY = asin(min(abs(diff(unique(obj1.yBase)))));
+                xmin = min(asin(obj1.x));
+                xmax = max(asin(obj1.x));
+                ymin = min(asin(obj1.y));
+                ymax = max(asin(obj1.y));
+            else
+                % Sort out rounding errors for degrees
+                stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^nSigDig)/10^nSigDig);
+                stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^nSigDig)/10^nSigDig);
+                xmin = min(obj1.x);
+                xmax = max(obj1.x);
+                ymin = min(obj1.y);
+                ymax = max(obj1.y);
+            end
+            
+            hem = 'top';
+            
+            % Overwrite defaults
+            if nargin >= 2
                 if numel(stepDeg) == 1
                     [stepX,stepY] = deal(deg2rad(stepDeg));
                 elseif numel(stepDeg) == 2
                     stepX = deg2rad(stepDeg(1));
                     stepY = deg2rad(stepDeg(2));
                 end
+                if nargin >= 3
+                    xylim = deg2rad(xylimsDeg);
+                    xmin = xylim(1,1);
+                    xmax = xylim(1,2);
+                    ymin = xylim(2,1);
+                    ymax = xylim(2,2);
+                    if nargin == 4
+                        hem = hemisphere;
+                    end
+                end
             end
+%             if nargin < 2
+%                 % Get a step from the current object
+%                 if strcmp(obj1.gridTypeBase,'DirCos') || strcmp(obj1.gridType,'ArcSin')
+%                     stepX = asin(min(abs(diff(unique(obj1.xBase)))));
+%                     stepY = asin(min(abs(diff(unique(obj1.yBase)))));
+%                 else
+%                     % Sort out rounding errors for degrees
+%                     stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^nSigDig)/10^nSigDig);
+%                     stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^nSigDig)/10^nSigDig);
+%                 end
+%                 xmin = min(obj1.x);
+%                 xmax = max(obj1.x);
+%                 ymin = max(obj1.y);
+%                 ymax = max(obj1.y);
+%                 hemisphere = 'top';
+%             elseif nargin < 3
+%                 if numel(stepDeg) == 1
+%                     [stepX,stepY] = deal(deg2rad(stepDeg));
+%                 elseif numel(stepDeg) == 2
+%                     stepX = deg2rad(stepDeg(1));
+%                     stepY = deg2rad(stepDeg(2));
+%                 end
+%                 xmin = min(obj1.x);
+%                 xmax = max(obj1.x);
+%                 ymin = max(obj1.y);
+%                 ymax = max(obj1.y);
+%                 hemisphere = 'top';
+%             end
             
             if strcmp(obj1.gridType,'DirCos') || strcmp(obj1.gridType,'ArcSin')
                 stepX = sin(stepX);
                 stepY = sin(stepY);
+                xmin = sin(xmin);
+                xmax = sin(xmax);
+                ymin = sin(ymin);
+                ymax = sin(ymax);
             end
             
             % Build the new grid
-            xivect = min(obj1.x):stepX:max(obj1.x);
-            yivect = min(obj1.y):stepY:max(obj1.y);
+            xivect = xmin:stepX:xmax;
+            yivect = ymin:stepY:ymax;
             [Xi,Yi] = meshgrid(xivect,yivect);
             xi = Xi(:);
             yi = Yi(:);
@@ -776,9 +829,9 @@ classdef FarField
             % Interpolate the fields
             [E1grid,E2grid,E3grid] = deal(zeros(Nxi*Nyi,obj1.Nf));
             for ff = 1:obj1.Nf
-                E1grid(:,ff) = interpolateGrid(obj1,'E1',xi,yi,ff,hemisphere);
-                E2grid(:,ff) = interpolateGrid(obj1,'E2',xi,yi,ff,hemisphere);
-                E3grid(:,ff) = interpolateGrid(obj1,'E3',xi,yi,ff,hemisphere);
+                E1grid(:,ff) = interpolateGrid(obj1,'E1',xi,yi,ff,hem);
+                E2grid(:,ff) = interpolateGrid(obj1,'E2',xi,yi,ff,hem);
+                E3grid(:,ff) = interpolateGrid(obj1,'E3',xi,yi,ff,hem);
             end
             % Populate the new farField object
             obj = obj1;
@@ -804,6 +857,61 @@ classdef FarField
         %% Interpolation methods
         %         [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
         [Z] = interpolateGrid(obj,output,xi,yi,varargin)
+        
+        %% Shifts and rotations of the field
+
+%         function obj = roty3D(obj,th)
+        function obj = rotate(obj,rotHandle,rotAng)
+            % General rotation function for FarField objects
+            % rotHandle is the funciton handle for the type of rotation:
+            %   rotx3Dsph, roty3Dsph, rotz3Dsph, rotGRASPsph, rotEulersph
+            % rotAng is the associated angle in rad. Scalar for rotations
+            % around an axis, and [3x1] for GRAP or Euler rotations
+            
+            % Test if the rotation function handle has the trailing 'sph'
+            handleStr = func2str(rotHandle);
+            if ~strcmp(handleStr(end-3:end),'sph')
+                handleStr = [handleStr,'sph'];  % Add it if not - some user errors fixed at least!
+                rotHandle = str2func(handleStr);
+            end
+            gridIn = obj.gridTypeBase;
+            coorIn = obj.coorSysBase;
+            xRangeIn = obj.xRangeType;
+            % Transform to sensible grid and ccordinate system for rotation
+            FFsph = obj.grid2PhTh;  % Always work in the PhTh coordinate system
+            FFsph = FFsph.setXrange('sym'); % Always work in symmetrical xRange
+            FFsph = FFsph.coor2Ludwig3(false); % And work in Ludwig3 coordinates to get rid of pole discontinuities in the fields
+            % Get the grid step sizes from the original
+            stepx = (max(FFsph.x) - min(FFsph.x))./(FFsph.Nx-1);
+            stepy = (max(FFsph.y) - min(FFsph.y))./(FFsph.Ny-1);
+            stepDeg = rad2deg([stepx,stepy]);
+            xmin = min(FFsph.x);
+            xmax = max(FFsph.x);
+            ymin = min(FFsph.y);
+            ymax = max(FFsph.y);
+            % Perform the rotation
+            phIn = FFsph.x.';
+            thIn = FFsph.y.';
+            sphAngIn = [phIn;thIn];
+            sphAngRot = rotHandle(sphAngIn,rotAng);
+            phOut = sphAngRot(1,:).';
+            thOut = sphAngRot(2,:).';
+            FFsph.x = phOut;
+            FFsph.y = thOut;
+            % Set the baseGrid of the rotated object
+            FFsph = FFsph.sortGrid;
+            FFsph = FFsph.setBase;
+            % Suppress the duplicate point warning resulting from the pole
+            warning('off','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
+            FFsph = FFsph.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
+            warning('on','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
+            % Reset the grid and coordinate system
+            grid2handle = str2func(['grid2',gridIn]);
+            obj = grid2handle(FFsph);
+            obj = obj.setXrange(xRangeIn);
+            coor2handle = str2func(['coor2',coorIn]);
+            obj = coor2handle(obj);
+        end
         
         %% Maths
         function obj = plus(obj1,obj2)

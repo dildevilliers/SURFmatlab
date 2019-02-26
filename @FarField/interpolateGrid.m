@@ -48,13 +48,13 @@ if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.grid
 end
 % Get xi and yi in the base gridType, and on the [-180,180] x-domain for the
 % angular grids
-grid2DirCoshandle = str2func(['FarField.',gridType,'2DirCos']);
+grid2DirCoshandle = str2func([gridType,'2DirCos']);
 [ui,vi,wi] = grid2DirCoshandle(xi,yi);
 % Check for bottom hemisphere plot - fix the w to be the negative root
 if (strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin')) && strcmp(hemisphere,'bot')
     wi = -wi;
 end
-DirCos2baseHandle = str2func(['FarField.DirCos2',obj.gridType]);
+DirCos2baseHandle = str2func(['DirCos2',obj.gridType]);
 [xi_bGT,yi_bGT] = DirCos2baseHandle(ui,vi,wi);
 % Find the invalid points included by the external meshgrid 
 valAngi = sqrt(ui.^2 + vi.^2) <= 1;
@@ -68,7 +68,7 @@ end
 % Get the indexes only, no later reshaping done, different from the grids
 % required for plotting in plot.m
 if strcmp(gridType,'DirCos') || strcmp(gridType,'ArcSin')  
-    grid2DirCoshandleBase = str2func(['FarField.',obj.gridType,'2DirCos']);
+    grid2DirCoshandleBase = str2func([obj.gridType,'2DirCos']);
     [~,~,w] = grid2DirCoshandleBase(obj.x,obj.y);
     if strcmp(hemisphere,'top')
         valAng = find(w >= 0);
@@ -95,8 +95,50 @@ end
 % Select frequency of interest
 Z = Zfreq(:,freqIndex);
 
+xVal = obj.x(valAng);
+yVal = obj.y(valAng);
+zVal = Z(valAng);
+
+% Extend grid past -180 and +180 for interpolation across the axis
+if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
+    tol = deg2rad(2); % Check for points close to the edges in azimuth
+    if abs(min(xVal) + pi) < tol && abs(max(xVal) - pi) < tol 
+        xVal = [xVal-2*pi;xVal;xVal+2*pi];
+        yVal = repmat(yVal,3,1);
+        zVal = repmat(zVal,3,1);
+    end
+end
+
+% Remove duplicate differing values completely from the set - interpolate
+% over them.  This happens at poles for certain coordinate projections
+% (like at th = 180 in Ludwig3 for instance, of th=0 and 180 for spherical)
+% First find duplicate domain values
+[~,iUnique] = unique([xVal,yVal],'rows');
+removePoints = [];
+if length(iUnique) < length(xVal)
+    iRepeated = setdiff((1:length(xVal)).',iUnique);
+    repeatedSet = [xVal(iRepeated),yVal(iRepeated),zVal(iRepeated)];
+    % Find the repeated values
+    repVals = unique(repeatedSet(:,1:2),'rows');
+    % Test if different z-values occur
+    for ii = 1:length(repVals(:,1))
+        currentValRowIndex = find(ismember(repeatedSet(:,1:2),repVals(ii,:),'rows'));
+        currentZ = repeatedSet(currentValRowIndex,3);
+        if ~all(currentZ == currentZ(1))
+            removePoints = [removePoints;repeatedSet(currentValRowIndex,1:2)];
+        end
+    end
+end
+if numel(removePoints) > 0
+    iRemove = find(ismember([xVal,yVal],removePoints,'rows'));
+    xVal(iRemove) = [];
+    yVal(iRemove) = [];
+    zVal(iRemove) = [];
+end
+
+
 % Build the interpolant on the base grid at the valid angles
-Zf = scatteredInterpolant(obj.x(valAng),obj.y(valAng),Z(valAng),'linear');
+Zf = scatteredInterpolant(xVal,yVal,zVal,'linear');
 % Get the values on the scattered set of inputs
 Zi = Zf(xi_bGT,yi_bGT);
 Zi(~valAngi) = NaN;
