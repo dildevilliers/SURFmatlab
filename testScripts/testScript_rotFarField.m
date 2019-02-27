@@ -2,13 +2,13 @@
 clear all
 close all
 
-plotDim = 2;    % Select 1, 2 or 3 for 2D or 3D plots
+plotDim = 3;    % Select 1, 2 or 3 for 2D or 3D plots
 grid2Dplot = 'PhTh'; % Can be DirCos, TrueView, PhTh, etc
-coorPlot = 'Ludwig3';
+coorPlot = 'spherical';
 output_1and2D = 'E2';
 
-rotHandle = @rotEuler;
-rotAng = deg2rad([-35,-78,36]);
+rotHandle = @rotGRASP;
+rotAng = deg2rad([180,0,0]);
 
 % Read a test field
 pathName = 'Farfield Source [1]';

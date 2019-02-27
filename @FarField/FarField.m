@@ -780,34 +780,6 @@ classdef FarField
                     end
                 end
             end
-%             if nargin < 2
-%                 % Get a step from the current object
-%                 if strcmp(obj1.gridTypeBase,'DirCos') || strcmp(obj1.gridType,'ArcSin')
-%                     stepX = asin(min(abs(diff(unique(obj1.xBase)))));
-%                     stepY = asin(min(abs(diff(unique(obj1.yBase)))));
-%                 else
-%                     % Sort out rounding errors for degrees
-%                     stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^nSigDig)/10^nSigDig);
-%                     stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^nSigDig)/10^nSigDig);
-%                 end
-%                 xmin = min(obj1.x);
-%                 xmax = max(obj1.x);
-%                 ymin = max(obj1.y);
-%                 ymax = max(obj1.y);
-%                 hemisphere = 'top';
-%             elseif nargin < 3
-%                 if numel(stepDeg) == 1
-%                     [stepX,stepY] = deal(deg2rad(stepDeg));
-%                 elseif numel(stepDeg) == 2
-%                     stepX = deg2rad(stepDeg(1));
-%                     stepY = deg2rad(stepDeg(2));
-%                 end
-%                 xmin = min(obj1.x);
-%                 xmax = max(obj1.x);
-%                 ymin = max(obj1.y);
-%                 ymax = max(obj1.y);
-%                 hemisphere = 'top';
-%             end
             
             if strcmp(obj1.gridType,'DirCos') || strcmp(obj1.gridType,'ArcSin')
                 stepX = sin(stepX);
@@ -880,7 +852,7 @@ classdef FarField
             % Transform to sensible grid and ccordinate system for rotation
             FFsph = obj.grid2PhTh;  % Always work in the PhTh coordinate system
             FFsph = FFsph.setXrange('sym'); % Always work in symmetrical xRange
-            FFsph = FFsph.coor2Ludwig3(false); % And work in Ludwig3 coordinates to get rid of pole discontinuities in the fields
+            FFsph = FFsph.coor2Ludwig3(false); % And work in Ludwig1 coordinates to get rid of pole discontinuities in the fields
             % Get the grid step sizes from the original
             stepx = (max(FFsph.x) - min(FFsph.x))./(FFsph.Nx-1);
             stepy = (max(FFsph.y) - min(FFsph.y))./(FFsph.Ny-1);
@@ -898,19 +870,19 @@ classdef FarField
             thOut = sphAngRot(2,:).';
             FFsph.x = phOut;
             FFsph.y = thOut;
-            % Set the baseGrid of the rotated object
+            % Set the baseGrid of the rotated object.  This is required
+            % since all transformations operate from the base grid
             FFsph = FFsph.sortGrid;
             FFsph = FFsph.setBase;
-            % Suppress the duplicate point warning resulting from the pole
-            warning('off','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
             FFsph = FFsph.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
-            warning('on','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
-            % Reset the grid and coordinate system
+            % Reset the grid and coordinate system, and reset the base back
+            % in the original format
             grid2handle = str2func(['grid2',gridIn]);
             obj = grid2handle(FFsph);
             obj = obj.setXrange(xRangeIn);
             coor2handle = str2func(['coor2',coorIn]);
-            obj = coor2handle(obj);
+            obj = coor2handle(obj,false);
+            obj = obj.currentForm2Base();
         end
         
         %% Maths

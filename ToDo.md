@@ -1,9 +1,11 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] Field rotations (DdV)
 - [ ] Generate FarField from specified gain pattern (Brandt)
 - [ ] Make empty constructor (Brandt)
+- [ ] Plot Grid (DdV)
+- [ ] Speed up interpolateGrid (DdV)
+- [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D
 - [ ] readFITS (DdV)
 - [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
@@ -20,6 +22,7 @@
 - [ ] Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
 - [ ] Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
 - [ ] Array pattern adder
+- [ ] plot on a spherical surface
 - [ ] Fix 3D plot for negative y-(th)axis cases
 - [ ] readMeasurements
 - [ ] Jones getter
@@ -38,20 +41,20 @@
 - [x] Subtraction of fields (for error calculations and comparisons)
 - [x] Normalise to isotropic
 - [x] Norm of fields (for error calculations and comparisons)
+- [x] Field rotations (DdV)
 
 ## ReflectorGeometry
 # General (class not assigned yet)
 - [ ] Masking of a FarField by a reflector system given the feed position and orientation
 - [ ] basic ray tracing of a reflector system
 - [ ] full GO of a reflector system
-- [ ] add offsetParaboloid class
+- [ ] add offsetParaboloid class (William)
 - [ ] add offset Gregorian/Cassegrain class
 - [ ] add offsetGregorianShaped class
 - [ ] add symmetrical Gregorian/Cassegrain class
 - [ ] add symmetrical Gregorian/Cassegrian shaped class
 
 # @reflector
-- [ ] Calculate projected area
 - [ ] Calculate actual area
 - [ ] Write GRASP outputs
 - [ ] getMaskFunction
@@ -62,6 +65,7 @@
 - [ ] calculate the rho-th mapping
 - [ ] sort out the 2D plotting
 - [ ] include a feed picture for plotting
+- [ ] Calculate projected area
 
 ## utils
 - [x] rotation of spherical coordinates

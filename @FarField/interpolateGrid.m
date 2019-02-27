@@ -136,9 +136,10 @@ if numel(removePoints) > 0
     zVal(iRemove) = [];
 end
 
-
 % Build the interpolant on the base grid at the valid angles
+warning('off','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
 Zf = scatteredInterpolant(xVal,yVal,zVal,'linear');
+warning('on','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
 % Get the values on the scattered set of inputs
 Zi = Zf(xi_bGT,yi_bGT);
 Zi(~valAngi) = NaN;
