@@ -90,7 +90,7 @@ classdef FarField
                 [PH, TH] = meshgrid(ph,th);
                 x = PH(:);
                 y = TH(:);
-                obj = FarField.farFieldFromPowerPattern(x,y,P,freq,1);
+                obj = FarField.farFieldFromPowerPattern(x,y,P,freq,'linearY');
                 
             else
                 
