@@ -82,15 +82,16 @@ classdef FarField
             
             if nargin == 0 %No-inputs case - generate a Gaussian beam pattern at a single frequency (1 GHz) over the full sphere, 5 degree angular resolution
                 
+                Nth_cut = 37;
+                Nph_cut = 73;
                 th = linspace(0,pi,37);
                 ph = linspace(0,2*pi,73);
+                th0 = 45;
+                taper_dB = -10;
                 freq = 1e9;
-                G = feedPatterns(45,-10,th,freq);
-                P = G.Ggauss.';
-                [PH, TH] = meshgrid(ph,th);
-                x = PH(:);
-                y = TH(:);
-                obj = FarField.farFieldFromPowerPattern(x,y,P,freq,'linearY');
+                [TH,PH] = meshgrid(th,ph);
+                P = powerPattern(TH(:),PH(:),'gauss',th0,taper_dB,freq);
+                obj = FarField.farFieldFromPowerPattern(TH(:),PH(:),P,freq,'linearY');
                 
             else
                 
