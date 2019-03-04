@@ -88,11 +88,7 @@ classdef FarField
                 [TH, PH] = meshgrid(th,ph);
                 x = PH(:);
                 y = TH(:);
-                
-                
-                
-                
-                
+
             else
                 
                 % Basic input error checking
