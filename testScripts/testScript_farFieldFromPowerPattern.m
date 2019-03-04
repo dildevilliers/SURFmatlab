@@ -22,13 +22,13 @@ FF1.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',tr
 
 FF2 = FarField.farFieldFromPowerPattern(TH(:),PH(:),P1,freq,'linearY');
 figure;
-%E1 is -inf dB (perfectly Y-linear field in Ludwig3 coords) and will break plot
+%E2 is -inf dB (perfectly Y-linear field in Ludwig3 coords) and will break plot
 % FF2.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',30); 
 FF2.plot('plotType','2D','output','E2','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',30);
 
 FF3 = FarField.farFieldFromPowerPattern(TH(:),PH(:),P1,freq,'circularLH');
 figure
-%E2 is -inf dB (perfectly LH circular field in spherical pol basis) and will break plot
+%E1 is -inf dB (perfectly LH circular field in spherical pol basis) and will break plot
 FF3.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',30);
 % FF3.plot('plotType','2D','output','E2','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',30);
 
