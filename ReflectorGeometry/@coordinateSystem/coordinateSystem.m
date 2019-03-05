@@ -25,7 +25,11 @@ classdef coordinateSystem
                obj.origin = origin;
                obj.x_axis = x_axis;
                obj.y_axis = y_axis;
-               obj.base = base;
+               if ~(isempty(base.base))
+                   error('base coordinate system must be based on the global coordinates - use getInGlobal to get base coordinates in global coordinates')
+               else
+                   obj.base = base;
+               end
            end
            % Check for valid inputs
            nX = norm(obj.x_axis);
@@ -99,10 +103,10 @@ classdef coordinateSystem
        function Q = dirCosine(coor_new,coor_base)
            % Calculates the 3x3 direction cosine matrix between coordinate
            % systems.  For only one argument, the global coordinate system
-           % is assumed as the second system. 
+           % is assumed as the second (base) system. 
            % coor_new indicates the rotated system and coor_base the base system.
            % So, a point in the rotated system, which was specified in the
-           % bases system, is calculated as A_rotate = inv(Q)*A_base
+           % base system, is calculated as A_rotate = inv(Q)*A_base
            % See the note: http://homepages.engineering.auckland.ac.nz/~pkel015/SolidMechanicsBooks/Part_III/Chapter_1_Vectors_Tensors/Vectors_Tensors_05_Coordinate_Transformation_Vectors.pdf
            if nargin == 1
                coor_base = coordinateSystem();
@@ -112,10 +116,61 @@ classdef coordinateSystem
                 dot(coor_base.z_axis,coor_new.x_axis), dot(coor_base.z_axis,coor_new.y_axis), dot(coor_base.z_axis,coor_new.z_axis)];
        end
        
+       %% Change of basis
+       function coorInGlobal = getInGlobal(obj)
+           % Returns the coordinate system, defined in obj.base, in the global coordinate system
+           % Assume obj.base is always defined in the global coordinate system
+           
+           if ~isempty(obj.base)
+               oldBase = obj.base;
+               newBase = coordinateSystem();
+               % Since the coordinate system is always defined in the global
+               % coordinate system, with a given base (which corresponds to the
+               % local global coordinate system), get the angle between the
+               % new base coordinate system and the object
+               graspAng = getGRASPangles(obj);
+               % Now rotate the base by this amount
+               baseRotated = oldBase.rotGRASP(graspAng);
+               % And shift the origin
+               Q = dirCosine(newBase,oldBase);
+               U = [obj.origin];
+               Up = Q\U;
+               Ups = Up + oldBase.origin;
+               coorInGlobal = coordinateSystem(Ups(:,1),baseRotated.x_axis,baseRotated.y_axis);
+               coorInGlobal.base = [];
+           else
+               coorInGlobal = obj;
+           end
+       end
+       
+       function coorOut = redefineToOtherBase(obj,newBase)
+           % Redefines the coordinate system in obj to be relative to the
+           % new base coordinate system newBase
+           
+           % First get both coordinate systems in the global base
+           coorIn = obj.getInGlobal;
+           baseIn = newBase.getInGlobal;
+           % Calculate the translation
+           diffGlobal = coorIn.origin - baseIn.origin;
+           Ox = dot(diffGlobal,baseIn.x_axis);
+           Oy = dot(diffGlobal,baseIn.y_axis);
+           Oz = dot(diffGlobal,baseIn.z_axis);
+           % Calculate the rotation
+           graspAng = getGRASPangBetweenCoors(coorIn,baseIn);
+           % Build the coordinate system
+           coorOut = coordinateSystem([Ox;Oy;Oz]);
+           coorOut = coorOut.rotGRASP(graspAng);
+           coorOut.base = newBase;
+       end
+       
        function Uprime = changeBase(U,coor_new,coor_base)
-           % Provides the points defined in the [3xN] matrix U, which are
-           % defined in the coordinate system coor_base, in the new
+           % Provides the points defined in the [3xN] matrix U, which would
+           % have been defined in the coordinate system coor_base, in the new
            % coordinate system coor_new through translation and rotation.
+           % U, coor_new, and coor_base should be described in the global
+           % coordinate system.  This is used when we have data points/coordinate systems, but
+           % no information about where they come from, but want to move
+           % them with another object that we do have information for
            % U can also be a coordinateSystem type, the Uprime is returned
            % as the new coordinate system - rotated and translated... 
            % The base class is deleted in this process.
@@ -147,7 +202,7 @@ classdef coordinateSystem
            if coorClass
                UprimeTemp = reshape(Uprime,3,3,Ncoor);
                clear Uprime
-               Uprime(1,Ncoor) = coordinateSystem(); % Initialise an arry of coordinate systems
+               Uprime(1,Ncoor) = coordinateSystem(); % Initialise an array of coordinate systems
                for ii = 1:Ncoor
                    Uprime(ii) = coordinateSystem(UprimeTemp(:,1,ii),UprimeTemp(:,2,ii)-UprimeTemp(:,1,ii),UprimeTemp(:,3,ii)-UprimeTemp(:,1,ii));
                end
@@ -156,7 +211,7 @@ classdef coordinateSystem
        
        function [angGRASP] = getGRASPangBetweenCoors(coor1,coor0)
            % Returns the GRASP angles (in rad) required to rotate from
-           % coor0 to coor1.  That is coor1 = coor0.rotGRASP(th,ph,ps)
+           % coor0 to coor1.  That is coor1 = coor0.rotGRASP([th,ph,ps])
            % Get the required angles to rotate back to the GC
            % See the GRASP technical description for details on the
            % definitions
@@ -178,10 +233,14 @@ classdef coordinateSystem
            
            % Now get ph
            % Get the vector which is x rotated by ph in the x-y plane 
-           Nz = cross(z,z1);
-           Nz = Nz./norm(Nz);
-           x_ph = cross(Nz,z);
-           x_ph = x_ph./norm(x_ph);
+           if ~isequal(z,z1)
+               Nz = cross(z,z1);
+               Nz = Nz./norm(Nz);
+               x_ph = cross(Nz,z);
+               x_ph = x_ph./norm(x_ph);
+           else
+               x_ph = x1;
+           end
            ph = angBetweenVectors(x,x_ph);
            % Sort out the sign of ph - compare to the z-axis direction
            phSign = sign(dot(cross(x,x_ph),z));
@@ -209,6 +268,7 @@ classdef coordinateSystem
            angEuler = GRASP2Euler(getGRASPangBetweenCoors(coor));
        end
        
+       %% Testers
        function  B = isequal(coor1,coor2,tol)
             % Test for equality - with a tolerance
             % Does not check the bases...
@@ -223,6 +283,17 @@ classdef coordinateSystem
               
        %% Plotting
        function plot(obj,scale)
+           % plots the coordinate system in obj in the global coordinates
+           if nargin  == 1
+               scale = 1;
+           end
+           coorGlobalBase = obj.getInGlobal;
+           plotLocal(coorGlobalBase,scale);
+       end
+       
+       function plotLocal(obj,scale)
+           % plots the coordinate system in obj in the local base
+           % coordinates
            if nargin  == 1
                scale = 1;
            end
@@ -254,9 +325,11 @@ classdef coordinateSystem
        function obj = setZaxis(obj)
            obj.z_axis = getZaxis(obj);
        end
+       
        function z = getZaxis(obj)
            z = cross(obj.x_axis,obj.y_axis);
        end
+       
        function obj = normAxis(obj)
            % Make sure we have unit vectors
            obj.x_axis = obj.x_axis/norm(obj.x_axis);
