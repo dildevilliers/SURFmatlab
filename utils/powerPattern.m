@@ -1,12 +1,12 @@
-function Pout = powerPattern(th,ph,Pin,th0,taper_dB,freq)
+function Pout = powerPattern(ph,th,Pin,th0,taper_dB,freq)
 
 %Name: powerPattern.m
 %Description:
 %   Function to create a power pattern vector to be used in
 %   farFieldFromPowerPattern function for the @FarField class
 %Inputs:
-% --th: column vector [Nth x 1] of th angles in rad - Nth is no. of unique theta angles
-% --ph: column vector [Nph x 1] of ph angles in rad - Nph is no. of unique theta angles
+% --ph: column vector [Nang x 1] of ph angles in rad - Nang is no. of unique angles
+% --th: column vector [Nang x 1] of th angles in rad - Nang is no. of unique angles
 % --Pin: Input power pattern cut [Nth x 1]/string/cut pair [Nth x 2]
 % --th0 = subtended half angle in rad
 % --taper_dB = required edge taper in dB (typically  < 0)
@@ -24,6 +24,7 @@ end
 % Define a few useful terms
 Pin_pattern = Pin;
 [Nth,Nph] = deal(length(th),length(ph));
+assert(Nth == Nph,'ph and th must be the same length');
 Nth_cut = length(unique(th));
 Nph_cut = length(unique(ph));
 
@@ -52,7 +53,7 @@ elseif (NPin1 == Nth_cut) %either a 1D axially symmetric pattern or a symmetric 
     switch NPin2
         case 1 %1D axially symmetric pattern
             Pout = repmat(Pin_pattern,Nph_cut,1);
-        case 2 %Symmetric pattern defined by (phi = 0) and (phi = pi/2) cuts - final power pattern is sum of both projected rectangualrly
+        case 2 %Symmetric pattern defined by (phi = 0) and (phi = pi/2) cuts - final power pattern is sum of both projected rectangularly
             [Pout1,Pout2] = deal(repmat(Pin_pattern(:,1),Nph_cut,1),repmat(Pin_pattern(:,2),Nph_cut,1));
             Pout = Pout1.*abs(cos(ph)) + Pout2.*abs(sin(ph));
         otherwise

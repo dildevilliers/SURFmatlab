@@ -84,14 +84,15 @@ classdef FarField
                 
                 Nth_cut = 37;
                 Nph_cut = 73;
-                th = linspace(0,pi,37);
-                ph = linspace(0,2*pi,73);
+                th = linspace(0,pi,Nth_cut);
+                ph = linspace(0,2*pi,Nph_cut);
                 th0 = 45;
                 taper_dB = -10;
                 freq = 1e9;
-                [TH,PH] = meshgrid(th,ph);
-                P = powerPattern(TH(:),PH(:),'gauss',th0,taper_dB,freq);
-                obj = FarField.farFieldFromPowerPattern(TH(:),PH(:),P,freq,'linearY');
+                [PH,TH] = meshgrid(ph,th);
+%                 [TH,PH] = meshgrid(th,ph);
+                P = powerPattern(PH(:),TH(:),'gauss',th0,taper_dB,freq);
+                obj = FarField.farFieldFromPowerPattern(PH(:),TH(:),P,freq,'linearY');
                 
             else
                 
@@ -999,7 +1000,7 @@ classdef FarField
                         P(ff) = integral2D(PH,TH,integrand);
                     end
                 otherwise
-                    error(['pradInt not implemented for gridType = ',obj.gridType])
+                    error(['pradInt not implemented for gridType = ',obj.gridType,', only for PhTh grids'])
             end
         end
         

@@ -1,12 +1,12 @@
-function FF = farFieldFromPowerPattern(th,ph,P,freq,fieldPol)
+function FF = farFieldFromPowerPattern(ph,th,P,freq,fieldPol)
 
 %Name: farFieldFromPowerPattern.m
 %Description:
 %   Function to create a Farfield object from a power pattern, which must
 %   be provided in the format that is outputted by powerPattern.m.
 %Inputs:
-% --th: column vector [Nang x 1] of th angles in rad
 % --ph: column vector [Nang x 1] of ph angles in rad
+% --th: column vector [Nang x 1] of th angles in rad
 % --P: column vector [Nang x 1] of power pattern values (see Pout output for powerPattern.m for an example of the format) 
 % --freq: scalar frequency in Hz
 % --fieldPol: (optional) string denoting how far field should be polarized- options are 'linearX', 'linearY', 'circularLH', 'circularRH' 
@@ -49,16 +49,15 @@ switch fieldPol
         error('fieldPol input string unrecognised')
 end
         
-
-
 %% Build the object
-E3 = zeros(size(E1)); %.ffe files will never have a radial field component...
+E3 = zeros(size(E1)); %farfields will never have a radial field component...
 
-Prad = 4*pi.*ones(1,Nf); %!!! NB: this should be replaced with a 2D power integral of P
+Prad = ones(1,Nf); % Dummy for the constructor
 radEff = ones(size(freq));
 
 FF = FarField(ph,th,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
 
+FF.Prad = FF.pradInt;
 FF = setEnames(FF);
 FF = setXYnames(FF);
 FF = setPhTh(FF);
