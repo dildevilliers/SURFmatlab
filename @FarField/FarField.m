@@ -1095,84 +1095,8 @@ classdef FarField
         obj = readGRASPgrd(pathName);
         obj = readFEKOffe(pathName);
         obj = readCSTffs(pathName);
-<<<<<<< HEAD
-=======
         obj = farFieldFromPowerPattern(x,y,P,freq,Pdim,coorSys,polType,gridType,freqUnit,slant);
         
-        %% Coordinate transformers
-        function [u,v,w] = PhTh2DirCos(ph,th)
-            % Try to maintain the ph angles in the pole
-            th(th == 0 & ph ~= 0) = eps;
-            u = real(sin(th).*cos(ph));
-            v = real(sin(th).*sin(ph));
-            w = real(cos(th));
-        end
-        
-        function [u,v,w] = DirCos2DirCos(u,v,w)
-            if nargin < 3
-                w = sqrt(1 - u.^2 - v.^2);
-            end
-        end
-        
-        function [u,v,w] = AzEl2DirCos(az,el)
-            % Try to maintain the az angles in the pole
-            el(el == pi/2 & az ~= 0) = pi/2+eps;
-            u = real(sin(az).*cos(el));
-            v = real(sin(el));
-            w = real(cos(az).*cos(el));
-        end
-        
-        function [u,v,w] = ElAz2DirCos(ep,al)
-            % Try to maintain the ep angles in the pole
-            al(al == pi/2 & ep ~= 0) = pi/2+eps;
-            u = real(sin(al));
-            v = real(cos(al).*sin(ep));
-            w = real(cos(al).*cos(ep));
-        end
-        
-        function [u,v,w] = TrueView2DirCos(x,y)
-            Th = sqrt(x.^2 + y.^2);
-            Ph = atan2(y,x);
-            % Try to maintain the Ph angles in the pole
-            Th(Th == 0 & Ph ~= 0) = eps;
-            u = real(sin(Th).*cos(Ph));
-            v = real(sin(Th).*sin(Ph));
-            w = real(cos(Th));
-        end
-        
-        function [u,v,w] = ArcSin2DirCos(x,y)
-            u = sin(x);
-            v = sin(y);
-            w = real(sqrt(1 - (sin(x).^2 + sin(y).^2)));
-        end
-        
-        function [ph,th] = DirCos2PhTh(u,v,w)
-            ph = real(atan2(v,u));
-            th = real(acos(w));
-        end
-        
-        function [az,el] = DirCos2AzEl(u,v,w)
-            el = real(asin(v));
-            az = real(atan2(u,w));
-        end
-        
-        function [ep,al] = DirCos2ElAz(u,v,w)
-            al = real(asin(u));
-            ep = real(atan2(v,w));
-        end
-        
-        function [Xg,Yg] = DirCos2TrueView(u,v,w)
-            Ph = atan2(v,u);
-            Th = acos(w);
-            Xg = real(Th.*cos(Ph));
-            Yg = real(Th.*sin(Ph));
-        end
-        
-        function [asinu,asinv] = DirCos2ArcSin(u,v,w)
-            asinu = real(asin(u));
-            asinv = real(asin(v));
-        end
->>>>>>> farFieldFromPowerPattern
     end
     
     %% Internal helper functions
