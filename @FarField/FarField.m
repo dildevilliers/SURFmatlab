@@ -80,18 +80,18 @@ classdef FarField
             % 'Prad': vector [1 x Nf] of radiated powers in W
             % 'radEff': vector [1 x Nf] of radiation efficiencies
             
-            if nargin == 0 %No-inputs case - generate a Gaussian beam pattern
+            if nargin == 0 %No-inputs case - generate a Gaussian beam pattern at a single frequency (1 GHz) over the full sphere, 5 degree angular resolution
                 
-                %code here
+                Nth_cut = 37;
+                Nph_cut = 73;
                 th = linspace(0,pi,37);
                 ph = linspace(0,2*pi,73);
-                [TH, PH] = meshgrid(th,ph);
-                x = PH(:);
-                y = TH(:);
-                
-                
-                
-                
+                th0 = 45;
+                taper_dB = -10;
+                freq = 1e9;
+                [TH,PH] = meshgrid(th,ph);
+                P = powerPattern(TH(:),PH(:),'gauss',th0,taper_dB,freq);
+                obj = FarField.farFieldFromPowerPattern(TH(:),PH(:),P,freq,'linearY');
                 
             else
                 
@@ -187,35 +187,36 @@ classdef FarField
                     y = y(:,1);
                 end
                 
+                
+                
+                obj.x = x;
+                obj.y = y;
+                %             [obj.th, obj.ph] = obj.getphth();
+                obj.E1 = E1;
+                obj.E2 = E2;
+                obj.E3 = E3;
+                obj.freq = freq;
+                obj.Prad = Prad;
+                obj.radEff = radEff;
+                obj.radEff_dB = dB10(radEff);
+                obj.coorSys = coorSys;
+                obj.polType = polType;
+                obj.gridType = gridType;
+                obj.freqUnit = freqUnit;
+                obj.slant = slant;
+                obj.Nf = Nf;
+                obj.Nang = Nang;
+                obj.Nx = length(unique(x));
+                obj.Ny = length(unique(y));
+                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
+                obj.Gain_dB = dB10(max(obj.getGain()));
+                obj = setEnames(obj);
+                obj = setXYnames(obj);
+                obj = setBase(obj);
+                obj = setFreq(obj);
+                obj = setPhTh(obj);
+                obj = setRangeTypes(obj);
             end
-            
-            obj.x = x;
-            obj.y = y;
-            %             [obj.th, obj.ph] = obj.getphth();
-            obj.E1 = E1;
-            obj.E2 = E2;
-            obj.E3 = E3;
-            obj.freq = freq;
-            obj.Prad = Prad;
-            obj.radEff = radEff;
-            obj.radEff_dB = dB10(radEff);
-            obj.coorSys = coorSys;
-            obj.polType = polType;
-            obj.gridType = gridType;
-            obj.freqUnit = freqUnit;
-            obj.slant = slant;
-            obj.Nf = Nf;
-            obj.Nang = Nang;
-            obj.Nx = length(unique(x));
-            obj.Ny = length(unique(y));
-            obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
-            obj.Gain_dB = dB10(max(obj.getGain()));
-            obj = setEnames(obj);
-            obj = setXYnames(obj);
-            obj = setBase(obj);
-            obj = setFreq(obj);
-            obj = setPhTh(obj);
-            obj = setRangeTypes(obj);
         end
         
         
@@ -1094,6 +1095,84 @@ classdef FarField
         obj = readGRASPgrd(pathName);
         obj = readFEKOffe(pathName);
         obj = readCSTffs(pathName);
+<<<<<<< HEAD
+=======
+        obj = farFieldFromPowerPattern(x,y,P,freq,Pdim,coorSys,polType,gridType,freqUnit,slant);
+        
+        %% Coordinate transformers
+        function [u,v,w] = PhTh2DirCos(ph,th)
+            % Try to maintain the ph angles in the pole
+            th(th == 0 & ph ~= 0) = eps;
+            u = real(sin(th).*cos(ph));
+            v = real(sin(th).*sin(ph));
+            w = real(cos(th));
+        end
+        
+        function [u,v,w] = DirCos2DirCos(u,v,w)
+            if nargin < 3
+                w = sqrt(1 - u.^2 - v.^2);
+            end
+        end
+        
+        function [u,v,w] = AzEl2DirCos(az,el)
+            % Try to maintain the az angles in the pole
+            el(el == pi/2 & az ~= 0) = pi/2+eps;
+            u = real(sin(az).*cos(el));
+            v = real(sin(el));
+            w = real(cos(az).*cos(el));
+        end
+        
+        function [u,v,w] = ElAz2DirCos(ep,al)
+            % Try to maintain the ep angles in the pole
+            al(al == pi/2 & ep ~= 0) = pi/2+eps;
+            u = real(sin(al));
+            v = real(cos(al).*sin(ep));
+            w = real(cos(al).*cos(ep));
+        end
+        
+        function [u,v,w] = TrueView2DirCos(x,y)
+            Th = sqrt(x.^2 + y.^2);
+            Ph = atan2(y,x);
+            % Try to maintain the Ph angles in the pole
+            Th(Th == 0 & Ph ~= 0) = eps;
+            u = real(sin(Th).*cos(Ph));
+            v = real(sin(Th).*sin(Ph));
+            w = real(cos(Th));
+        end
+        
+        function [u,v,w] = ArcSin2DirCos(x,y)
+            u = sin(x);
+            v = sin(y);
+            w = real(sqrt(1 - (sin(x).^2 + sin(y).^2)));
+        end
+        
+        function [ph,th] = DirCos2PhTh(u,v,w)
+            ph = real(atan2(v,u));
+            th = real(acos(w));
+        end
+        
+        function [az,el] = DirCos2AzEl(u,v,w)
+            el = real(asin(v));
+            az = real(atan2(u,w));
+        end
+        
+        function [ep,al] = DirCos2ElAz(u,v,w)
+            al = real(asin(u));
+            ep = real(atan2(v,w));
+        end
+        
+        function [Xg,Yg] = DirCos2TrueView(u,v,w)
+            Ph = atan2(v,u);
+            Th = acos(w);
+            Xg = real(Th.*cos(Ph));
+            Yg = real(Th.*sin(Ph));
+        end
+        
+        function [asinu,asinv] = DirCos2ArcSin(u,v,w)
+            asinu = real(asin(u));
+            asinv = real(asin(v));
+        end
+>>>>>>> farFieldFromPowerPattern
     end
     
     %% Internal helper functions
