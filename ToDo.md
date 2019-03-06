@@ -1,8 +1,6 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] Generate FarField from specified gain pattern (Brandt)
-- [ ] Make empty constructor (Brandt)
 - [ ] Plot Grid (DdV)
 - [ ] Speed up interpolateGrid (DdV)
 - [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D
@@ -42,6 +40,9 @@
 - [x] Normalise to isotropic
 - [x] Norm of fields (for error calculations and comparisons)
 - [x] Field rotations (DdV)
+- [x] Generate FarField from specified gain pattern (Brandt)
+- [x] Make empty constructor (Brandt)
+
 
 ## ReflectorGeometry
 # General (class not assigned yet)

@@ -59,22 +59,19 @@ classdef reflector
            % system, is intercepted by the reflector by checking for <th at
            % ph.
 
-       end
-       
-       function A = projectedArea(obj)
-           
+           % ToDo
        end
        
        function A = totalArea(obj)
-           
+           % ToDo
        end
        
        function writeGRASPsfc(obj,pathName,N)
-           
+           % ToDo
        end
        
        function writeGRASPrim(obj,pathName,N)
-           
+           % ToDo
        end
 
        %% Plotting
@@ -129,9 +126,13 @@ classdef reflector
            [X,Y] = meshgrid(linspace(min(V(1,:)),max(V(1,:)),N),linspace(min(V(2,:)),max(V(2,:)),N));
        end
        
+       function [X,Y] = generateSurfaceGridPolar(obj,N,thinFlag)
+           % ToDo
+       end
+       
        function [Xp,Yp,Zp] = changeBaseMeshgrid(obj,X,Y,Z)
            % Returns the meshgrid style variable X,Y,Z, defined in the
-           % global coordinate system, as Xp,Yp, and Zp defined in the
+           % global coordinate system, as Xp,Yp,Zp defined in the
            % reflector coordinate system
             [Nx,Ny] = size(X);
             xyz = [X(:).';Y(:).';Z(:).'];

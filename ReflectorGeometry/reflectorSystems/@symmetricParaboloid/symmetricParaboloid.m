@@ -17,6 +17,7 @@ classdef symmetricParaboloid
         chordX        % chord length along x-axis
         chordY        % chord length along y-axis
         PR            % Primary reflector object
+        apArea        % Projected aperture area
     end
     
     methods
@@ -39,10 +40,15 @@ classdef symmetricParaboloid
             obj.chordX = norm(obj.P_PR_xMax - obj.P_PR_xMin);
             obj.chordY = norm(obj.P_PR_yMax - obj.P_PR_yMin);
             obj.P_PR0 = PRcoor.origin;
+            obj.chordX = D;
+            obj.chordY = D;
+            obj.apArea = pi*(D/2)^2;
         end
         
-        function rho = getThRhMapping(obj,th)
-            
+        function [rho,drho_dth] = getThRhoMapping(obj,th)
+            % Returns the th->rho mapping and its derivative 
+            rho = 2.*obj.F.*tan(th./2);
+            drho_dth = obj.F.*sec(th./2).^2;
         end
         
         function pathLengthStruct = getPathLength(obj,th,ph)

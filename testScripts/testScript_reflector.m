@@ -28,26 +28,6 @@ feedCoor1.plot
 
 
 % % Get the required angles to rotate back to the GC
-% Np = cross(MR.coor.z_axis,GC.z_axis);
-% Np = Np./norm(Np);
-% % plot3([0,Np(1)],[0,Np(2)],[0,Np(3)],'c')
-% N = cross(Np,MR.coor.z_axis);
-% N = N./norm(N);
-% % plot3([0,N(1)],[0,N(2)],[0,N(3)],'m')
-% % th = acos(dot(GC.z_axis,MR.coor.z_axis));
-% th = angBetweenVectors(MR.coor.z_axis,GC.z_axis);
-% ph = angBetweenVectors(MR.coor.x_axis,N);
-% % Sort out sign
-% phSign = sign(dot(cross(MR.coor.x_axis,N),MR.coor.z_axis));
-% ph = ph*phSign;
-% MRcoor = MR.coor;
-% xyz_prime = MRcoor.rotGRASP(th,ph,0);
-% ps = angBetweenVectors(xyz_prime.x_axis,GC.x_axis);
-% % Sort out sign
-% psSign = sign(dot(cross(xyz_prime.x_axis,GC.x_axis),GC.z_axis));
-% ps = ps*psSign;
-% % MRcoor = MRcoor.rotGRASP(th,ph,ps);
-% % MRcoor.plot
 [angGRASP] = getGRASPangBetweenCoors(GC,MR.coor);
 
 % Shift/rotate back
@@ -63,3 +43,4 @@ MR.coor = rotGRASP(MR.coor,angGRASP);
 MR.plot
 MR.coor.plot
 
+%% 
