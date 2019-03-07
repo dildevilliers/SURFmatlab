@@ -1,8 +1,8 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] Plot Grid (DdV)
-- [ ] Speed up interpolateGrid (DdV)
+- [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
+- [ ] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
 - [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D
 - [ ] readFITS (DdV)
 - [ ] readGRASPcut (DdV)
@@ -42,31 +42,32 @@
 - [x] Field rotations (DdV)
 - [x] Generate FarField from specified gain pattern (Brandt)
 - [x] Make empty constructor (Brandt)
+- [x] Plot Grid (DdV)
 
 
 ## ReflectorGeometry
 # General (class not assigned yet)
 - [ ] Masking of a FarField by a reflector system given the feed position and orientation
 - [ ] basic ray tracing of a reflector system
-- [ ] full GO of a reflector system
 - [ ] add offsetParaboloid class (William)
 - [ ] add offset Gregorian/Cassegrain class
 - [ ] add offsetGregorianShaped class
 - [ ] add symmetrical Gregorian/Cassegrain class
 - [ ] add symmetrical Gregorian/Cassegrian shaped class
+- [ ] full GO of a reflector system
 
 # @reflector
-- [ ] Calculate actual area
+- [ ] Calculate actual area (William)
 - [ ] Write GRASP outputs
 - [ ] getMaskFunction
 - [ ] add more functionality for point cloud grids (polar, thinned polar)
 
 # @symmetricParaboloid
 - [ ] calculate a path length structure
-- [ ] calculate the rho-th mapping
 - [ ] sort out the 2D plotting
 - [ ] include a feed picture for plotting
-- [ ] Calculate projected area
+- [x] Calculate projected area
+- [x] calculate the rho-th mapping
 
 ## utils
 - [x] rotation of spherical coordinates

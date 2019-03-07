@@ -43,4 +43,9 @@ MR.coor = rotGRASP(MR.coor,angGRASP);
 MR.plot
 MR.coor.plot
 
-%% 
+%% Grid and plotting test
+R = reflector();
+% R.plot(10000,'polarThin')
+% R.plot(1000,'x0')
+% R.plot(1000,'x0')
+R.plotNorms(1000,200,'polarThin')

@@ -3,7 +3,7 @@ classdef polarGrid
     % by Kildal in TAP
     
     properties
-        rhoMax(1,1) double {mustBeReal, mustBeFinite} = 1 % radius in (m)
+        rhoMax double {mustBeReal, mustBeFinite} = [1,1] % radius in (m). If 2 elemens the first is the radius in x-axis and the second the radius in y-axis
         expN(1,1) double {mustBeReal, mustBeFinite} = 5   % number of spokes = 2^expN
         thinFlag(1,1) logical = false
     end
@@ -22,7 +22,13 @@ classdef polarGrid
     methods
         function obj = polarGrid(rM,I,thinGrid)
             if nargin >= 1
-                obj.rhoMax = rM;
+                if numel(rM) == 1
+                    obj.rhoMax = ones(1,2).*rM;
+                elseif numel(rM) == 2
+                    obj.rhoMax = rM;
+                else
+                    error('rM should have 1 or 2 elements')
+                end
                 if nargin >= 2
                     obj.expN = I;
                     if nargin == 3
@@ -31,7 +37,7 @@ classdef polarGrid
                 end
             end
             
-            if obj.expN >= 11
+            if obj.expN >= 13
                 reply = input(['Are you sure that expN = ',num2str(obj.expN),'? This will make a huge grid! Y/N [N]:'],'s');
                 if isempty(reply)
                     reply = 'N';
@@ -54,8 +60,6 @@ classdef polarGrid
                 if obj.thinFlag
                     if mm <= obj.M
                         i_m(mm) = round(log10(16*mm/3)/log10(2));
-%                     else % Keep number of phi points the same for the outer th angles
-%                         i_m(mm) = i_m(obj.M);
                     end
                 else
                     i_m(mm) = obj.expN;
@@ -68,14 +72,21 @@ classdef polarGrid
             Npoints = sum(obj.N_m);
             [obj.phi,obj.rho] = deal(zeros(Npoints,1));
             
-            rho_grid_delta = obj.rhoMax/(obj.M-1);
+            % Eccentricity
+            a = obj.rhoMax(1);
+            b = obj.rhoMax(2);
+            e = sqrt(1-(b/a).^2);
+            % Get the grid deltas
+            a_delta = a/(obj.M-1);  
+            b_delta = b/(obj.M-1);
             
-            obj.rho(1:obj.N_m(1)) = 0*rho_grid_delta;
+            obj.rho(1:obj.N_m(1)) = 0;
             obj.phi(1:obj.N_m(1)) = linspace(0,2*pi,obj.N_m(1));
             for mm = 2:obj.M
-                obj.rho(sum(obj.N_m(1:mm-1))+1:sum(obj.N_m(1:mm))) = (mm-1)*rho_grid_delta;
                 ph_delta = 2*pi/obj.N_m(mm);
-                obj.phi(sum(obj.N_m(1:mm-1))+1:sum(obj.N_m(1:mm))) = 0:ph_delta:(obj.N_m(mm)-1)*ph_delta;
+                ph_vect = 0:ph_delta:(obj.N_m(mm)-1)*ph_delta;
+                obj.phi(sum(obj.N_m(1:mm-1))+1:sum(obj.N_m(1:mm))) = ph_vect;
+                obj.rho(sum(obj.N_m(1:mm-1))+1:sum(obj.N_m(1:mm))) = (mm-1)*b_delta./sqrt(1-(e.*cos(ph_vect)).^2);
             end
             obj.x = obj.rho.*cos(obj.phi);
             obj.y = obj.rho.*sin(obj.phi);
@@ -87,6 +98,8 @@ classdef polarGrid
         
         function plot(obj)
             plot(obj.x,obj.y,'k.')
+            xlabel('x (m)')
+            ylabel('y (m)')
             axis equal
             grid on
         end

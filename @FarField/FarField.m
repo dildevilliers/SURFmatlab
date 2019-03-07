@@ -828,6 +828,34 @@ classdef FarField
         plotJones(obj1,obj2,varargin)  % Much to do here still...
         plotPrincipleCuts(obj,varargin)
         
+        function plotGrid(obj)
+            switch obj.gridType
+                case {'DirCos'}
+                    xplot = obj.x;
+                    yplot = obj.y;
+                    xtext = [obj.xname, ' = sin(\theta)cos(\phi)'];
+                    ytext = [obj.yname, ' = sin(\theta)sin(\phi)'];
+                    
+                otherwise
+                    xplot = rad2deg(obj.x);
+                    yplot = rad2deg(obj.y);
+                    xtext = [obj.xname,' (deg)'];
+                    ytext = [obj.yname,' (deg)'];
+            end
+            plot(xplot,yplot,'k.')
+            xlabel(xtext)
+            ylabel(ytext)
+            axis equal
+            grid on
+            xlim([min(xplot),max(xplot)])
+            ylim([min(yplot),max(yplot)])
+        end
+        
+        function plotGridBase(obj)
+            obj = obj.reset2Base;
+            obj.plotGrid;
+        end
+        
         %% Interpolation methods
         %         [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
         [Z] = interpolateGrid(obj,output,xi,yi,varargin)
