@@ -53,7 +53,7 @@
 - [ ] add offset Gregorian/Cassegrain class
 - [ ] add offsetGregorianShaped class
 - [ ] add symmetrical Gregorian/Cassegrain class
-- [ ] add symmetrical Gregorian/Cassegrian shaped class
+- [ ] add symmetrical Gregorian/Cassegrain shaped class
 - [ ] full GO of a reflector system
 
 # @reflector
@@ -64,10 +64,10 @@
 
 # @symmetricParaboloid
 - [ ] calculate a path length structure
-- [ ] sort out the 2D plotting
 - [ ] include a feed picture for plotting
 - [x] Calculate projected area
 - [x] calculate the rho-th mapping
+- [x] sort out the 2D plotting
 
 ## utils
 - [x] rotation of spherical coordinates

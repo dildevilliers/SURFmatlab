@@ -82,28 +82,63 @@ classdef reflector
            M = obj.rim.isInRim(x,y);
            z = obj.surface.getZ(x,y);
            z(M == 0) = NaN;
-           xyz_prime = changeBase([x,y,z].',obj.coor);
+           GC = coordinateSystem();
+           xyz_prime = changeBase([x,y,z].',GC,obj.coor);
            surfPoints = xyz_prime;
            % Remove columns with NaN z values and return as a 3xN^2 matrix
            NaNCols = any(isnan(surfPoints));
            surfPoints = surfPoints(:,~NaNCols);
            
            % Get the actual rim
-           Rxy = obj.rim.cartRim;
+           Rxy = obj.rim.cartRim(N);
            Rz = obj.surface.getZ(Rxy(1,:),Rxy(2,:));
-           [rimPoints] = changeBase([Rxy;Rz],obj.coor);
+           [rimPoints] = changeBase([Rxy;Rz],GC,obj.coor);
        end
        
-       function [th,ph,coorCentre] = getMaskFunction(obj,x)
-           % Returns a th, as a function of ph, in the coordinate system
-           % coorCentre, which points at the apparent centre of the
-           % reflector with (with the its z-axis), and is positioned at the
-           % point x.  This information can be used to determine easily if
-           % a certain direction of radiation, in the coorCentre coordinate
+%        function [th,ph,coorCentre] = getMaskFunction(obj,x)
+%            % Returns th, as a function of ph, in the coordinate system
+%            % coorCentre, which points at the apparent centre of the
+%            % reflector with (with the its z-axis), and is positioned at the
+%            % point x.  This information can be used to determine easily if
+%            % a certain direction of radiation, in the coorCentre coordinate
+%            % system, is intercepted by the reflector by checking for <th at
+%            % ph.
+% 
+%            % ToDo
+%        end
+       
+       function [th,ph,validGraph] = getMaskFunction(obj,coorIn)
+           % Returns th, as a function of ph of the apparent rim position 
+           % from the coordinate system coorIn.  
+           % This information can be used to determine if a certain 
+           % direction of radiation, in the coorIn coordinate
            % system, is intercepted by the reflector by checking for <th at
            % ph.
-
-           % ToDo
+           % validGraph is a logical which indicates if the z-axis actually
+           % points at some part of the disch, and therefore presents a
+           % valid graph for this fast method of masking...
+           
+           P0 = coorIn.origin;
+           Npoints = 500^2;   % Use plenty of points to resolve cases where we're pointing very close to the edge...
+           % Get the rim points in 3D space
+           [~,rimPoints] = obj.getPointCloud(Npoints);
+           % Get rim points in the coordinate System base
+           rimPointsInCoorIn = changeBase(rimPoints,coorIn,obj.coor);
+           % Calculate the vectors between the origin and the rim points
+           [ph,el] = cart2sph(rimPointsInCoorIn(1,:),rimPointsInCoorIn(2,:),rimPointsInCoorIn(3,:));
+           th = pi/2-el;
+           % Check for valid graph (ph must be monotonic)
+           validGraph = all(sign(diff(unwrap(ph)))<0) | all(sign(diff(unwrap(ph)))>0);
+           if validGraph
+               [ph,Isort] = sort(ph);
+               th = th(Isort);
+           end
+%            figure
+%            plot(rad2deg(ph),rad2deg(th),'k.-'), grid on
+%            figure
+%            plot3(rimPointsInCoorIn(1,:),rimPointsInCoorIn(2,:),rimPointsInCoorIn(3,:),'.')
+%            grid on
+%            keyboard
        end
        
        function A = totalArea(obj)
@@ -190,7 +225,8 @@ classdef reflector
            % reflector coordinate system
             [Nx,Ny] = size(X);
             xyz = [X(:).';Y(:).';Z(:).'];
-            xyz_prime = changeBase(xyz,obj.coor);
+            GC = coordinateSystem;
+            xyz_prime = changeBase(xyz,GC,obj.coor);
             Xp = reshape(xyz_prime(1,:),Nx,Ny);
             Yp = reshape(xyz_prime(2,:),Nx,Ny);
             Zp = reshape(xyz_prime(3,:),Nx,Ny);

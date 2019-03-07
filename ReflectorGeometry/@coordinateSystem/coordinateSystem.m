@@ -132,10 +132,7 @@ classdef coordinateSystem
                % Now rotate the base by this amount
                baseRotated = oldBase.rotGRASP(graspAng);
                % And shift the origin
-               Q = dirCosine(newBase,oldBase);
-               U = [obj.origin];
-               Up = Q\U;
-               Ups = Up + oldBase.origin;
+               Ups = changeBase(obj.origin,newBase,oldBase);
                coorInGlobal = coordinateSystem(Ups(:,1),baseRotated.x_axis,baseRotated.y_axis);
                coorInGlobal.base = [];
            else
@@ -164,49 +161,24 @@ classdef coordinateSystem
        end
        
        function Uprime = changeBase(U,coor_new,coor_base)
-           % Provides the points defined in the [3xN] matrix U, which would
-           % have been defined in the coordinate system coor_base, in the new
+           % Provides the points defined in the [3xN] matrix U, which are
+           % defined in the coordinate system coor_base, in the new
            % coordinate system coor_new through translation and rotation.
-           % U, coor_new, and coor_base should be described in the global
-           % coordinate system.  This is used when we have data points/coordinate systems, but
-           % no information about where they come from, but want to move
-           % them with another object that we do have information for
-           % U can also be a coordinateSystem type, the Uprime is returned
-           % as the new coordinate system - rotated and translated... 
-           % The base class is deleted in this process.
+           
            if nargin == 2
                coor_base = coordinateSystem();
-           end
-           coorClass = false;
-           if isa(U,'coordinateSystem')
-               Ncoor = numel(U); % Handle arrays or ccordinate systems
-               Utemp = zeros(3,3,Ncoor);
-               for ii = 1:Ncoor
-                   Utemp(:,:,ii) = [[0;0;0],U(ii).x_axis,U(ii).y_axis]+U(ii).origin;
-               end
-               U = reshape(Utemp,3,3*Ncoor);
-               coorClass = true;
            end
            [N3,~] = size(U);
            if N3 ~= 3
                error('U must have 3 rows indicated [x;y;z] coordinates')
            end
-           
-           % Move points to origin reference
-           Uorigin = bsxfun(@minus,U,coor_base.origin);
+           % Move points to new coordinate origin reference
+           U = U - coor_new.origin;
            % Rotate the points in the origin reference
            Q = dirCosine(coor_new,coor_base);
-           UoriginPrime = Q*Uorigin;
+           Uprime = Q\U;
            % Move to new coordinate base
-           Uprime = UoriginPrime + coor_new.origin;
-           if coorClass
-               UprimeTemp = reshape(Uprime,3,3,Ncoor);
-               clear Uprime
-               Uprime(1,Ncoor) = coordinateSystem(); % Initialise an array of coordinate systems
-               for ii = 1:Ncoor
-                   Uprime(ii) = coordinateSystem(UprimeTemp(:,1,ii),UprimeTemp(:,2,ii)-UprimeTemp(:,1,ii),UprimeTemp(:,3,ii)-UprimeTemp(:,1,ii));
-               end
-           end
+           Uprime = Uprime + coor_base.origin;
        end
        
        function [angGRASP] = getGRASPangBetweenCoors(coor1,coor0)
