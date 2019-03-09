@@ -15,7 +15,7 @@ classdef polarGrid
         delta_n % Thinning factor as function of M
         rho     % vector of rho values
         phi     % vector of phi values
-        x       % vector fo x values
+        x       % vector of x values
         y       % vector of y values
     end
     

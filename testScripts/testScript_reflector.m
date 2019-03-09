@@ -45,20 +45,36 @@ MR.plot
 MR.coor.plot
 
 %% Grid and plotting test
-R = reflector();
-% R.plot(10000,'polarThin')
+close all
+clear all
+S = paraboloid([0;0;0],5);
+R = ellipticalRim([1;2],[2;5]);
+C = coordinateSystem();
+C = C.rotGRASP(deg2rad([0,0,0]));
+R = reflector(S,R,C);
+R.plot(10000,'polarThin')
 % R.plot(1000,'x0')
 % R.plot(1000,'x0')
-R.plotNorms(1000,200,'polarThin')
+% R.plotNorms(1000,200,'polarThin')
 
 %% Masking test
-S = paraboloid([0;0;-5],5);
-R = ellipticalRim([0;0],[5;5]);
+close all
+clear all
+S = paraboloid([2;2;0],5);
+R = ellipticalRim([2;2],[5;2]);
 C0 = coordinateSystem();
-C0 = C0.rotGRASP(deg2rad([0,0,0]));
+C0 = C0.rotGRASP(deg2rad([35,25,0]));
 R = reflector(S,R,C0);
-C = coordinateSystem([2,6,0]);
-C = C.rotGRASP(deg2rad([-145,25,90]));
-R.plot
-C.plot
-R.getMaskFunction(C)
+C = coordinateSystem([1,3,5]);
+C = C.rotGRASP(deg2rad([-145,30,90]));
+% R.plot
+% C.plot
+% R.getMaskFunction(C);
+th = linspace(-pi,pi,101);
+ph = zeros(size(th));
+FF = FarField;
+% M = R.getMask(C,FF);
+% R.plotMask(C,[ph.',th.'],12)
+% R.plotMask(C,FF,12)
+
+R.getRayClosestPoint(C,ph.',th.')
