@@ -47,8 +47,6 @@
 
 ## ReflectorGeometry
 # General (class not assigned yet)
-- [ ] Masking of a FarField by a reflector system given the feed position and orientation
-- [ ] basic ray tracing of a reflector system
 - [ ] add offsetParaboloid class (William)
 - [ ] add offset Gregorian/Cassegrain class
 - [ ] add offsetGregorianShaped class
@@ -59,15 +57,22 @@
 # @reflector
 - [ ] Calculate actual area (William)
 - [ ] Write GRASP outputs
-- [ ] getMaskFunction
-- [ ] add more functionality for point cloud grids (polar, thinned polar)
+- [x] getMaskFunction
+- [x] add more functionality for point cloud grids (polar, thinned polar)
+- [x] basic ray tracing of a reflector system
 
 # @symmetricParaboloid
+- [ ] Masking of a FarField by a reflector system given the feed position and orientation
+- [ ] build a FarField object of the mask
 - [ ] calculate a path length structure
 - [ ] include a feed picture for plotting
 - [x] Calculate projected area
 - [x] calculate the rho-th mapping
 - [x] sort out the 2D plotting
+
+# @pnt3D
+- [x] plot line between 2 points
+- [x] plot a ray from a point in a given direction
 
 ## utils
 - [x] rotation of spherical coordinates

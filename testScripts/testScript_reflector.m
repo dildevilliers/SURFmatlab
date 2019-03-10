@@ -55,7 +55,7 @@ R = reflector(S,R,C);
 R.plot(10000,'polarThin')
 % R.plot(1000,'x0')
 % R.plot(1000,'x0')
-R.plotNorms(1000,400,5,'polarThin')
+R.plotNorms(1000,400,1,'polarThin')
 
 %% Masking/ray tracing test
 close all
@@ -63,21 +63,20 @@ clear all
 S = paraboloid(pnt3D(2,2,0),5);
 R = ellipticalRim([2;2],[5;2]);
 C0 = coordinateSystem();
-C0 = C0.rotGRASP(deg2rad([35,25,0]));
+C0 = C0.rotGRASP(deg2rad([0,25,0]));
 R = reflector(S,R,C0);
 C = coordinateSystem(pnt3D(1,3,5));
 C = C.rotGRASP(deg2rad([-145,30,90]));
 % R.plot
 % C.plot
 % R.getMaskFunction(C);
-th = linspace(-pi,pi,1000);
-ph = zeros(size(th));
+th = linspace(-pi,pi,100);
+ph = ones(size(th)).*deg2rad(45);
 FF = FarField;
 % M = R.getMask(C,FF);
 % R.plotMask(C,[ph.',th.'],12)
 % R.plotMask(C,FF,12)
 
 % R.getRayInterceptPoint(C,ph.',th.',500)
-Pintercept = R.getRayInterceptPoint(C,FF.ph,FF.th,500);
-figure
-plot3(rad2deg(Pintercept.ph),rad2deg(Pintercept.th),Pintercept.r,'.')
+% Pintercept = R.getRayInterceptPoint(C,FF.ph,FF.th,500);
+R.reflectRays(C,ph.',th.',200);

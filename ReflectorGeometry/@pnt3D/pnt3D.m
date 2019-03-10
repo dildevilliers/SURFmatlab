@@ -102,6 +102,105 @@ classdef pnt3D
             obj = obj.setProps;
         end
         
+        function plotVect(obj,V,varargin)
+            % Plots a direction vector [3xNpoints] at all the points defined in the object
+            
+            parseobj = inputParser;
+            parseobj.FunctionName = 'plotLines';
+            
+            typeValidationObj = @(x) validateattributes(x,{'pnt3D'},{'numel',1},'plot','obj',1);
+            addRequired(parseobj,'obj',typeValidationObj);
+
+            typeValidationObj = @(x) validateattributes(x,{'double'},{'nrows',3},'plot','V',1);
+            addRequired(parseobj,'V',typeValidationObj);
+
+            typeValidationLineStyle = @(x) validateattributes(x,{'char'},{},'plot','lineStyle');
+            addParameter(parseobj,'lineStyle','-',typeValidationLineStyle);
+            
+            typeValidationLineColor = @(x) validateattributes(x,{'char','double'},{},'plot','lineColor');
+            addParameter(parseobj,'lineColor','k',typeValidationLineColor);
+            
+            typeValidationLineWidth = @(x) validateattributes(x,{'double'},{'real','positive'},'plot','lineWidth');
+            addParameter(parseobj,'lineWidth',1,typeValidationLineWidth);
+            
+            parse(parseobj, obj, V, varargin{:});
+            
+            lineStyle = parseobj.Results.lineStyle;
+            lineColor = parseobj.Results.lineColor;
+            lineWidth = parseobj.Results.lineWidth;
+            
+            % Check the input sizes
+            Nv = size(V,2);
+            if ~isequal(obj.size,[1 1])
+                assert(max(obj.size) == Nv,'There should be the same number of vectors as points')
+                x1 = obj.x(:).';
+                y1 = obj.y(:).';
+                z1 = obj.z(:).';
+            else
+                x1 = repmat(obj.x(:).',1,Nv);
+                y1 = repmat(obj.y(:).',1,Nv);
+                z1 = repmat(obj.z(:).',1,Nv);
+            end
+            
+            x2 = x1 + V(1,:);
+            y2 = y1 + V(2,:);
+            z2 = z1 + V(3,:);
+            plot3([x1;x2],[y1;y2],[z1;z2],'linestyle',lineStyle,...
+                'color',lineColor,'lineWidth',lineWidth);
+        end
+        
+        function plotLines(obj1,obj2,varargin)
+            % Plots lines between the points in obj1 and obj2
+            % obj1 can contain a single point
+            parseobj = inputParser;
+            parseobj.FunctionName = 'plotLines';
+            
+            typeValidationObj = @(x) validateattributes(x,{'pnt3D'},{'numel',1},'plot','obj1',1);
+            addRequired(parseobj,'obj1',typeValidationObj);
+
+            typeValidationObj = @(x) validateattributes(x,{'pnt3D'},{'numel',1},'plot','obj2',1);
+            addRequired(parseobj,'obj2',typeValidationObj);
+
+            typeValidationLineStyle = @(x) validateattributes(x,{'char'},{},'plot','lineStyle');
+            addParameter(parseobj,'lineStyle','-',typeValidationLineStyle);
+            
+            typeValidationLineColor = @(x) validateattributes(x,{'char','double'},{},'plot','lineColor');
+            addParameter(parseobj,'lineColor','k',typeValidationLineColor);
+            
+            typeValidationLineWidth = @(x) validateattributes(x,{'double'},{'real','positive'},'plot','lineWidth');
+            addParameter(parseobj,'lineWidth',1,typeValidationLineWidth);
+            
+            parse(parseobj, obj1, obj2, varargin{:});
+            
+            lineStyle = parseobj.Results.lineStyle;
+            lineColor = parseobj.Results.lineColor;
+            lineWidth = parseobj.Results.lineWidth;
+            
+            % Check the input sizes
+            sO1 = obj1.size;
+            sO2 = obj2.size;
+            No2 = max(sO2);
+            if ~isequal(sO1,[1 1])
+%                 assert(all(obj1.size == obj2.size),'The two points objects should be the same size')
+                assert(numel(obj1.x) == numel(obj2.x),'The two points objects should be the same size')
+                x1 = obj1.x(:).';
+                y1 = obj1.y(:).';
+                z1 = obj1.z(:).';
+            else
+                x1 = repmat(obj1.x(:).',1,No2);
+                y1 = repmat(obj1.y(:).',1,No2);
+                z1 = repmat(obj1.z(:).',1,No2);
+            end
+%             x1 = obj1.x(:).';
+%             y1 = obj1.y(:).';
+%             z1 = obj1.z(:).';
+            x2 = obj2.x(:).';
+            y2 = obj2.y(:).';
+            z2 = obj2.z(:).';
+            plot3([x1;x2],[y1;y2],[z1;z2],'linestyle',lineStyle,...
+                'color',lineColor,'lineWidth',lineWidth);
+        end
+        
         function plot(obj,varargin)
             parseobj = inputParser;
             parseobj.FunctionName = 'plot';

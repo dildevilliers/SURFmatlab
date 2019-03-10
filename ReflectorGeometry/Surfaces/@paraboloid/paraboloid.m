@@ -23,7 +23,8 @@ classdef paraboloid
            ny = (y - obj.vertex.y)./(2*obj.focalLength);
            nz = ones(size(nx)).*(-1);  
            n = [nx(:),ny(:),nz(:)].';
-           n = -n./norm(n); % Change sign for inward facing normal vectors
+           nMag = sqrt(sum(n.^2));
+           n = -bsxfun(@rdivide,n,nMag);
        end
        
        function C = getCurvature(obj,x,y)

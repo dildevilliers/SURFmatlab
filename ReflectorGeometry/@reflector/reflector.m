@@ -99,6 +99,7 @@ classdef reflector
             rimPoints = rimPoints.changeBase(GC,obj.coor);
         end
         
+        %% Masking and ray tracing
         function [th,ph,validGraph] = getMaskFunction(obj,coorIn)
             % Returns th, as a function of ph of the apparent rim position
             % from the coordinate system coorIn.
@@ -167,11 +168,12 @@ classdef reflector
             %            plot(rad2deg(ph),rad2deg(th)), grid on
         end
         
-        function [Pintercept] = getRayInterceptPoint(obj,coorIn,ph_in,th_in,NpointsTest)
+        function [Pintercept,M] = getRayInterceptPoint(obj,coorIn,ph_in,th_in,NpointsTest)
             % Return the point on the reflector where the ray pointing in the direction
             % [ph_in,th_in] from the coorIn coordinate system will intercept.
             % ph_in and th_in can be vectors of equal length
-            % Pintercept is a pnt3D object in the global coordinate system
+            % Pintercept is a pnt3D object in the global coordinate system.
+            % M is the associated input ray mask
             % NpointsTest is an optional parameter which determines the
             % resolution on the reflector to test with - keep under 1000 to
             % use to more accurate 3D scettered interpolation scheme 
@@ -231,8 +233,7 @@ classdef reflector
                 Pintercept = pnt3D(mean(xInt(1:nMean,:)),mean(yInt(1:nMean,:)),mean(zInt(1:nMean,:)));
             end
             
-            
-            debugPlot = 1;
+            debugPlot = 0;
             if debugPlot
                 int1Sph.plot('marker','.','markerEdgeColor','b','markerSize',5)
                 hold on
@@ -243,14 +244,80 @@ classdef reflector
                 intPoints.plot('marker','.','markerEdgeColor','b','markerSize',5)
                 hold on
 %                 pIntClosest.plot('marker','*','markerEdgeColor','g','markerSize',5)
-%                 pIntAveM.plot('marker','*','markerEdgeColor','c','markerSize',5)
                 Pintercept.plot('marker','*','markerEdgeColor','r','markerSize',5)
-%                 pIntI.plot('marker','none','markerEdgeColor','m','markerSize',5,'lineStyle','-','lineColor','m','lineWidth',3)
             end
-            
-            
         end
         
+        function [interceptPnt,reflectDir,M] = reflectRays(obj,coorIn,ph_in,th_in,NpointsTest)
+            % Returns the point on the reflector, as well as direction of 
+            % the reflected ray, for the ray pointing in the direction
+            % [ph_in,th_in].
+            % ph_in and th_in can be vectors of equal length
+            % reflectPoint is a pnt3D object in the global coordinate
+            % system, and reflectDir is a [3xNrefl] matrix of unit vectors,
+            % in the global coordinate system, of the Nrefl reflected rays.
+            % M is the associated input ray mask
+            % NpointsTest is an optional parameter which determines the
+            % resolution on the reflector to test with - keep under 1000 to
+            % use to more accurate 3D scettered interpolation scheme 
+            
+            assert(all(size(ph_in)==size(th_in)),'ph_in and th_in should be the same size');
+            if nargin < 5
+                NpointsTest = 500;
+            end
+            ph_in = ph_in(:);
+            th_in = th_in(:);
+            
+            % Get the interception points in the global coordinates
+            [interceptPnt,M] = getRayInterceptPoint(obj,coorIn,ph_in,th_in,NpointsTest);
+            % Get the points in the reflector base coordinate system
+            interceptPnt_base = interceptPnt.changeBase(obj.coor);
+            % Get the normal vectors here
+            Vn = obj.surface.getNorm(interceptPnt_base.x,interceptPnt_base.y);
+            % Get the coordinate system in the reflector coordinate system
+            coorIn_base = coorIn.redefineToOtherBase(obj.coor);
+            % Get the vectors from the coordinate to the reflection points
+            Vin = interceptPnt_base.pointMatrix - coorIn_base.origin.pointMatrix;
+            VinMag = sqrt(sum(Vin.^2));
+            VinN = bsxfun(@rdivide,Vin,VinMag);
+            % Reflect the incoming ray
+            VoutN = VinN - bsxfun(@times,Vn,2*(dot(Vn,VinN)));
+            % Get the points at the tips of the reflected ray for the base
+            % change
+            reflPointMat_base = interceptPnt_base.pointMatrix + VoutN;
+            reflPoint_base = pnt3D(reflPointMat_base(1,:).',reflPointMat_base(2,:).',reflPointMat_base(3,:).');
+            % Get back in global coordinates
+            reflPoint = reflPoint_base.changeBase(coordinateSystem,obj.coor);
+            reflectDirTmp = reflPoint - interceptPnt;
+            reflectDir = reflectDirTmp.pointMatrix;
+            
+            debugPlot = 0;
+            if debugPlot
+                % First plot in the reflector base
+                figure
+                reflectorPnts = obj.getPointCloud;
+                reflectorPnts = reflectorPnts.changeBase(obj.coor);
+                reflectorPnts.plot('marker','.','markerEdgeColor','k','markerSize',5)
+                hold on
+                interceptPnt_base.plot('marker','o','markerEdgeColor','r','markerSize',5)
+                interceptPnt_base.plotVect(Vn,'lineColor','r')
+                coorIn_base.origin.plotVect(Vin,'lineColor','g')
+                interceptPnt_base.plotVect(VoutN,'lineColor','b')
+                axis equal
+                
+                % Now in the actual global coordinate system where we want
+                % it
+                figure
+                obj.plot
+                coorIn.plot
+                interceptPnt.plot('marker','o','markerEdgeColor','r','markerSize',5)
+                plotLines(coorIn.origin,interceptPnt,'lineColor','g')
+                interceptPnt.plotVect(reflectDir,'lineColor','b')
+            end
+        end
+        
+        
+        %% Other functionality and output
         function A = totalArea(obj)
             % ToDo
         end
@@ -317,13 +384,7 @@ classdef reflector
             % Now add the normal vectors
             surfPoints = obj.getPointCloud(Nnorm,gridType);
             normalVects = obj.surface.getNorm(surfPoints.x,surfPoints.y).*scale;
-            x0 = surfPoints.x(:).';
-            y0 = surfPoints.y(:).';
-            z0 = surfPoints.z(:).';
-            x1 = surfPoints.x(:).' + normalVects(1,:);
-            y1 = surfPoints.y(:).' + normalVects(2,:);
-            z1 = surfPoints.z(:).' + normalVects(3,:);
-            plot3([x0;x1],[y0;y1],[z0;z1],'k')
+            plotVect(surfPoints,normalVects,'lineColor','k')
         end
         
         function plotMask(obj,coorIn,A,scaleRays)
