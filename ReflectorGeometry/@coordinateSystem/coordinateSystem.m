@@ -1,6 +1,6 @@
 classdef coordinateSystem
     properties
-      origin(3,1) double {mustBeReal, mustBeFinite} = [0;0;0] % [x;y;z] in (m) 
+      origin(1,1) pnt3D = pnt3D(0,0,0) 
       x_axis(3,1) double {mustBeReal, mustBeFinite} = [1;0;0] % x-axis direction
       y_axis(3,1) double {mustBeReal, mustBeFinite} = [0;1;0] % y-axis direction
       base = [] % Can be another coordinate system object, or, if empty, is assumed to be the global coordinate system 
@@ -52,7 +52,7 @@ classdef coordinateSystem
        
        %% Translation
        function obj = translate(obj,delta)
-           obj.origin = trans3D(obj.origin,delta);
+           obj.origin = translate(obj.origin,delta);
        end
        
        %% Rotation
@@ -133,7 +133,7 @@ classdef coordinateSystem
                baseRotated = oldBase.rotGRASP(graspAng);
                % And shift the origin
                Ups = changeBase(obj.origin,newBase,oldBase);
-               coorInGlobal = coordinateSystem(Ups(:,1),baseRotated.x_axis,baseRotated.y_axis);
+               coorInGlobal = coordinateSystem(Ups,baseRotated.x_axis,baseRotated.y_axis);
                coorInGlobal.base = [];
            else
                coorInGlobal = obj;
@@ -148,37 +148,16 @@ classdef coordinateSystem
            coorIn = obj.getInGlobal;
            baseIn = newBase.getInGlobal;
            % Calculate the translation
-           diffGlobal = coorIn.origin - baseIn.origin;
+           diffGlobal = coorIn.origin.pointMatrix - baseIn.origin.pointMatrix;
            Ox = dot(diffGlobal,baseIn.x_axis);
            Oy = dot(diffGlobal,baseIn.y_axis);
            Oz = dot(diffGlobal,baseIn.z_axis);
            % Calculate the rotation
            graspAng = getGRASPangBetweenCoors(coorIn,baseIn);
            % Build the coordinate system
-           coorOut = coordinateSystem([Ox;Oy;Oz]);
+           coorOut = coordinateSystem(pnt3D(Ox,Oy,Oz));
            coorOut = coorOut.rotGRASP(graspAng);
            coorOut.base = newBase;
-       end
-       
-       function Uprime = changeBase(U,coor_new,coor_base)
-           % Provides the points defined in the [3xN] matrix U, which are
-           % defined in the coordinate system coor_base, in the new
-           % coordinate system coor_new through translation and rotation.
-           
-           if nargin == 2
-               coor_base = coordinateSystem();
-           end
-           [N3,~] = size(U);
-           if N3 ~= 3
-               error('U must have 3 rows indicated [x;y;z] coordinates')
-           end
-           % Move points to new coordinate origin reference
-           U = U - coor_new.origin;
-           % Rotate the points in the origin reference
-           Q = dirCosine(coor_new,coor_base);
-           Uprime = Q\U;
-           % Move to new coordinate base
-           Uprime = Uprime + coor_base.origin;
        end
        
        function [angGRASP] = getGRASPangBetweenCoors(coor1,coor0)
@@ -245,9 +224,9 @@ classdef coordinateSystem
             % Test for equality - with a tolerance
             % Does not check the bases...
            if nargin == 2
-               tol = norm(coor1.origin).*1e-10;
+               tol = coor1.origin.r.*1e-10;
            end
-           BO = all(abs(coor1.origin - coor2.origin) < tol);
+           BO = isequal(coor1.origin,coor2.origin);
            Bx = all(abs(coor1.x_axis - coor2.x_axis) < tol);
            By = all(abs(coor1.y_axis - coor2.y_axis) < tol);
            B = BO && Bx && By;
@@ -274,9 +253,10 @@ classdef coordinateSystem
            x = obj.x_axis.*scale;
            y = obj.y_axis.*scale;
            z = obj.z_axis.*scale;
-           xAx = [obj.origin, obj.origin+x];
-           yAx = [obj.origin, obj.origin+y];
-           zAx = [obj.origin, obj.origin+z];
+           O = [obj.origin.x;obj.origin.y;obj.origin.z];
+           xAx = [O, O+x];
+           yAx = [O, O+y];
+           zAx = [O, O+z];
            plot3(xAx(1,:),xAx(2,:),xAx(3,:),'r','LineWidth',lineWidth), hold on
            plot3(yAx(1,:),yAx(2,:),yAx(3,:),'g','LineWidth',lineWidth)
            plot3(zAx(1,:),zAx(2,:),zAx(3,:),'b','LineWidth',lineWidth)

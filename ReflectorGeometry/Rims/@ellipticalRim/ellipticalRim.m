@@ -39,7 +39,8 @@ classdef ellipticalRim
            ph = linspace(0,2*pi,N);
            x = Cx + Rx.*cos(ph).*cos(alpha) - Ry.*sin(ph).*sin(alpha);
            y = Cy + Rx.*cos(ph).*sin(alpha) + Ry.*sin(ph).*cos(alpha);
-           V = [x;y];
+%            V = [x;y];
+           V = pnt3D(x,y,0);
        end
        
        function V = polarRim(obj,N)

@@ -3,22 +3,24 @@
 close all
 clear all
 
-originBase = [-2,0.6,1].';
+originBase = pnt3D(-2,0.6,1);
 angGRASPBase = deg2rad([45,30,0]);
 % originBase = [0,0,0].';
 % angGRASPBase = deg2rad([0,0,0].');
 
-originCoor = [-1,3,2];
+originCoor = pnt3D(-1,3,2);
 angGRASPCoor = deg2rad([-30,67,80]);
 % originCoor = [2,2,0];
 % angGRASPCoor = deg2rad([0,0,90]);
 
-originOtherBase = [2,-1,-0.5].';
+originOtherBase = pnt3D(2,-1,-0.5);
 angGRASPotherBase = deg2rad([20,-78,143]);
 
 coorGlob = coordinateSystem();
 coorGlob.plot
 hold on
+
+B = isequal(coorGlob,coorGlob)
 
 coorBase = coordinateSystem(originBase);
 coorBase = coorBase.rotGRASP(angGRASPBase);
@@ -40,6 +42,7 @@ coorSysInOtherBase = coorSys.redefineToOtherBase(coorOtherBase);
 coorSysInOtherBase.origin
 coorSysInOtherBase.x_axis
 coorSysInOtherBase.y_axis
+
 
 
 % U = [1,1,0].';

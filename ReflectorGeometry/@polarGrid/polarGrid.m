@@ -13,6 +13,7 @@ classdef polarGrid
         M % Number of rings
         N_m % Number of spokes as a function of M
         delta_n % Thinning factor as function of M
+        P       % vector of output points
         rho     % vector of rho values
         phi     % vector of phi values
         x       % vector of x values
@@ -90,6 +91,7 @@ classdef polarGrid
             end
             obj.x = obj.rho.*cos(obj.phi);
             obj.y = obj.rho.*sin(obj.phi);
+            obj.P = pnt3D(obj.x,obj.y,0);
         end
         
         function polar(obj)
