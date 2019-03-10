@@ -62,8 +62,8 @@ classdef reflector
             switch type
                 case 'cart'
                     [X,Y] = obj.generateSurfaceGrid(N);
-                    x = X(:);
-                    y = Y(:);
+                    x = X(:).';
+                    y = Y(:).';
                 case {'polar','polarThin'}
                     thinGrid = numel(type) > 5;
                     % Make a polar grid object
@@ -74,11 +74,11 @@ classdef reflector
                     y = PG.y + obj.rim.centre(2);
                 case 'x0'
                     V = obj.rim.cartRim(Npoints);
-                    x = linspace(min(V(1,:)),max(V(1,:)),Npoints);
+                    x = linspace(min(V.x),max(V.x),Npoints);
                     y = zeros(size(x));
                 case 'y0'
                     V = obj.rim.cartRim(Npoints);
-                    y = linspace(min(V(2,:)),max(V(2,:)),Npoints);
+                    y = linspace(min(V.y),max(V.y),Npoints);
                     x = zeros(size(y));
                 otherwise
                     error(['Unknown type: ', type])
@@ -157,10 +157,12 @@ classdef reflector
                 [ph_in,el_in,~] = cart2sph(x_in,y_in,z_in);
                 th_in = pi/2-el_in;
             end
+            ph_in = ph_in(:).';
+            th_in = th_in(:).';
             [th,ph,validGraph] = obj.getMaskFunction(coorIn);
             if validGraph
                 th_test = interp1(ph,th,ph_in,'linear','extrap');
-                M = th_in <= th_test;
+                M = th_in <= th_test+eps;
             else
                 M = NaN;
             end
@@ -186,8 +188,8 @@ classdef reflector
             if nargin < 5
                 NpointsTest = 500;
             end
-            ph_in = ph_in(:);
-            th_in = th_in(:);
+            ph_in = ph_in(:).';
+            th_in = th_in(:).';
             % Get the valid output rays
             M = obj.getMask(coorIn,[ph_in(:),th_in(:)]);
             ph_out = ph_in(M);
@@ -209,8 +211,8 @@ classdef reflector
                 % Use a 3D interpolant on the unit sphere to get the radius
                 % to the interception point - can be very expensive for a
                 % densely sampled reflector
-                R = scatteredInterpolant([int1Sph.x,int1Sph.y,int1Sph.z],intPointsInCoorIn.r,'natural');
-                rInterpolate = R([in1Sph.x(M),in1Sph.y(M),in1Sph.z(M)]);
+                R = scatteredInterpolant([int1Sph.x;int1Sph.y;int1Sph.z].',intPointsInCoorIn.r.','natural');
+                rInterpolate = R([in1Sph.x(M);in1Sph.y(M);in1Sph.z(M)].').';
                 Pintercept = pnt3D.sph(ph_out,th_out,rInterpolate);
                 Pintercept = Pintercept.changeBase(coordinateSystem(),coorIn);
             else
@@ -265,8 +267,8 @@ classdef reflector
             if nargin < 5
                 NpointsTest = 500;
             end
-            ph_in = ph_in(:);
-            th_in = th_in(:);
+            ph_in = ph_in(:).';
+            th_in = th_in(:).';
             
             % Get the interception points in the global coordinates
             [interceptPnt,M] = getRayInterceptPoint(obj,coorIn,ph_in,th_in,NpointsTest);
@@ -285,7 +287,7 @@ classdef reflector
             % Get the points at the tips of the reflected ray for the base
             % change
             reflPointMat_base = interceptPnt_base.pointMatrix + VoutN;
-            reflPoint_base = pnt3D(reflPointMat_base(1,:).',reflPointMat_base(2,:).',reflPointMat_base(3,:).');
+            reflPoint_base = pnt3D(reflPointMat_base(1,:),reflPointMat_base(2,:),reflPointMat_base(3,:));
             % Get back in global coordinates
             reflPoint = reflPoint_base.changeBase(coordinateSystem,obj.coor);
             reflectDirTmp = reflPoint - interceptPnt;

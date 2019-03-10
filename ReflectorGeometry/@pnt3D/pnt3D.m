@@ -80,6 +80,14 @@ classdef pnt3D
             X = [obj.x(:),obj.y(:),obj.z(:)].';
         end
         
+        function obj = addVect(obj,V)
+            % Adds the [3xN] vector to the points.  Vector must have the
+            % same number of columns as the points, or be scalar.
+            if size(V,1)~=3, error('V must have 3 rows [x,y,z]'); end
+            P = obj.pointMatrix + V;
+            obj = pnt3D(P(1,:),P(2,:),P(3,:));
+        end
+        
         
         function obj = changeBase(obj,coor_new,coor_base)
             % Transforms the points from the coordinate system coor_base,
@@ -191,9 +199,6 @@ classdef pnt3D
                 y1 = repmat(obj1.y(:).',1,No2);
                 z1 = repmat(obj1.z(:).',1,No2);
             end
-%             x1 = obj1.x(:).';
-%             y1 = obj1.y(:).';
-%             z1 = obj1.z(:).';
             x2 = obj2.x(:).';
             y2 = obj2.y(:).';
             z2 = obj2.z(:).';

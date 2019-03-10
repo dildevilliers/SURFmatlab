@@ -62,10 +62,11 @@
 - [x] basic ray tracing of a reflector system
 
 # @symmetricParaboloid
-- [ ] Masking of a FarField by a reflector system given the feed position and orientation
-- [ ] build a FarField object of the mask
-- [ ] calculate a path length structure
 - [ ] include a feed picture for plotting
+- [x] Ray tracing plot
+- [x] Masking of a FarField by a reflector system given the feed position and orientation
+- [x] build a FarField object of the mask
+- [x] calculate a path length structure
 - [x] Calculate projected area
 - [x] calculate the rho-th mapping
 - [x] sort out the 2D plotting

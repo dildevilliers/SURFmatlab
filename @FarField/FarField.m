@@ -188,8 +188,6 @@ classdef FarField
                     y = y(:,1);
                 end
                 
-                
-                
                 obj.x = x;
                 obj.y = y;
                 %             [obj.th, obj.ph] = obj.getphth();

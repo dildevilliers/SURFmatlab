@@ -184,7 +184,7 @@ classdef coordinateSystem
            
            % Now get ph
            % Get the vector which is x rotated by ph in the x-y plane 
-           if ~isequal(z,z1)
+           if ~isequal(abs(z),abs(z1))
                Nz = cross(z,z1);
                Nz = Nz./norm(Nz);
                x_ph = cross(Nz,z);
