@@ -1,16 +1,12 @@
 classdef (Abstract) FarFieldExpansion
-    properties 
+    properties(Abstract)
         nBasis
-        nCoeffs
         basis
-        coeffs
     end
     
-    methods (Abstract)
-        Expansion2FarField(obj)
-        plotCoeffs(obj)
-        plotBasis(obj)
-        %getBasisPower(obj)
+    methods(Abstract)
+        expansion2FarField
+        farField2Expansion
     end
     
 end

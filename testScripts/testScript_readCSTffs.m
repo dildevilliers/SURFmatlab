@@ -10,7 +10,7 @@
 
 
 % Create FarField obj
-pathName = 'UserInput.ffs';
+pathName = 'Farfield Source [1]';
 
 FF = FarField.readCSTffs(pathName);
 
