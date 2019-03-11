@@ -47,15 +47,15 @@
 
 ## ReflectorGeometry
 # General (class not assigned yet)
-- [ ] add offsetParaboloid class (William)
-- [ ] add hyperboloid class (DdV)
+- [ ] add symmetrical Gregorian/Cassegrain class
+- [ ] add offset Gregorian/Cassegrain class
 - [ ] add numeric surface class (DdV)
 - [ ] add numeric rim class (DdV)
-- [ ] add offset Gregorian/Cassegrain class
 - [ ] add offsetGregorianShaped class
-- [ ] add symmetrical Gregorian/Cassegrain class
 - [ ] add symmetrical Gregorian/Cassegrain shaped class
 - [ ] full GO of a reflector system
+- [x] add hyperboloid class (DdV)
+- [x] add offsetParaboloid class (William)
 
 # @reflector
 - [ ] Calculate actual area (William)
