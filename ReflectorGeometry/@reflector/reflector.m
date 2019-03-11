@@ -170,7 +170,7 @@ classdef reflector
             %            plot(rad2deg(ph),rad2deg(th)), grid on
         end
         
-        function [Pintercept,M] = getRayInterceptPoint(obj,coorIn,ph_in,th_in,NpointsTest)
+        function [Pintercept,M] = getRayInterceptPoint(obj,coorIn,ph_in,th_in,NpointsTest,debugPlot)
             % Return the point on the reflector where the ray pointing in the direction
             % [ph_in,th_in] from the coorIn coordinate system will intercept.
             % ph_in and th_in can be vectors of equal length
@@ -187,11 +187,15 @@ classdef reflector
             assert(all(size(ph_in)==size(th_in)),'ph_in and th_in should be the same size');
             if nargin < 5
                 NpointsTest = 500;
+                debugPlot = 0;
+            elseif nargin == 5
+                debugPlot = 0;
             end
             ph_in = ph_in(:).';
             th_in = th_in(:).';
             % Get the valid output rays
             M = obj.getMask(coorIn,[ph_in(:),th_in(:)]);
+            assert(~any(isnan(M)),'No ray interception points found - coordinate system not pointing at dish')
             ph_out = ph_in(M);
             th_out = th_in(M);
             Nvalid = sum(M);
@@ -235,7 +239,6 @@ classdef reflector
                 Pintercept = pnt3D(mean(xInt(1:nMean,:)),mean(yInt(1:nMean,:)),mean(zInt(1:nMean,:)));
             end
             
-            debugPlot = 0;
             if debugPlot
                 int1Sph.plot('marker','.','markerEdgeColor','b','markerSize',5)
                 hold on
@@ -250,7 +253,7 @@ classdef reflector
             end
         end
         
-        function [interceptPnt,reflectDir,M] = reflectRays(obj,coorIn,ph_in,th_in,NpointsTest)
+        function [interceptPnt,reflectDir,M] = reflectRays(obj,coorIn,ph_in,th_in,NpointsTest,debugPlot)
             % Returns the point on the reflector, as well as direction of 
             % the reflected ray, for the ray pointing in the direction
             % [ph_in,th_in].
@@ -266,6 +269,9 @@ classdef reflector
             assert(all(size(ph_in)==size(th_in)),'ph_in and th_in should be the same size');
             if nargin < 5
                 NpointsTest = 500;
+                debugPlot = 0;
+            elseif nargin == 5
+                debugPlot = 0;
             end
             ph_in = ph_in(:).';
             th_in = th_in(:).';
@@ -293,7 +299,7 @@ classdef reflector
             reflectDirTmp = reflPoint - interceptPnt;
             reflectDir = reflectDirTmp.pointMatrix;
             
-            debugPlot = 0;
+            
             if debugPlot
                 % First plot in the reflector base
                 figure

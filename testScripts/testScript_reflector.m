@@ -8,13 +8,15 @@ figure
 % Make global coor object
 GC = coordinateSystem();
 % GC.plot
-% make a paraboloid
+% make a reflector
 MR = reflector;
+% Test ellipsoid
+MR.surface = ellipsoid(5,4);
 % Shift/rotate it
 rotTh = deg2rad(-70);
 rotPh = deg2rad(115);
 rotPs = deg2rad(-45);
-transVect = [0.5,0.3,-0.1];
+transVect = [0.5,0.3,-0.1].';
 MR.coor = MR.coor.rotGRASP([rotTh,rotPh,rotPs]);
 MR.coor = MR.coor.translate(transVect);
 MR.plot(10000,'cart')
@@ -47,26 +49,33 @@ MR.coor.plot
 %% Grid and plotting test
 close all
 clear all
-S = paraboloid(pnt3D(0,0,0),5);
-R = ellipticalRim([1;2],[2;5]);
+% S = paraboloid(pnt3D(0,0,0),5);
+% R = ellipticalRim([1;2],[0.5;1]);
+S = ellipsoid(5,4);
+R = ellipticalRim([0;0],[1.5;1.5]);
 C = coordinateSystem();
 C = C.rotGRASP(deg2rad([0,0,0]));
 R = reflector(S,R,C);
 R.plot(10000,'polarThin')
 % R.plot(1000,'x0')
 % R.plot(1000,'x0')
-R.plotNorms(1000,400,1,'polarThin')
+R.plotNorms(1000,100,1,'polarThin')
 
 %% Masking/ray tracing test
+
 close all
 clear all
-S = paraboloid(pnt3D(2,2,0),5);
-R = ellipticalRim([2;2],[5;2]);
+% S = paraboloid(pnt3D(2,2,0),5);
+% R = ellipticalRim([2;2],[5;2]);
+% C = coordinateSystem(pnt3D(1,3,5));
+% C = C.rotGRASP(deg2rad([-145,30,90]));
+S = ellipsoid(5,4);
+R = ellipticalRim([0;0],[1.2;1.2]);
 C0 = coordinateSystem();
-C0 = C0.rotGRASP(deg2rad([0,25,0]));
+C0 = C0.rotGRASP(deg2rad([0,0,0]));
 R = reflector(S,R,C0);
-C = coordinateSystem(pnt3D(1,3,5));
-C = C.rotGRASP(deg2rad([-145,30,90]));
+C = coordinateSystem(pnt3D(0,0,-2*S.f));
+C = C.rotGRASP(deg2rad([10,0,0]));
 % R.plot
 % C.plot
 % R.getMaskFunction(C);
@@ -79,4 +88,4 @@ FF = FarField;
 
 % R.getRayInterceptPoint(C,ph.',th.',500)
 % Pintercept = R.getRayInterceptPoint(C,FF.ph,FF.th,500);
-R.reflectRays(C,ph.',th.',200);
+R.reflectRays(C,ph.',th.',200,1)

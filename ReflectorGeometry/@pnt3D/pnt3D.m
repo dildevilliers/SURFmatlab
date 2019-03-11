@@ -18,9 +18,9 @@ classdef pnt3D
         function obj = pnt3D(X,Y,Z)
             if nargin == 3
                 % Get all the same size
-                obj.x = (Y+eps)./(Y+eps).*(Z+eps)./(Z+eps).*X;
-                obj.y = (X+eps)./(X+eps).*(Z+eps)./(Z+eps).*Y;
-                obj.z = (X+eps)./(X+eps).*(Y+eps)./(Y+eps).*Z;
+                obj.x = (Y+eps(1/2))./(Y+eps(1/2)).*(Z+eps(1/2))./(Z+eps(1/2)).*X;
+                obj.y = (X+eps(1/2))./(X+eps(1/2)).*(Z+eps(1/2))./(Z+eps(1/2)).*Y;
+                obj.z = (X+eps(1/2))./(X+eps(1/2)).*(Y+eps(1/2))./(Y+eps(1/2)).*Z;
             end
             obj = obj.setProps;
         end
@@ -67,7 +67,7 @@ classdef pnt3D
         
         function obj = translate(obj,DEL)
             % translates the point(s) by DEL = [dx;dy;dz]
-            Xp = obj.pointMatrix + DEL;
+            Xp = obj.pointMatrix + DEL(:);
 %             Xp = trans3D(pointMatrix(obj),DEL(:));
             obj.x = reshape(Xp(1,:),size(obj));
             obj.y = reshape(Xp(2,:),size(obj));
