@@ -48,6 +48,9 @@
 ## ReflectorGeometry
 # General (class not assigned yet)
 - [ ] add offsetParaboloid class (William)
+- [ ] add hyperboloid class (DdV)
+- [ ] add numeric surface class (DdV)
+- [ ] add numeric rim class (DdV)
 - [ ] add offset Gregorian/Cassegrain class
 - [ ] add offsetGregorianShaped class
 - [ ] add symmetrical Gregorian/Cassegrain class

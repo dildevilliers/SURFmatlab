@@ -10,8 +10,10 @@ GC = coordinateSystem();
 % GC.plot
 % make a reflector
 MR = reflector;
+% % Test ellipsoid
+% MR.surface = ellipsoid(5,4);
 % Test ellipsoid
-MR.surface = ellipsoid(5,4);
+MR.surface = hyperboloid(4,5);
 % Shift/rotate it
 rotTh = deg2rad(-70);
 rotPh = deg2rad(115);
@@ -51,7 +53,9 @@ close all
 clear all
 % S = paraboloid(pnt3D(0,0,0),5);
 % R = ellipticalRim([1;2],[0.5;1]);
-S = ellipsoid(5,4);
+% S = ellipsoid(5,4);
+% R = ellipticalRim([0;0],[1.5;1.5]);
+S = hyperboloid(4,5);
 R = ellipticalRim([0;0],[1.5;1.5]);
 C = coordinateSystem();
 C = C.rotGRASP(deg2rad([0,0,0]));
@@ -69,17 +73,19 @@ clear all
 % R = ellipticalRim([2;2],[5;2]);
 % C = coordinateSystem(pnt3D(1,3,5));
 % C = C.rotGRASP(deg2rad([-145,30,90]));
-S = ellipsoid(5,4);
+% C = coordinateSystem(pnt3D(0,0,0));
+% S = ellipsoid(5,4);
+S = hyperboloid(2,5);
 R = ellipticalRim([0;0],[1.2;1.2]);
 C0 = coordinateSystem();
 C0 = C0.rotGRASP(deg2rad([0,0,0]));
 R = reflector(S,R,C0);
 C = coordinateSystem(pnt3D(0,0,-2*S.f));
-C = C.rotGRASP(deg2rad([10,0,0]));
+C = C.rotGRASP(deg2rad([0,0,0]));
 % R.plot
 % C.plot
 % R.getMaskFunction(C);
-th = linspace(-pi,pi,100);
+th = linspace(-pi,pi,200);
 ph = ones(size(th)).*deg2rad(45);
 FF = FarField;
 % M = R.getMask(C,FF);
