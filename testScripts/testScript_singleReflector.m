@@ -3,10 +3,10 @@ clear all
 
 % SP = symmetricParaboloid;
 SP = singleReflector(1,1.7,2.5);
-% SP.plot
+SP.plot
 % figure
-SP.plot3D
-% figure
+% SP.plot3D
+figure
 SP.plotRayTrace
 % pathLengthStruct = SP.getPathLength
 FFM = SP.getMask;

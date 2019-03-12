@@ -339,7 +339,7 @@ classdef reflector
         end
         
         %% Plotting
-        function plot(obj,N,gridType)
+        function plot(obj,N,gridType,surfaceColor)
             % If gridType is empty, or not specified, only the surface is
             % plotted. Otherwise the point cloud is also plotted.
             % See getPointCloud for details on allowable types
@@ -347,10 +347,13 @@ classdef reflector
             if nargin == 1
                 N = 10000;
                 gridType = [];
+                surfaceColor = [0.5,0.5,0.5];
             elseif nargin == 2
                 gridType = [];
+                surfaceColor = [0.5,0.5,0.5];
+            elseif nargin == 3
+                surfaceColor = [0.5,0.5,0.5];
             end
-            surfaceColor = [0.5,0.5,0.5];
             edgeColor = 1.2*surfaceColor;
             rimColor = edgeColor;
             rimWidth = 2;

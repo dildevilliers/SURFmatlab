@@ -47,8 +47,7 @@
 
 ## ReflectorGeometry
 # General (class not assigned yet)
-- [ ] add symmetrical Gregorian/Cassegrain class
-- [ ] add offset Gregorian/Cassegrain class
+- [ ] include a feed picture for plotting
 - [ ] add numeric surface class (DdV)
 - [ ] add numeric rim class (DdV)
 - [ ] add offsetGregorianShaped class
@@ -56,6 +55,8 @@
 - [ ] full GO of a reflector system
 - [x] add hyperboloid class (DdV)
 - [x] add offsetParaboloid class (William)
+- [x] add symmetrical Gregorian/Cassegrain class
+- [x] add offset Gregorian/Cassegrain class
 
 # @reflector
 - [ ] Calculate actual area (William)
@@ -64,8 +65,20 @@
 - [x] add more functionality for point cloud grids (polar, thinned polar)
 - [x] basic ray tracing of a reflector system
 
+# @hyperboloid
+- [ ] Sort out the negative e concave case like in GRASP
+
+# @dualReflector
+- [ ] SR extensions
+- [ ] masking (both SR and PR masking)
+- [ ] ray tracing
+- [ ] path length structure
+- [ ] ray trace plots
+- [ ] constructor function for different symmetrical design options
+- [ ] constructor function for different offset design options
+
 # @symmetricParaboloid
-- [ ] include a feed picture for plotting
+- [ ] Remove and only keep the singleReflector class
 - [x] Ray tracing plot
 - [x] Masking of a FarField by a reflector system given the feed position and orientation
 - [x] build a FarField object of the mask
