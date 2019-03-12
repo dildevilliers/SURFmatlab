@@ -89,28 +89,13 @@ fclose(fid);
 
 %% Build the FF obj
 
-% FF.Nth = Nth;
-% FF.Nph = Nph;
-% FF.Nf = Nf;
-% FF.pos = pos;
-% FF.zAxis = zAxis;
-% FF.xAxis = xAxis;
-% FF.freq = freq;
-% FF.NphNth = NphNth;
-% FF.fData = fData;
-% FF.th = th;
-% FF.ph = ph;
-% FF.Eth = Eth;
-% FF.Eph = Eph;
-% FF.Prad = Prad;
-% FF.Pacc = Pacc;
-% FF.Pstim = Pstim;
+x = ph(:,1);
+y = th(:,1);
 
-x = ph;
-y = th;
 E1 = Eth;
 E2 = Eph;
 E3 = zeros(size(E1));
+
 radEff = Prad./Pacc;
 coorSys = 'spherical';
 polType = 'linear';
