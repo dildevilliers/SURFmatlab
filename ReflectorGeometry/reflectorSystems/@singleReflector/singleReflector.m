@@ -105,9 +105,13 @@ classdef singleReflector
             pathLengthStruct.FA = pathLengthStruct.FP + pathLengthStruct.PA;
         end
         
-        function FFM_F = getMask(obj,A)
+        function [FFM_F,MaskPointing,M] = getMask(obj,A)
             % Returns the reflector mask, from feed to PR, as a FarField
-            % object.  
+            % object. Also returns a matrix of pointing directions, as 
+            % coordinate system objects, of the final rays after reflection 
+            % throught the whole system. These can be used to assign
+            % background temperature whan calculating antenna temperature.
+            % Finally, the logical Mask is returned - true if being masked.
             % A can be a matrix of [ph,th] pairs, or a FarField object.  If
             % it is a FarField object it will be converted to a PhTh grid,
             % and those angles will be used
@@ -125,6 +129,20 @@ classdef singleReflector
             FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq);
             FFM_F = FFM_F.setXrange('pos');
             FFM_F = FFM_F.currentForm2Base;
+            % Build the pointing matrix
+            MaskPointing(size(ph_in)) = coordinateSystem;
+            % First those outside mask - centered at feed currently
+            [MaskPointing(~M).base] = deal(obj.feedCoor);
+            % Those in mask - origin at global base and pointing up so do
+            % nothing...
+            % Fix the non-masked position pointing angles - in the global
+            % coordinate system
+            maskI = find(~M);
+            for mm = maskI
+                MaskPointing(mm) = MaskPointing(mm).rotGRASP([th_in(mm),ph_in(mm),0]);
+                MaskPointing(mm) = MaskPointing(mm).getInGlobal;    % Rotate to global Coor
+                MaskPointing(mm).origin = pnt3D;    % Force to centre of global Coor
+            end
         end
         
         %% Plotting

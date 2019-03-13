@@ -1,8 +1,8 @@
 classdef pnt3D
     properties
-        x double {mustBeReal, mustBeFinite} = 1 % in (m)
-        y double {mustBeReal, mustBeFinite} = 1 % in (m)
-        z double {mustBeReal, mustBeFinite} = 1 % in (m)
+        x double {mustBeReal, mustBeFinite} = 0 % in (m)
+        y double {mustBeReal, mustBeFinite} = 0 % in (m)
+        z double {mustBeReal, mustBeFinite} = 0 % in (m)
     end
     
     properties (SetAccess = private)
