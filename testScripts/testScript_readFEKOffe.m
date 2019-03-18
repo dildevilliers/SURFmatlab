@@ -5,7 +5,7 @@
 %   FEKO.
 
 %create farfield object
-FF = FarField.readFEKOffe(['D:\SURFmatlab\testScripts\patch']);
+FF = FarField.readFEKOffe([pwd, '\patch']);
 
 %2D plot of mag(E1), 1 degree step, 40dB dynamic range and visible grid 
 figure
