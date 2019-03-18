@@ -5,7 +5,8 @@ function FF = readFEKOffe(pathName)
 %   Function to create a Farfield object from a FEKO .ffe far-field output
 %   file. 
 %Inputs:
-% --pathName: full path and filename (no extension) of target .ffe file.
+% th: column vector [Nang x 1] of th angles in rad
+% ph: column vector [Nang x 1] of ph angles in rad
 %Outputs:
 % --FF: Farfield object containing parameters as derived from target .ffe
 % file.

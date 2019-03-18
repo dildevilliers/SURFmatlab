@@ -80,18 +80,19 @@ classdef FarField
             % 'Prad': vector [1 x Nf] of radiated powers in W
             % 'radEff': vector [1 x Nf] of radiation efficiencies
             
-            if nargin == 0 %No-inputs case - generate a Gaussian beam pattern
+            if nargin == 0 %No-inputs case - generate a Gaussian beam pattern at a single frequency (1 GHz) over the full sphere, 5 degree angular resolution
                 
-                %code here
-                th = linspace(0,pi,37);
-                ph = linspace(0,2*pi,73);
-                [TH, PH] = meshgrid(th,ph);
-                x = PH(:);
-                y = TH(:);
-                
-                
-                
-                
+                Nth_cut = 37;
+                Nph_cut = 73;
+                th = linspace(0,pi,Nth_cut);
+                ph = linspace(0,2*pi,Nph_cut);
+                th0 = 45;
+                taper_dB = -10;
+                freq = 1e9;
+                [PH,TH] = meshgrid(ph,th);
+%                 [TH,PH] = meshgrid(th,ph);
+                P = powerPattern(PH(:),TH(:),'gauss',th0,taper_dB,freq);
+                obj = FarField.farFieldFromPowerPattern(PH(:),TH(:),P,freq,'linearY');
                 
             else
                 
@@ -187,35 +188,34 @@ classdef FarField
                     y = y(:,1);
                 end
                 
+                obj.x = x;
+                obj.y = y;
+                %             [obj.th, obj.ph] = obj.getphth();
+                obj.E1 = E1;
+                obj.E2 = E2;
+                obj.E3 = E3;
+                obj.freq = freq;
+                obj.Prad = Prad;
+                obj.radEff = radEff;
+                obj.radEff_dB = dB10(radEff);
+                obj.coorSys = coorSys;
+                obj.polType = polType;
+                obj.gridType = gridType;
+                obj.freqUnit = freqUnit;
+                obj.slant = slant;
+                obj.Nf = Nf;
+                obj.Nang = Nang;
+                obj.Nx = length(unique(x));
+                obj.Ny = length(unique(y));
+                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
+                obj.Gain_dB = dB10(max(obj.getGain()));
+                obj = setEnames(obj);
+                obj = setXYnames(obj);
+                obj = setBase(obj);
+                obj = setFreq(obj);
+                obj = setPhTh(obj);
+                obj = setRangeTypes(obj);
             end
-            
-            obj.x = x;
-            obj.y = y;
-            %             [obj.th, obj.ph] = obj.getphth();
-            obj.E1 = E1;
-            obj.E2 = E2;
-            obj.E3 = E3;
-            obj.freq = freq;
-            obj.Prad = Prad;
-            obj.radEff = radEff;
-            obj.radEff_dB = dB10(radEff);
-            obj.coorSys = coorSys;
-            obj.polType = polType;
-            obj.gridType = gridType;
-            obj.freqUnit = freqUnit;
-            obj.slant = slant;
-            obj.Nf = Nf;
-            obj.Nang = Nang;
-            obj.Nx = length(unique(x));
-            obj.Ny = length(unique(y));
-            obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
-            obj.Gain_dB = dB10(max(obj.getGain()));
-            obj = setEnames(obj);
-            obj = setXYnames(obj);
-            obj = setBase(obj);
-            obj = setFreq(obj);
-            obj = setPhTh(obj);
-            obj = setRangeTypes(obj);
         end
         
         
@@ -826,6 +826,34 @@ classdef FarField
         plotJones(obj1,obj2,varargin)  % Much to do here still...
         plotPrincipleCuts(obj,varargin)
         
+        function plotGrid(obj)
+            switch obj.gridType
+                case {'DirCos'}
+                    xplot = obj.x;
+                    yplot = obj.y;
+                    xtext = [obj.xname, ' = sin(\theta)cos(\phi)'];
+                    ytext = [obj.yname, ' = sin(\theta)sin(\phi)'];
+                    
+                otherwise
+                    xplot = rad2deg(obj.x);
+                    yplot = rad2deg(obj.y);
+                    xtext = [obj.xname,' (deg)'];
+                    ytext = [obj.yname,' (deg)'];
+            end
+            plot(xplot,yplot,'k.')
+            xlabel(xtext)
+            ylabel(ytext)
+            axis equal
+            grid on
+            xlim([min(xplot),max(xplot)])
+            ylim([min(yplot),max(yplot)])
+        end
+        
+        function plotGridBase(obj)
+            obj = obj.reset2Base;
+            obj.plotGrid;
+        end
+        
         %% Interpolation methods
         %         [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
         [Z] = interpolateGrid(obj,output,xi,yi,varargin)
@@ -998,7 +1026,7 @@ classdef FarField
                         P(ff) = integral2D(PH,TH,integrand);
                     end
                 otherwise
-                    error(['pradInt not implemented for gridType = ',obj.gridType])
+                    error(['pradInt not implemented for gridType = ',obj.gridType,', only for PhTh grids'])
             end
         end
         
@@ -1094,6 +1122,8 @@ classdef FarField
         obj = readGRASPgrd(pathName);
         obj = readFEKOffe(pathName);
         obj = readCSTffs(pathName);
+        obj = farFieldFromPowerPattern(x,y,P,freq,Pdim,coorSys,polType,gridType,freqUnit,slant);
+        
     end
     
     %% Internal helper functions
