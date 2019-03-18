@@ -18,9 +18,9 @@ classdef pnt3D
         function obj = pnt3D(X,Y,Z)
             if nargin == 3
                 % Get all the same size
-                obj.x = (Y+eps(1/2))./(Y+eps(1/2)).*(Z+eps(1/2))./(Z+eps(1/2)).*X;
-                obj.y = (X+eps(1/2))./(X+eps(1/2)).*(Z+eps(1/2))./(Z+eps(1/2)).*Y;
-                obj.z = (X+eps(1/2))./(X+eps(1/2)).*(Y+eps(1/2))./(Y+eps(1/2)).*Z;
+                obj.x = (Y+eps(realmin))./(Y+eps(realmin)).*(Z+eps(realmin))./(Z+eps(realmin)).*X;
+                obj.y = (X+eps(realmin))./(X+eps(realmin)).*(Z+eps(realmin))./(Z+eps(realmin)).*Y;
+                obj.z = (X+eps(realmin))./(X+eps(realmin)).*(Y+eps(realmin))./(Y+eps(realmin)).*Z;
             end
             obj = obj.setProps;
         end

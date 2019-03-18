@@ -100,36 +100,7 @@ classdef reflector
         end
         
         %% Masking and ray tracing
-        function [th,ph,validGraph] = getMaskFunction(obj,coorIn)
-            % Returns th, as a function of ph of the apparent rim position
-            % from the coordinate system coorIn.
-            % This information can be used to determine if a certain
-            % direction of radiation, in the coorIn coordinate
-            % system, is intercepted by the reflector by checking for <th at
-            % ph.
-            % validGraph is a logical which indicates if the z-axis actually
-            % points at some part of the disch, and therefore presents a
-            % valid graph for this fast method of masking...
-            
-            Npoints = 500^2;   % Use plenty of points to resolve cases where we're pointing very close to the edge...
-            % Get the rim points in 3D space
-            [~,rimPoints] = obj.getPointCloud(Npoints);
-            % Get rim points (currently in Global coordinate base) in the coordinate System base
-            rimPointsInCoorIn = changeBase(rimPoints,coorIn);
-            ph = rimPointsInCoorIn.ph;
-            th = rimPointsInCoorIn.th;
-            %            % Calculate the vectors between the origin and the rim points
-            %            [ph,el] = cart2sph(rimPointsInCoorIn(1,:),rimPointsInCoorIn(2,:),rimPointsInCoorIn(3,:));
-            %            th = pi/2-el;
-            % Check for valid graph (ph must be monotonic)
-            validGraph = all(sign(diff(unwrap(ph)))<0) | all(sign(diff(unwrap(ph)))>0);
-            if validGraph
-                [ph,Isort] = unique(ph);
-                th = th(Isort);
-            end
-        end
-        
-        function [M,ph_in,th_in] = getMask(obj,coorIn,A)
+        function [M,ph_in,th_in] = getMask(obj,coorIn,A,debugPlot)
             % Returns a logical vector M, indicating if the angles in A,
             % defined in the coordinate system coorIn, is pointing towards
             % the reflector or not.
@@ -137,37 +108,75 @@ classdef reflector
             % it is a FarField object it will be converted to a PhTh grid,
             % and those angles will be used
             
-            % Interpret the input
-            if isa(A,'FarField')
-                FF = A.grid2PhTh;
-                FF = FF.setXrange('sym');
-                ph_in = FF.x;
-                th_in = FF.y;
-            else
+            if nargin < 4
+                debugPlot = 0;
+            end
+            
+            if ~isa(A,'FarField')
                 [Nr,Nc] = size(A);
                 if Nr == 2 && Nc ~= 2
                     A = A.';
                 elseif Nc ~= 2
                     error('Unknown input format for A - must be a 2 column matrix or a FarField object');
                 end
-                ph_in = A(:,1);
-                th_in = A(:,2);
-                %                ph_in(ph_in > pi) = ph_in(ph_in > pi) - 2*pi;
-                [x_in,y_in,z_in] = sph2cart(ph_in,pi/2-th_in,1);
-                [ph_in,el_in,~] = cart2sph(x_in,y_in,z_in);
-                th_in = pi/2-el_in;
+                FF = FarField(A(:,1),A(:,2),ones(size(A,1),1),zeros(size(A,1),1));
+            else
+                FF = A;
             end
+            FF = FF.grid2PhTh;
+            ph_in = FF.x;
+            th_in = FF.y;
+            
             ph_in = ph_in(:).';
             th_in = th_in(:).';
-            [th,ph,validGraph] = obj.getMaskFunction(coorIn);
-            if validGraph
-                th_test = interp1(ph,th,ph_in,'linear','extrap');
-                M = th_in <= th_test+eps;
-            else
-                M = NaN;
+            
+            Npoints = 500^2;   % Use plenty of points to resolve cases where we're pointing very close to the edge...
+            % Get the rim points in 3D space
+            [~,rimPoints] = obj.getPointCloud(Npoints);
+            rimPointsInCoorIn = changeBase(rimPoints,coorIn);
+            ph = rimPointsInCoorIn.ph;
+            th = rimPointsInCoorIn.th;
+            % Test in the TrueView plane - should always make a closed
+            % polygon unless at really specific pointings (orthogonal to rim)
+            [u,v,w] = PhTh2DirCos(ph,th);
+            [Xg,Yg] = DirCos2TrueView(u,v,w);
+            [uIn,vIn,wIn] = PhTh2DirCos(ph_in,th_in);
+            [XgIn,YgIn] = DirCos2TrueView(uIn,vIn,wIn);
+            M = inpolygon(XgIn,YgIn,Xg,Yg);
+            % Do final check to determine if we are in fact looking away
+            % from the surface...
+            % Looking into, or away from, rim.  If [0,0] is in the rim, the
+            % curve will close on itself around the origin.  When pointing
+            % away, the mask is defined by the region outside the polygon.
+            if inpolygon(0,0,Xg,Yg)
+                % Estimate the midpoint of the reflector
+                RimC = obj.rim.centre;
+                P0z = obj.surface.getZ(RimC(1),RimC(2));
+                P0 = pnt3D(RimC(1),RimC(2),P0z);
+                % In the global coordinate system
+                P0 = P0.changeBase(coordinateSystem,obj.coor);
+                % Get the angle between the input coor z_axis and this
+                % point
+                V0 = P0-coorIn.origin;
+                V0 = [V0.x,V0.y,V0.z]./V0.r;
+                psiForward = acos(dot(V0.',coorIn.z_axis));
+                psiBackward = acos(dot(V0.',-coorIn.z_axis));
+                if psiBackward < psiForward
+                    M = ~M;
+                end
             end
-            %            figure
-            %            plot(rad2deg(ph),rad2deg(th)), grid on
+            
+            if debugPlot
+                figure
+                plot(rad2deg(ph),rad2deg(th)), grid on, hold on
+                plot(rad2deg(ph_in(M)),rad2deg(th_in(M)),'b.')
+                plot(rad2deg(ph_in(~M)),rad2deg(th_in(~M)),'r.')
+                figure
+                plot(Xg,Yg), grid on, hold on
+                plot(XgIn(M),YgIn(M),'b.')
+                plot(XgIn(~M),YgIn(~M),'r.')
+                axis([-pi,pi,-pi,pi])
+            end
         end
         
         function [Pintercept,M] = getRayInterceptPoint(obj,coorIn,ph_in,th_in,NpointsTest,debugPlot)

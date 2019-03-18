@@ -69,26 +69,44 @@ R.plotNorms(1000,100,1,'polarThin')
 
 close all
 clear all
-% S = paraboloid(pnt3D(2,2,0),5);
-% R = ellipticalRim([2;2],[5;2]);
-% C = coordinateSystem(pnt3D(1,3,5));
-% C = C.rotGRASP(deg2rad([-145,30,90]));
-% C = coordinateSystem(pnt3D(0,0,0));
-% S = ellipsoid(5,4);
-S = hyperboloid(2,5);
-R = ellipticalRim([0;0],[1.2;1.2]);
+
+S = paraboloid(pnt3D(0,0,0),5);
+R = ellipticalRim([0;0],[5;5]);
+C = coordinateSystem(pnt3D(0,0,5));
+C = C.rotGRASP(deg2rad([-90,0,0]));
 C0 = coordinateSystem();
 C0 = C0.rotGRASP(deg2rad([0,0,0]));
+
+% S = paraboloid(pnt3D(2,2,0),5);
+% R = ellipticalRim([2;2],[5;4]);
+% C = coordinateSystem(pnt3D(1,3,5));
+% C = C.rotGRASP(deg2rad([-145,30,90]));
+% C0 = coordinateSystem();
+% C0 = C0.rotGRASP(deg2rad([60,-45,0]));
+
+% S = ellipsoid(5,4);
+% R = ellipticalRim([0;0],[1.2;1.2]);
+% C = coordinateSystem(pnt3D(0,0,0));
+% C = C.rotGRASP(deg2rad([-15,45,0]));
+% C0 = coordinateSystem();
+% C0 = C0.rotGRASP(deg2rad([60,-45,0]));
+
+% S = hyperboloid(3.5,5);
+% R = ellipticalRim([0;0],[1.2;1.2]);
+% C = coordinateSystem(pnt3D(0,0,-2*S.f));
+% C = C.rotGRASP(deg2rad([-15,45,0]));
+% C0 = coordinateSystem();
+% C0 = C0.rotGRASP(deg2rad([60,-45,0]));
+
 R = reflector(S,R,C0);
-C = coordinateSystem(pnt3D(0,0,-2*S.f));
-C = C.rotGRASP(deg2rad([0,0,0]));
-% R.plot
-% C.plot
+R.plot
+C.plot
+% C0.plot
 % R.getMaskFunction(C);
 th = linspace(-pi,pi,200);
 ph = ones(size(th)).*deg2rad(45);
 FF = FarField;
-% M = R.getMask(C,FF);
+M = R.getMask(C,[ph.',th.'],1);
 % R.plotMask(C,[ph.',th.'],12)
 % R.plotMask(C,FF,12)
 

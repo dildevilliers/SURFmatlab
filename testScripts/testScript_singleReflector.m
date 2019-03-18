@@ -10,6 +10,7 @@ figure
 SP.plotRayTrace
 % pathLengthStruct = SP.getPathLength
 [FFM,MaskPointing,M] = SP.getMask;
+FFM = FFM.grid2TrueView;
 figure
 plot(FFM,'output','Directivity','outputType','mag','plotType','2D','scaleMag','lin','step',1,'norm',1)
 % Also plot the mask pointing

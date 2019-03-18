@@ -72,8 +72,8 @@ classdef singleReflector
         end
         
         function [pAp,pRefl] = rayTrace(obj,ph_in,th_in)
-            % Returns the aperture and reflector points for an Nray 
-            % element ray trace in the y=0 plane 
+            % Returns the aperture and reflector points for a general 
+            % element ray trace 
             [pRefl,reflectDir] = obj.PR.reflectRays(obj.feedCoor,ph_in,th_in);
             % Get the intersection of the reflection and the aperture plane
             % Provide the feed position as point in aperture plane
@@ -124,11 +124,9 @@ classdef singleReflector
                 freq = 1;
             end
             
-            [M,ph_in,th_in] = getMask(obj.PR,obj.feedCoor,A);
+            [M,ph_in,th_in] = obj.PR.getMask(obj.feedCoor,A);
             P = repmat(double(M(:)),1,numel(freq));
             FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq);
-            FFM_F = FFM_F.setXrange('pos');
-            FFM_F = FFM_F.currentForm2Base;
             % Build the pointing matrix
             MaskPointing(size(ph_in)) = coordinateSystem;
             % First those outside mask - centered at feed currently

@@ -36,7 +36,9 @@ classdef dualReflector
         % Extreme points on the reflectors and aperture
         P0
         P1
+        P1e % P1 after SR extension
         P2
+        P2e % P2 after SR extension
         Q0
         Q1
         Q2
@@ -146,25 +148,69 @@ classdef dualReflector
             obj.P1 = pnt3D(obj.sigma*OP1*sin(obj.th_L),0,obj.sigma*OP1*cos(obj.th_L));
             obj.P2 = pnt3D(obj.sigma*OP2*sin(obj.th_U),0,obj.sigma*OP2*cos(obj.th_U));
             
-            Cx = (distanceCart(obj.feedCoor.origin,obj.P1)*sin(obj.alpha + obj.sigma.*obj.th_e) + distanceCart(obj.feedCoor.origin,obj.P2).*sin(obj.alpha - obj.sigma.*obj.th_e))/2; % (38)
+            % Handle the extension of the SR
+            % Distribute the amount of extension angle according to the
+            % symmetry factor
+            % Limit to 1
+            if abs(obj.symFact_ext) > 1
+                obj.symFact_ext = sign(obj.symFact_ext);
+            end
+            th_ext1 = (obj.th_ext.*obj.symFact_ext + 1)/2;
+            th_ext2 = (-obj.th_ext.*obj.symFact_ext + 1)/2;
+            extRotAng = (th_ext2 - th_ext1)/2;
+            al_cone = obj.alpha + extRotAng;
+            th_cone = obj.th_e + th_ext/2;
+            
+            if obj.th_ext ~= 0
+                obj.type = ['Extended SR ', obj.type];
+                % Use equations on p116 of Granet - get the rim positions
+                % in the SR coordinate system
+                if obj.sigma == 1
+                    ph = deg2rad([0,180]);
+                elseif obj.sigma == -1
+                    ph = deg2rad([180,0]);
+                end
+                rho_sr = obj.a*(obj.e^2 - 1)./(obj.e*(-sin(al_cone).*sin(th_cone).*cos(ph) + cos(al_cone).*cos(th_cone)) - 1);   % P117 Granet top right
+                Primx = (cos(al_cone).*sin(th_cone).*cos(ph) + sin(al_cone).*cos(th_cone)).*rho_sr;
+                Primy = sin(th_cone).*sin(ph).*rho_sr;
+                Primz = (-sin(al_cone).*sin(th_cone).*cos(ph) + cos(al_cone).*cos(th_cone)).*rho_sr - 2.*obj.f;
+                
+                % Extension points P1e and P2e in the SR coordinate system
+                PeSR = pnt3D(Primx,Primy,Primz);
+                Dsxe = abs(diff(PeSR.x));
+                % Get in Global coor
+                gC = coordinateSystem;
+                sC = gC.rotGRASP([obj.beta,0,0]);
+                Pe = PeSR.changeBase(gC,sC);
+                obj.P1e = pnt3D(Pe.x(1),Pe.y(1),Pe.z(1));
+                obj.P2e = pnt3D(Pe.x(2),Pe.y(2),Pe.z(2));
+            else
+                obj.P1e = obj.P1;
+                obj.P2e = obj.P2;
+                Dsxe = obj.Dsx;
+            end
+            
+            % Use the extension cone for this calculation
+            Cx = (distanceCart(obj.feedCoor.origin,obj.P1e)*sin(al_cone + obj.sigma.*th_cone) + distanceCart(obj.feedCoor.origin,obj.P2e).*sin(al_cone - obj.sigma.*th_cone))/2; % (38)
             Cy = 0; % (38)
             Cz = obj.a*sqrt(1 + Cx^2/(obj.f^2 - obj.a^2)) - obj.f; % (38)
             obj.C_SR = pnt3D(Cx,Cy,Cz);
             
             ph = linspace(0,2*pi,1001);
             obj.Dsy = max((2*obj.a*(obj.e^2-1)*sin(obj.th_e).*sin(ph))./(obj.e.*(-sin(obj.alpha).*sin(obj.th_e).*cos(ph) + cos(obj.alpha).*cos(obj.th_e)) - 1));   % (39)
+            Dsye = max((2*obj.a*(obj.e^2-1)*sin(th_cone).*sin(ph))./(obj.e.*(-sin(al_cone).*sin(th_cone).*cos(ph) + cos(al_cone).*cos(th_cone)) - 1));   % (39)
 
             % Derived geometry
             obj.PR_chordX = distanceCart(obj.Q2,obj.Q1);
             obj.PR_chordY = obj.Dm;
-            obj.SR_chordX = distanceCart(obj.P2,obj.P1);
-            obj.SR_chordY = obj.Dsy;
+            obj.SR_chordX = distanceCart(obj.P2e,obj.P1e);
+            obj.SR_chordY = Dsye;
             obj.apArea = pi*(obj.Dm/2)^2;
 
             % Build the reflectors and coordinate systems
             obj.SR = reflector;
             obj.SR.surface = SRhandle(2*obj.a,2*obj.f);
-            obj.SR.rim = ellipticalRim([obj.C_SR.x,obj.C_SR.y],[obj.Dsx,obj.Dsy]./2);
+            obj.SR.rim = ellipticalRim([obj.C_SR.x,obj.C_SR.y],[Dsxe,Dsye]./2);
             SRcoor = coordinateSystem;
             obj.SR.coor = SRcoor.rotGRASP([obj.beta,0,0]);
             
@@ -182,60 +228,135 @@ classdef dualReflector
             drho_dth = obj.Feq.*sec(th./2).^2;
         end
         
-        function [pAp,pRefl] = rayTrace(obj,ph_in,th_in)
-            % Returns the aperture and reflector points for an Nray 
-            % element ray trace in the y=0 plane 
-%             [pRefl,reflectDir] = obj.PR.reflectRays(obj.feedCoor,ph_in,th_in);
-%             % Get the intersection of the reflection and the aperture plane
-%             % Provide the feed position as point in aperture plane
-%             n = repmat([0;0;1],1,size(reflectDir,2));    % Normal vector on aperture plane
-%             % Distance from intersection points to plane
-%             d = dot((obj.apCoor.origin.pointMatrix - pRefl.pointMatrix),n)./(dot(reflectDir,n));
-%             reflectDirScale = bsxfun(@times,reflectDir,d);
-%             pAp = pRefl.addVect(reflectDirScale);
+        function [pAp,pReflPR,pReflSR] = rayTrace(obj,ph_in,th_in)
+            % Returns the aperture and reflector points for a general 
+            % element ray trace
+            
+            % Get SR reflection points
+            [pReflSR,reflectDirSR] = obj.SR.reflectRays(obj.feedCoor,ph_in,th_in);
+            % Get the PR reflection points
+            [xPR,yPR,zPR] = deal(zeros(size(pReflSR)));
+            reflectDirPR = zeros(size(reflectDirSR));
+            % Initialise aperture plane normal vector;
+            n = repmat([0;0;1],1,size(reflectDirSR,2));    % Normal vector on aperture plane
+            % Loop through the directions of interest
+            for rr = 1:length(pReflSR.x)
+                directionPoint = pnt3D(reflectDirSR(1,rr),reflectDirSR(2,rr),reflectDirSR(3,rr));
+                reflCoor = coordinateSystem;
+                reflCoor = reflCoor.rotGRASP([directionPoint.th,directionPoint.ph,0]);
+                reflCoor.origin = pnt3D(pReflSR.x(rr),pReflSR.y(rr),pReflSR.z(rr));
+                [pPR,reflectDirPR(:,rr)] = obj.PR.reflectRays(reflCoor,0,0,5000);
+                [xPR(rr),yPR(rr),zPR(rr)] = deal(pPR.x,pPR.y,pPR.z);
+            end
+            pReflPR = pnt3D(xPR,yPR,zPR);
+            % Distance from intersection points to plane
+            d = dot((obj.apCoor.origin.pointMatrix - pReflPR.pointMatrix),n)./(dot(reflectDirPR,n));
+            reflectDirScale = bsxfun(@times,reflectDirPR,d);
+            pAp = pReflPR.addVect(reflectDirScale);
         end
         
         function pathLengthStruct = getPathLength(obj,ph_in,th_in)
             % Calculate path length from:
-            % feed to PR: FP
+            % feed to SR: FS
+            % from SR to PR: SP
             % from PR to aperture: PA
             % from feed to aperture: FA
-%             if nargin == 1
-%                 th_in = linspace(-obj.th_e,obj.th_e,21);
-%                 ph_in = zeros(size(th_in));
-%             end
-%             ph_in = ph_in(:).';
-%             th_in = th_in(:).';
-%             [pAp,pRefl] = rayTrace(obj,ph_in,th_in);
-%             delFR = pRefl - obj.PR.coor.origin;
-%             delPA = pAp - pRefl;
-%             pathLengthStruct.ph = ph_in;
-%             pathLengthStruct.th = th_in;
-%             pathLengthStruct.FP = delFR.r;
-%             pathLengthStruct.PA = delPA.r;
-%             pathLengthStruct.FA = pathLengthStruct.FP + pathLengthStruct.PA;
+            if nargin == 1
+                th_in = linspace(-obj.th_e,obj.th_e,21);
+                ph_in = zeros(size(th_in));
+            end
+            ph_in = ph_in(:).';
+            th_in = th_in(:).';
+            [pAp,pReflPR,pReflSR] = rayTrace(obj,ph_in,th_in);
+            delFS = pReflSR - obj.feedCoor.origin;
+            delSP = pReflPR - pReflSR;
+            delPA = pAp - pReflPR;
+            pathLengthStruct.ph = ph_in;
+            pathLengthStruct.th = th_in;
+            pathLengthStruct.FS = delFS.r;
+            pathLengthStruct.SP = delSP.r;
+            pathLengthStruct.PA = delPA.r;
+            pathLengthStruct.FA = pathLengthStruct.FS + pathLengthStruct.SP + pathLengthStruct.PA;
         end
         
-        function FFM_F = getMask(obj,A)
-            % Returns the reflector mask, from feed to PR, as a FarField
-            % object.  
+        function [FFM_F,MaskPointing,Mint] = getMask(obj,A,refl)
+            % Returns the reflector mask (for the PR) as a FarField
+            % object. Also returns a matrix of pointing directions, as 
+            % coordinate system objects, of the final rays after reflection 
+            % through the whole system. These can be used to assign
+            % background temperature whan calculating antenna temperature.
+            % refl can be 'PR' or 'SR'
+            % Finally, the logical Mask is returned - true if being masked.
             % A can be a matrix of [ph,th] pairs, or a FarField object.  If
             % it is a FarField object it will be converted to a PhTh grid,
             % and those angles will be used
-%             if nargin == 1
-%                 A = FarField;
-%             end
-%             if isa(A,'FarField')
-%                 freq = A.freq;
-%             else
-%                 freq = 1;
-%             end
-%             
-%             [M,ph_in,th_in] = getMask(obj.PR,obj.feedCoor,A);
-%             P = repmat(double(M(:)),1,numel(freq));
-%             FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq);
-%             FFM_F = FFM_F.setXrange('pos');
-%             FFM_F = FFM_F.currentForm2Base;
+            if nargin == 1
+                A = FarField;
+                refl = 'PR';
+            end
+            if isa(A,'FarField')
+                freq = A.freq;
+            else
+                freq = 1;
+            end
+            
+            switch refl
+                case 'PR'
+                    [Mint,ph_in,th_in] = obj.PR.getMask(coordinateSystem,A,0);
+                    P = repmat(double(Mint(:)),1,numel(freq));
+                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq);
+                    % Build the pointing matrix - already at globalCoor base
+                    MaskPointing(size(ph_in)) = coordinateSystem;
+                    % Fix the non-masked position pointing angles - in the global
+                    % coordinate system
+                    maskI = find(~Mint);
+                    for m0 = maskI
+                        MaskPointing(m0) = MaskPointing(m0).rotGRASP([th_in(m0),ph_in(m0),0]);
+                    end
+                case 'SR'
+                    [M,ph_in,th_in] = obj.SR.getMask(obj.feedCoor,A,0);
+                    % Also require an SR with no extension
+                    if obj.th_ext > 0
+                        SRnoExt = dualReflector(obj.Dm,obj.Lm,obj.th_e,obj.Ls,obj.th_0,obj.beta,obj.sigma,0,0);
+                        MnoExt = SRnoExt.SR.getMask(obj.feedCoor,A,0);
+                    else 
+                        MnoExt = M;
+                    end
+                    Mint = M + MnoExt;  % 0 where no mask, 1 on the extension, 2 in the actual SR
+                    % The FarField object is based on the intersected
+                    % extension - all the information is here
+                    P = repmat(double(Mint(:)),1,numel(freq));
+                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq);
+                    
+                    % Build the pointing matrix
+                    MaskPointing(size(ph_in)) = coordinateSystem;
+                    % First those outside the SR mask - centered at feed currently
+                    [MaskPointing(Mint<=1).base] = deal(obj.feedCoor);
+                    % Those in mask - origin at global base and pointing up so do
+                    % nothing...
+                    % Fix the non-masked position pointing angles - in the global
+                    % coordinate system
+                    % First the outside ones - no reflection
+                    mask0 = find(Mint == 0);
+                    for m0 = mask0
+                        MaskPointing(m0) = MaskPointing(m0).rotGRASP([th_in(m0),ph_in(m0),0]);
+                        MaskPointing(m0) = MaskPointing(m0).getInGlobal;    % Rotate to global Coor
+                        MaskPointing(m0).origin = pnt3D;    % Force to centre of global Coor
+                    end
+                    % And reflect the rays pointing at the extension
+                    mask1 = find(Mint == 1);
+                    % Reflection directions already in Global Coordinates
+                    [~,reflectDir] = obj.SR.reflectRays(obj.feedCoor,ph_in(mask1),th_in(mask1));
+                    ii = 0;
+                    for m1 = mask1
+                        ii = ii+1;
+                        directionPoint = pnt3D(reflectDir(1,ii),reflectDir(2,ii),reflectDir(3,ii));
+                        MaskPointing(m1) = MaskPointing(m1).rotGRASP([directionPoint.th,directionPoint.ph,0]);
+                        MaskPointing(m1).origin = pnt3D;    % Force to centre of global Coor
+                    end
+                otherwise
+                    error(['Undefined input: ', refl]);
+            end
         end
         
         %% Plotting
@@ -251,7 +372,7 @@ classdef dualReflector
             plot(surfPointsPR.x,surfPointsPR.z,'k','linewidth',lineWidthRefl), hold on, grid on
             plot(surfPointsSR.x,surfPointsSR.z,'k','linewidth',lineWidthRefl)
             % Plot the feed point
-            plot(obj.feedCoor.origin.x,obj.feedCoor.origin.z,'k.','markersize',1.0*obj.SR_chordX)
+            plot(obj.feedCoor.origin.x,obj.feedCoor.origin.z,'k.','markersize',2)
             % Plot the edge rays
             xR = [obj.R2.x,obj.Q2.x,obj.P2.x,obj.feedCoor.origin.x,obj.P1.x,obj.Q1.x,obj.R1.x];
             zR = [obj.R2.z,obj.Q2.z,obj.P2.z,obj.feedCoor.origin.z,obj.P1.z,obj.Q1.z,obj.R1.z];
@@ -283,25 +404,31 @@ classdef dualReflector
             xlabel('x-axis (m)')
             ylabel('y-axis (m)')
             zlabel('z-axis (m)')
+            % Plot the original SR rim if an extension is present
+            if obj.th_ext > 0
+                objNoExt = dualReflector(obj.Dm,obj.Lm,obj.th_e,obj.Ls,obj.th_0,obj.beta,obj.sigma,0,0);
+                objNoExt.SR.plot(10000,[],[1,1,1].*0.2)
+            end
         end
         
         function plotRayTrace(obj,Nray,Nrefl)
-%             if nargin == 1
-%                 Nray = 21;
-%                 Nrefl = 101;
-%             elseif nargin == 2
-%                 Nrefl = 101;
-%             end
-%             th_in = linspace(-obj.th_e,obj.th_e,Nray);
-%             ph_in = zeros(size(th_in));
-%             obj.plot(Nrefl)
-%             hold on
-%             [pAp,pRefl] = rayTrace(obj,ph_in,th_in);
-%             rayColor = ones(1,3).*0;
-%             rayWidth = 0.5;
-%             plotLines(obj.feedCoor.origin,pRefl,'lineColor',rayColor,'lineWidth',rayWidth)
-%             plotLines(pRefl,pAp,'lineColor',rayColor,'lineWidth',rayWidth)
-%             view([0,0])
+            if nargin == 1
+                Nray = 21;
+                Nrefl = 101;
+            elseif nargin == 2
+                Nrefl = 101;
+            end
+            th_in = linspace(-obj.th_e,obj.th_e,Nray);
+            ph_in = zeros(size(th_in));
+            obj.plot3D(Nrefl)
+            hold on
+            [pAp,pReflPR,pReflSR] = rayTrace(obj,ph_in,th_in);
+            rayColor = ones(1,3).*0;
+            rayWidth = 0.5;
+            plotLines(obj.feedCoor.origin,pReflSR,'lineColor',rayColor,'lineWidth',rayWidth)
+            plotLines(pReflSR,pReflPR,'lineColor',rayColor,'lineWidth',rayWidth)
+            plotLines(pReflPR,pAp,'lineColor',rayColor,'lineWidth',rayWidth)
+            view([0,0])
         end
         
     end

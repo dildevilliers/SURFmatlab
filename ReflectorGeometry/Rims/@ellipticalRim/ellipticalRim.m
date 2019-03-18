@@ -55,7 +55,8 @@ classdef ellipticalRim
        
        function plot(obj)
            V = cartRim(obj,100);
-           plot(V(1,:),V(2,:),'k')
+%            plot(V(1,:),V(2,:),'k')
+           plot(V.x,V.y,'k')
            grid on
            xlabel('x-axis (m)')
            ylabel('y-axis (m)')

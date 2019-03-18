@@ -69,13 +69,13 @@
 - [ ] Sort out the negative e concave case like in GRASP
 
 # @dualReflector
-- [ ] SR extensions
-- [ ] masking (both SR and PR masking)
 - [ ] ray tracing
 - [ ] path length structure
 - [ ] ray trace plots
 - [ ] constructor function for different symmetrical design options
 - [ ] constructor function for different offset design options
+- [x] SR extensions
+- [x] masking (both SR and PR masking)
 
 # @symmetricParaboloid
 - [ ] Remove and only keep the singleReflector class
