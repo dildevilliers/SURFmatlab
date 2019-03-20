@@ -47,6 +47,8 @@
 
 ## ReflectorGeometry
 # General (class not assigned yet)
+- [ ] Aperture efficiency calculator
+- [ ] Antenna temperature calculator
 - [ ] include a feed picture for plotting
 - [ ] add numeric surface class (DdV)
 - [ ] add numeric rim class (DdV)
@@ -69,13 +71,13 @@
 - [ ] Sort out the negative e concave case like in GRASP
 
 # @dualReflector
-- [ ] ray tracing
-- [ ] path length structure
-- [ ] ray trace plots
 - [ ] constructor function for different symmetrical design options
 - [ ] constructor function for different offset design options
 - [x] SR extensions
 - [x] masking (both SR and PR masking)
+- [x] ray tracing
+- [x] path length structure
+- [x] ray trace plots
 
 # @symmetricParaboloid
 - [ ] Remove and only keep the singleReflector class
