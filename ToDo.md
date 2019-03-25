@@ -49,6 +49,7 @@
 
 ## ReflectorGeometry
 # General (class not assigned yet)
+- [ ] Change all class names to be Capital letter first 
 - [ ] Aperture efficiency calculator
 - [ ] Antenna temperature calculator
 - [ ] include a feed picture for plotting
