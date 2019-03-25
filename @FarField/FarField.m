@@ -1009,6 +1009,22 @@ classdef FarField
            normE = [nE1,nE2,nE3];
         end
         
+        function T = convPower(obj1,obj2)
+            % Convolve the power patterns, over the full sphere, of two
+            % FarField objects. Typically used for antenna temperature
+            % calculations
+            obj1 = reset2Base(obj1);
+            obj2 = reset2Base(obj2);
+            
+            if isGridEqual(obj1,obj2)
+                P = obj1.getU.*obj2.getU;
+                FF_T = FarField.farFieldFromPowerPattern(obj1.ph,obj1.th,P,obj1.freq);
+                T = FF_T.pradInt;
+            else
+                error('Can only convolve FarFields with equal base grids')
+            end
+        end
+        
         %% Field normalization
         function P = pradInt(obj)
             % Returns the total power in the field integrated over the

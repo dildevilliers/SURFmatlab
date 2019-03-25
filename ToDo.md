@@ -4,15 +4,16 @@
 - [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
 - [ ] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
 - [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D
+- [ ] Field symmetries: Add a property for x and y symmetry; full field checks and power integration only operates on existing field; plotting mirrors as required.
 - [ ] readFITS (DdV)
 - [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
-- [ ] Weighted power integral - for antenna noise (DdV)
+- [ ] Get only the BOR1 components of the field and return as FarField object (DdV)
 - [ ] CBFP expansion (Fahmi)
 - [ ] SWE of a given field (Fahmi + Brandt)
 - [ ] Multiple frequency concat
 - [ ] Shift field in 3D space - phase change
-- [ ] Typical pattern parameters calculator
+- [ ] Typical pattern parameters calculator: SLL, XP, Beamwidth, etc.
 - [ ] writeCSTffs
 - [ ] writeFEKOfft
 - [ ] writeGRASPcut
@@ -43,6 +44,7 @@
 - [x] Generate FarField from specified gain pattern (Brandt)
 - [x] Make empty constructor (Brandt)
 - [x] Plot Grid (DdV)
+- [x] Weighted power integral - for antenna noise (DdV)
 
 
 ## ReflectorGeometry

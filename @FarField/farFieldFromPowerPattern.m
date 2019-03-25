@@ -31,20 +31,20 @@ end
 switch fieldPol
     case 'linearX' % linearly polarised along X-axis 
         coorSys = 'Ludwig3';
-        E1  = sqrt(P).*(2*eta0);
+        E1  = sqrt(P.*2*eta0);
         E2  = zeros(size(P));
     case 'linearY' % linearly polarised along Y-axis 
         coorSys = 'Ludwig3';
         E1  = zeros(size(P));
-        E2  = sqrt(P).*(2*eta0);
+        E2  = sqrt(P.*2*eta0);
     case 'circularLH'  % Lefthand Circular polarization
         polType = 'circular';
-        E1  = sqrt(P).*(2*eta0);
+        E1  = sqrt(P.*2*eta0);
         E2  = zeros(size(P));
     case 'circularRH'  % Righthand Circular polarization
         polType = 'circular';
         E1  = zeros(size(P));
-        E2  = sqrt(P).*(2*eta0);
+        E2  = sqrt(P.*2*eta0);
     otherwise
         error('fieldPol input string unrecognised')
 end
