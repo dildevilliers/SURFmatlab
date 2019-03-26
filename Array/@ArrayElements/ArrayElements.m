@@ -3,20 +3,25 @@ classdef ArrayElements
     %   Detailed explanation goes here
     
     properties
-        Property1
+        arrayPositions(:,1) pnt3D % {mustBeFinite}
+        elementPatterns(:,1) FarField 
     end
     
     methods
-        function obj = ArrayElements(inputArg1,inputArg2)
-            %ARRAYELEMENTS Construct an instance of this class
-            %   Detailed explanation goes here
-            obj.Property1 = inputArg1 + inputArg2;
-        end
-        
-        function outputArg = method1(obj,inputArg)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            outputArg = obj.Property1 + inputArg;
+        function obj = ArrayElements(arrayPositions,elementPatterns)
+            obj.arrayPositions = arrayPositions;
+            
+            if nargin < 2
+                FF = FarField;
+                FF = FF.makeIsotropic();
+                obj.elementPatterns(size(arrayPositions),1) = FF;
+            else
+                if size(arrayPositions) ~= size(elementPatterns)
+                   error('The elementPatterns must be equal in size to the arrayPositions');
+                end
+                obj.elementPatterns = elementPatterns;
+            end
+
         end
     end
 end
