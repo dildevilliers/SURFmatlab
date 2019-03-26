@@ -145,32 +145,7 @@ for nn = 1:NMAX
             end
             dPcosth0(1,nn,[iNaN0,iNaNpi]) = 0;
         end
-        
-%         % Test using functions...
-%         P0test = PmnNorm(reshape(cos(th(1,nn,:)),NDIR,1),0,nn);
-%         P0err(mm,nn) = max(abs(P0test - reshape(Pcosth0(1,nn,:),NDIR,1)))
-%         
-%         dP0test = dPcos_dthN(reshape(th(1,nn,:),NDIR,1),0,nn);
-%         [dP0err(mm,nn), idP0errMax(mm,nn)] = max(abs(dP0test - reshape(dPcosth0(1,nn,:),NDIR,1)))
-%         
-%         if mm <= nn
-%             Ptest = PmnNorm(reshape(cos(th(mm,nn,:)),NDIR,1),mm,nn);
-%             Perr(mm,nn) = max(abs(Ptest - reshape(Pcosth(mm,nn,:),NDIR,1)))
-%             figure(1)
-%             plot(Ptest,'b'), grid on, hold on
-%             plot(reshape(Pcosth(mm,nn,:),NDIR,1),'k-')
-%             hold off
-%             
-%             dPtest = dPcos_dthN(reshape(th(mm,nn,:),NDIR,1),mm,nn);
-%             [dPerr(mm,nn), idPerrMax(mm,nn)] = max(abs(dPtest - reshape(dPcosth(mm,nn,:),NDIR,1)))
-%             figure(2)
-%             plot(dPtest,'b'), grid on, hold on
-%             plot(reshape(dPcosth(mm,nn,:),NDIR,1),'k-')
-%             hold off
-%             
-%         end
-%         keyboard;
-%         
+         
     end
 end
 

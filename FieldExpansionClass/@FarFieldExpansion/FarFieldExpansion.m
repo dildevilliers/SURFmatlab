@@ -4,7 +4,7 @@ classdef (Abstract) FarFieldExpansion
         basis
     end
     
-    methods(Abstract)
+    methods(Abstract, Static)
         expansion2FarField
         farField2Expansion
     end

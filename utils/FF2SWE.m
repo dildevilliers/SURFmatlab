@@ -1,4 +1,4 @@
-function [Qsmnout,Qjout,Pout,Fout] = FF2SWE(FFin,NMAXin,MMAXin,opts,r0)
+function [Qsmnout,Qjout,Pout,Fout] = FF2SWE(FFin,NMAXin,MMAXin,opts,r0,Fin)
 % function [Qsmnout,Pout,Qjout,Fout] = FF2SWE(FFin,NMAXin,MMAXin,r0,opts)
 % Performs Spherical Wave Expansion (SWE) on a set of input far/nearfields (defined
 % in spherical coordinates), and returns the Q-expansion coefficients and
@@ -8,7 +8,7 @@ function [Qsmnout,Qjout,Pout,Fout] = FF2SWE(FFin,NMAXin,MMAXin,opts,r0)
 %   containing farfield evaluated at NF frequencies
 %   --NMAXin - User-defined maximum number of polar modes to use during SWE.
 %   Can be given as scalar (applied uniformly across all FFin's elements and frequencies),
-%   NX-by-1 vector (applied element-wise to FFin, 1-by-NF vector (applied uniformly across all FFin's elements but 
+%   NX-by-1 vector (applied element-wise to FFin, 1-by-NF vector (applied uniformly across all FFin's elements but
 %   element-wise in frequency), NX-by-NF array or empty (calculates maximum
 %   modes numbers using the minimum sphere).
 %   --MMAXin - User-defined maximum number of azimuthal modes to use during
@@ -40,7 +40,7 @@ function [Qsmnout,Qjout,Pout,Fout] = FF2SWE(FFin,NMAXin,MMAXin,opts,r0)
 %% Constants
 
 c0 = 299792458;
-eta0 = 3.767303134749689e+02;   
+eta0 = 3.767303134749689e+02;
 
 %% Basic error checking
 
@@ -60,14 +60,14 @@ else
     r = ones(size(th)).*inf;
 end
 
-%% Other Preliminaries 
+%% Other Preliminaries
 
 NX = length(FFin);
 [NDIR,NF] = size(FFin(1).Eth);
 
 if isfield(FFin,'freq') && ~isempty(FFin(1).freq)
     freq = reshape(FFin(1).freq,1,NF);
-    powerNorm = false;  
+    powerNorm = false;
 else
     warning('No frequency found - normalizing power in modes to 0.5 W');
     freq = ones(1,NF);
@@ -97,14 +97,31 @@ getallF = 1; %flag to signify that F-matrices should be calculated for each iter
 
 [Qsm0n,Qsmmn,Qsmpn,POWERM,P] = deal(cell(NX,NF));
 
-if getR == 0 && length(NMAXin) == 1 && length(MMAXin) == 1 %Farfield case where NMAX, MMAX are uniform across input set
-    [F0all,Fmall,Fpall] = FsmnFast(r,th,ph,MMAXin,NMAXin,1); %frequency set to 1 because farfield F-functions are independent of f
-    [Fsm0n{1:NX,1:NF}] = deal(F0all);
-    [Fsmmn{1:NX,1:NF}] = deal(Fmall);
-    [Fsmpn{1:NX,1:NF}] = deal(Fpall);
-    getallF = 0;
-    disp('Uniform mode limits detected- only calculating one F-matrix for all inputs')
+if nargin < 6
+    if getR == 0 && length(NMAXin) == 1 && length(MMAXin) == 1 %Farfield case where NMAX, MMAX are uniform across input set
+        [F0all,Fmall,Fpall] = FsmnFast(r,th,ph,MMAXin,NMAXin,1); %frequency set to 1 because farfield F-functions are independent of f
+        [Fsm0n{1:NX,1:NF}] = deal(F0all);
+        [Fsmmn{1:NX,1:NF}] = deal(Fmall);
+        [Fsmpn{1:NX,1:NF}] = deal(Fpall);
+        getallF = 0;
+        disp('Uniform mode limits detected- only calculating one F-matrix for all inputs')
+    end
+else
+    if getR == 0 && length(NMAXin) == 1 && length(MMAXin) == 1
+        [Fsm0n{1:NX,1:NF}] = deal(Fin{1}.Fsm0n);
+        [Fsmmn{1:NX,1:NF}] = deal(Fin{1}.Fsmmn);
+        [Fsmpn{1:NX,1:NF}] = deal(Fin{1}.Fsmpn);
+    else
+        for xx = 1:NX
+            for ff = 1:NF
+                Fsm0n{xx,ff} = Fin{xx,ff}.Fsm0n;
+                Fsmmn{xx,ff} = Fin{xx,ff}.Fsmmn;
+                Fsmpn{xx,ff} = Fin{xx,ff}.Fsmpn;
+            end
+        end
+    end
 end
+
 
 for xx = 1:NX
     for ff = 1:NF
@@ -136,15 +153,15 @@ for xx = 1:NX
             MMAX{xx,ff} = MMAXin(xx,ff);  % Will throw error for wrong lengths
         end
         
-        if getallF == 1 % Nearfield case, or farfields with variations in NMAXin, MMAxin along xx and ff
-            [Fsm0n{xx,ff},Fsmmn{xx,ff},Fsmpn{xx,ff}] = FsmnFast(r,th,ph,MMAX{xx,ff},NMAX{xx,ff},freq(ff)); 
+        if getallF == 1 && nargin < 6  % Nearfield case, or farfields with variations in NMAXin, MMAxin along xx and ff
+            [Fsm0n{xx,ff},Fsmmn{xx,ff},Fsmpn{xx,ff}] = FsmnFast(r,th,ph,MMAX{xx,ff},NMAX{xx,ff},freq(ff));
         end
-
+        
         % Build the matrix for different components first
         % First get indices of valid mode numbers
         [SS,MM,NN] = ndgrid(1:2,1:MMAX{xx,ff},1:NMAX{xx,ff});
         NN(NN<MM) = 0;
-        validModePos = find(NN>0);  
+        validModePos = find(NN>0);
         NvalidMode = length(validModePos);
         [Fr,Fth,Fph] = deal(zeros(NDIR,2*(NMAX{xx,ff}+NvalidMode)));
         for dd = 1:NDIR
@@ -166,21 +183,21 @@ for xx = 1:NX
             Fphm = reshape(Fsmmn{xx,ff}(:,:,:,dd,3),2*MMAX{xx,ff}*NMAX{xx,ff},1);
             Fphp = reshape(Fsmpn{xx,ff}(:,:,:,dd,3),2*MMAX{xx,ff}*NMAX{xx,ff},1);
             Fph(dd,:) = [Fph0;Fphm(validModePos);Fphp(validModePos)].';
-
+            
         end
         F = [Fr;Fth;Fph];   % This is only populated for the valid mode columns - wont reshape to rectangular matrices
-
+        
         % RHS vector
         if getR
             E = [FFin(xx).Er(:,ff);FFin(xx).Eth(:,ff);FFin(xx).Eph(:,ff)];
         else
             E = [FFin(xx).Eth(:,ff);FFin(xx).Eph(:,ff)];
         end
-
+        
         % Solve for Q - NB: Qv is divided by sqrt(eta0) to produce Q-coefficients with same magnitude as those provided by FEKO/GRASP
-%         keyboard
+        %         keyboard
         Qv = (F\E)./sqrt(eta0);   % This is for all the valid modes (not for m > n modes which are included in the matrices from FsmnFast.m)
-
+        
         % Expand and repack Q into the standard matrices used by SWEgetField.m
         % zero m
         Qm0 = Qv(1:2*NMAX{xx,ff});
@@ -192,13 +209,13 @@ for xx = 1:NX
         % positive m
         Qmp(validModePos) = Qv(2*NMAX{xx,ff}+NvalidMode+1:end);
         Qsmpn{xx,ff} = reshape(Qmp,2,MMAX{xx,ff},NMAX{xx,ff});
-
+        
         % Calculate the power in each of the m-modes for normalization
         POWERM{xx,ff}(1,1) = 0;
-        POWERM{xx,ff}(1,2) = sum(sum(abs(Qsm0n{xx,ff}).^2,3),1);  
+        POWERM{xx,ff}(1,2) = sum(sum(abs(Qsm0n{xx,ff}).^2,3),1);
         POWERM{xx,ff}(2:MMAX{xx,ff}+1,1) = 1:MMAX{xx,ff};
         POWERM{xx,ff}(2:MMAX{xx,ff}+1,2) = sum(sum(abs(Qsmmn{xx,ff}).^2,3),1) + sum(sum(abs(Qsmpn{xx,ff}).^2,3),1);
-
+        
         if powerNorm
             PnormFact = 0.5/max(POWERM{xx,ff}(:,2));
             POWERM{xx,ff}(:,2) = POWERM{xx,ff}(:,2)*PnormFact;
@@ -206,18 +223,18 @@ for xx = 1:NX
             Qsmmn{xx,ff} = Qsmmn{xx,ff}.*sqrt(PnormFact);
             Qsmpn{xx,ff} = Qsmpn{xx,ff}.*sqrt(PnormFact);
         end
-    
-    %Calculate total radiated power via sum of squares of the modal coefficients
-    P{xx,ff} = 0.5*(sum(sum(sum(abs(Qsm0n{xx,ff}).^2,3),2)) + sum(sum(sum(abs(Qsmmn{xx,ff}).^2,3),2)) + sum(sum(sum(abs(Qsmpn{xx,ff}).^2,3),2)));
-
-    end    
+        
+        %Calculate total radiated power via sum of squares of the modal coefficients
+        P{xx,ff} = 0.5*(sum(sum(sum(abs(Qsm0n{xx,ff}).^2,3),2)) + sum(sum(sum(abs(Qsmmn{xx,ff}).^2,3),2)) + sum(sum(sum(abs(Qsmpn{xx,ff}).^2,3),2)));
+        
+    end
 end
 
 %% Output structures
 
-Qsmnout = struct('Qsm0n',Qsm0n,'Qsmmn',Qsmmn,'Qsmpn',Qsmpn,'freq',repmat(num2cell(freq),NX,1),'MMAX',MMAX,'NMAX',MMAX);
+Qsmnout = struct('Qsm0n',Qsm0n,'Qsmmn',Qsmmn,'Qsmpn',Qsmpn,'freq',repmat(num2cell(freq),NX,1),'MMAX',MMAX,'NMAX',NMAX);
 Qjout = Qsmn2j(Qsmnout);
-Fout = struct('Fsm0n',Fsm0n,'Fsmmn',Fsmmn,'Fsmpn',Fsmpn); 
+Fout = struct('Fsm0n',Fsm0n,'Fsmmn',Fsmmn,'Fsmpn',Fsmpn);
 
 if powerNorm
     Pout = struct('POWERM',POWERM,'P',P,'PnormFact',Pnormfact);

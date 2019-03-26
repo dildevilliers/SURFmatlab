@@ -1,6 +1,6 @@
-function FF = SWEgetField(Q,r,th,ph,F,P) %optional F matrix added!
+function FF = SWEgetField(Q,r,th,ph,F,P) 
 
-% function FF = SWEgetField(Q,r,th,ph,P)
+% function FF = SWEgetField(Q,r,th,ph,F,P)
 % Computes the farfield from a given set of spherical modes Q (as returned
 % by readSPH.m) at distance r, and spherical angles th and ph.
 % r, th, and ph must be the same lengths, and r can be inf for farfield
@@ -17,7 +17,7 @@ if nargin > 5
     FF.Prad = P;
 end
 
-NF = length(Q.freq);
+NF = length([Q.freq]);
 
 MMAX = [Q.MMAX];
 NMAX = [Q.NMAX];
@@ -33,9 +33,7 @@ k = 2.*pi./lam;
 
 for ff = 1:NF
     disp(['Calculating farfield pattern ', num2str(ff),' of ', num2str(NF), '...'])
-    
-    Emat = F*Q.Q;
-    
+    Emat = F*Q(ff).Q;    
     
 %     FF.Eth(:,ff) = eta0*(k(ff))*Emat(1,1,1,:,2);
 %     FF.Eph(:,ff) = eta0*(k(ff))*Emat(1,1,1,:,3);
