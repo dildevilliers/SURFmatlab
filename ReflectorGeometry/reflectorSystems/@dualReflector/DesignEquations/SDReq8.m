@@ -1,3 +1,3 @@
-function a = SDReq8(Lm,F,sigma,Dm,)
-a = (4.*(Ls - f))./( (1)./(sin(th_e)) + (sigma.*(16.*F.^2 + Dm.^2))./(8.*F.*Dm) )
+function a = SDReq8(Lm,F,sigma,Dm,th_e)
+a = (-1/2).*( ((Lm-F).*(sigma.*Dm + 4.*F.*tan(th_e./2)))./(sigma.*Dm - 4.*F.*tan(th_e./2)) );
 end
