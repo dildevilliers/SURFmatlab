@@ -21,7 +21,6 @@ if (fid==-1)
     error(['Unable to open data file ', fileName, '!']);
 end
 
-
 %===================================================================
 % LOAD DATA
 %===================================================================
@@ -88,26 +87,8 @@ end
 fclose(fid);
 
 %% Build the FF obj
-
-% FF.Nth = Nth;
-% FF.Nph = Nph;
-% FF.Nf = Nf;
-% FF.pos = pos;
-% FF.zAxis = zAxis;
-% FF.xAxis = xAxis;
-% FF.freq = freq;
-% FF.NphNth = NphNth;
-% FF.fData = fData;
-% FF.th = th;
-% FF.ph = ph;
-% FF.Eth = Eth;
-% FF.Eph = Eph;
-% FF.Prad = Prad;
-% FF.Pacc = Pacc;
-% FF.Pstim = Pstim;
-
-x = ph;
-y = th;
+x = ph(:,1);
+y = th(:,1);
 E1 = Eth;
 E2 = Eph;
 E3 = zeros(size(E1));

@@ -137,7 +137,7 @@ if strcmp(obj.gridType,'DirCos') || strcmp(obj.gridType,'ArcSin')
     % base definition is not a direction cosine type it can contain
     % information over the full sphere. 
     objBase = obj.grid2Base;
-    grid2DirCoshandle = str2func(['FarField.',objBase.gridType,'2DirCos']);
+    grid2DirCoshandle = str2func([objBase.gridType,'2DirCos']);
     [~,~,w] = grid2DirCoshandle(objBase.x,objBase.y);
     if strcmp(hemisphere,'top')
         valAng = w >= 0;

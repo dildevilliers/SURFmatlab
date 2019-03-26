@@ -39,7 +39,8 @@ classdef ellipticalRim
            ph = linspace(0,2*pi,N);
            x = Cx + Rx.*cos(ph).*cos(alpha) - Ry.*sin(ph).*sin(alpha);
            y = Cy + Rx.*cos(ph).*sin(alpha) + Ry.*sin(ph).*cos(alpha);
-           V = [x;y];
+%            V = [x;y];
+           V = pnt3D(x,y,0);
        end
        
        function V = polarRim(obj,N)
@@ -54,7 +55,8 @@ classdef ellipticalRim
        
        function plot(obj)
            V = cartRim(obj,100);
-           plot(V(1,:),V(2,:),'k')
+%            plot(V(1,:),V(2,:),'k')
+           plot(V.x,V.y,'k')
            grid on
            xlabel('x-axis (m)')
            ylabel('y-axis (m)')

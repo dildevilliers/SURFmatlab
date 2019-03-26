@@ -1,18 +1,19 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] Field rotations (DdV)
-- [ ] Generate FarField from specified gain pattern (Brandt)
-- [ ] Make empty constructor (Brandt)
+- [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
+- [ ] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
+- [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D
+- [ ] Field symmetries: Add a property for x and y symmetry; full field checks and power integration only operates on existing field; plotting mirrors as required.
 - [ ] readFITS (DdV)
 - [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
-- [ ] Weighted power integral - for antenna noise (DdV)
+- [ ] Get only the BOR1 components of the field and return as FarField object (DdV)
 - [ ] CBFP expansion (Fahmi)
 - [ ] SWE of a given field (Fahmi + Brandt)
 - [ ] Multiple frequency concat
 - [ ] Shift field in 3D space - phase change
-- [ ] Typical pattern parameters calculator
+- [ ] Typical pattern parameters calculator: SLL, XP, Beamwidth, etc.
 - [ ] writeCSTffs
 - [ ] writeFEKOfft
 - [ ] writeGRASPcut
@@ -20,6 +21,7 @@
 - [ ] Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
 - [ ] Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
 - [ ] Array pattern adder
+- [ ] plot on a spherical surface
 - [ ] Fix 3D plot for negative y-(th)axis cases
 - [ ] readMeasurements
 - [ ] Jones getter
@@ -38,30 +40,61 @@
 - [x] Subtraction of fields (for error calculations and comparisons)
 - [x] Normalise to isotropic
 - [x] Norm of fields (for error calculations and comparisons)
+- [x] Field rotations (DdV)
+- [x] Generate FarField from specified gain pattern (Brandt)
+- [x] Make empty constructor (Brandt)
+- [x] Plot Grid (DdV)
+- [x] Weighted power integral - for antenna noise (DdV)
+
 
 ## ReflectorGeometry
 # General (class not assigned yet)
-- [ ] Masking of a FarField by a reflector system given the feed position and orientation
-- [ ] basic ray tracing of a reflector system
-- [ ] full GO of a reflector system
-- [ ] add offsetParaboloid class
-- [ ] add offset Gregorian/Cassegrain class
+- [ ] Change all class names to be Capital letter first 
+- [ ] Aperture efficiency calculator
+- [ ] Antenna temperature calculator
+- [ ] include a feed picture for plotting
+- [ ] add numeric surface class (DdV)
+- [ ] add numeric rim class (DdV)
 - [ ] add offsetGregorianShaped class
-- [ ] add symmetrical Gregorian/Cassegrain class
-- [ ] add symmetrical Gregorian/Cassegrian shaped class
+- [ ] add symmetrical Gregorian/Cassegrain shaped class
+- [ ] full GO of a reflector system
+- [x] add hyperboloid class (DdV)
+- [x] add offsetParaboloid class (William)
+- [x] add symmetrical Gregorian/Cassegrain class
+- [x] add offset Gregorian/Cassegrain class
 
 # @reflector
-- [ ] Calculate projected area
-- [ ] Calculate actual area
+- [ ] Calculate actual area (William)
 - [ ] Write GRASP outputs
-- [ ] getMaskFunction
-- [ ] add more functionality for point cloud grids (polar, thinned polar)
+- [x] getMaskFunction
+- [x] add more functionality for point cloud grids (polar, thinned polar)
+- [x] basic ray tracing of a reflector system
+
+# @hyperboloid
+- [ ] Sort out the negative e concave case like in GRASP
+
+# @dualReflector
+- [ ] constructor function for different symmetrical design options
+- [ ] constructor function for different offset design options
+- [x] SR extensions
+- [x] masking (both SR and PR masking)
+- [x] ray tracing
+- [x] path length structure
+- [x] ray trace plots
 
 # @symmetricParaboloid
-- [ ] calculate a path length structure
-- [ ] calculate the rho-th mapping
-- [ ] sort out the 2D plotting
-- [ ] include a feed picture for plotting
+- [ ] Remove and only keep the singleReflector class
+- [x] Ray tracing plot
+- [x] Masking of a FarField by a reflector system given the feed position and orientation
+- [x] build a FarField object of the mask
+- [x] calculate a path length structure
+- [x] Calculate projected area
+- [x] calculate the rho-th mapping
+- [x] sort out the 2D plotting
+
+# @pnt3D
+- [x] plot line between 2 points
+- [x] plot a ray from a point in a given direction
 
 ## utils
-- [ ] rotation of spherical coordinates
+- [x] rotation of spherical coordinates

@@ -1,3 +1,3 @@
-function linVal = lin20(dBval)
+function linVal = lin10(dBval)
 
-linVal = 10.^(dBval./20);
+linVal = 10.^(dBval./10);
