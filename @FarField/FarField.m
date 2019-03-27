@@ -866,11 +866,11 @@ classdef FarField
             % rotHandle is the funciton handle for the type of rotation:
             %   rotx3Dsph, roty3Dsph, rotz3Dsph, rotGRASPsph, rotEulersph
             % rotAng is the associated angle in rad. Scalar for rotations
-            % around an axis, and [3x1] for GRAP or Euler rotations
+            % around an axis, and [3x1] for GRASP or Euler rotations
             
             % Test if the rotation function handle has the trailing 'sph'
             handleStr = func2str(rotHandle);
-            if ~strcmp(handleStr(end-3:end),'sph')
+            if ~strcmp(handleStr(end-2:end),'sph')
                 handleStr = [handleStr,'sph'];  % Add it if not - some user errors fixed at least!
                 rotHandle = str2func(handleStr);
             end

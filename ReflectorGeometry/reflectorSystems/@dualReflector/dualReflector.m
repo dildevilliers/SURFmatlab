@@ -11,7 +11,7 @@ classdef dualReflector
         sigma(1,1) double {mustBeReal, mustBeFinite} = 1 
         th_ext(1,1) double {mustBeReal, mustBeFinite} = 0 % Extension angle in (rad)
         symFact_ext(1,1) double {mustBeReal, mustBeFinite} = 0 % Symmetry factor of the SR extension. 0 is symmetric, 1 is bottom, and -1 is top extension
-        Df(1,1) double {mustBeReal, mustBeFinite} = Dm/25 % Feed aperture diameter
+        Df(1,1) double {mustBeReal, mustBeFinite} = 0.2 % Feed aperture diameter
     end
     
     properties (SetAccess = private)
@@ -83,7 +83,11 @@ classdef dualReflector
             end
             if nargin >= 8, obj.th_ext = th_ext; end
             if nargin == 9, obj.symFact_ext = symFact_ext; end
-            if nargin >= 10, obj.Df = Df; end
+            if nargin >= 10
+                obj.Df = Df; 
+            else
+                obj.Df = obj.Dm/25; % Handle default here
+            end
             
             if obj.sigma == 1
                 obj.type = ['Gregorian'];

@@ -1,6 +1,7 @@
 # ToDo list for new code
 
 ## @Farfield
+- [ ] Fix FarField th rotation direction (DdV)
 - [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
 - [ ] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
 - [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D
