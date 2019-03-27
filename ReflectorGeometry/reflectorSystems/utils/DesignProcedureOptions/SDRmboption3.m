@@ -1,4 +1,4 @@
-function [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption3(Dm,F,Ds)
+function [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption3(Dm,F,Ds, sigma, Df)
 f = SDReq30(F,Df,Ds);
 Lm = SDReq29(F,f);
 th_e = SDReq26(F,Dm,Ds,f,sigma);

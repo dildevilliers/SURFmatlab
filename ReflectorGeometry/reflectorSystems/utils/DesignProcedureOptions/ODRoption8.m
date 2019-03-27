@@ -1,4 +1,4 @@
-function [F,h,th_U,th_L,e,a,f,Dsx,Dsy,alpha,Lm,dSRPR,dFPR,Lt,Ht,C_SR] = ODRoption8(Dm, th_0, th_e, Ls, beta)
+function [F,h,th_U,th_L,e,a,f,Dsx,Dsy,alpha,Lm,dSRPR,dFPR,Lt,Ht,C_SR] = ODRoption8(Dm, th_0, th_e, Ls, beta, sigma)
 e = ODReq5(sigma,beta,th_0);
 alpha = ODReq6(e,beta);
 a = ODReq22(Ls,e,beta,th_0);

@@ -1,4 +1,4 @@
-function [Dm, th_0, th_e, Ls, beta] = ODRoption10(Dm, th_0, th_e, dSRPR, beta)
+function [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption10(Dm, th_0, th_e, dSRPR, beta, sigma)
 e = ODReq5(sigma,beta,th_0);
 alpha = ODReq6(e,beta);
 th_U = ODReq3(e,alpha,sigma,th_e,beta);
@@ -9,4 +9,5 @@ a = ODReq21(dSRPR, h, Dm, sigma, e, beta, th_U, th_L);
 f = ODReq15(a,e);
 Dsx = ODReq27(sigma,a,e,beta,th_U,th_L);
 Ls = ODReq8(a,e,beta,th_0);
+Lm = ODReq9(a,e,beta,th_0,h);
 end

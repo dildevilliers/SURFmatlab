@@ -1,4 +1,4 @@
-function [Dm, th_0, th_e, Ls, beta] = ODRoption4(Dm, F, h, Lt, beta)
+function [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption4(Dm, F, h, Lt, beta, sigma)
 th_0 = ODReq1(h,F);
 th_U = ODReq2(h,Dm,F);
 th_L = ODReq4(h,Dm,F);
