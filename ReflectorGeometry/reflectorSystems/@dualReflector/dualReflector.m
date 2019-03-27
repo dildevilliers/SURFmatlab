@@ -11,6 +11,7 @@ classdef dualReflector
         sigma(1,1) double {mustBeReal, mustBeFinite} = 1 
         th_ext(1,1) double {mustBeReal, mustBeFinite} = 0 % Extension angle in (rad)
         symFact_ext(1,1) double {mustBeReal, mustBeFinite} = 0 % Symmetry factor of the SR extension. 0 is symmetric, 1 is bottom, and -1 is top extension
+        Df(1,1) double {mustBeReal, mustBeFinite} = Dm/25 % Feed aperture diameter
     end
     
     properties (SetAccess = private)
@@ -64,7 +65,7 @@ classdef dualReflector
         % symmetric and offset systems in one class.  Use one of the
         % meta-constructors below, which are specified according to the
         % Granet paper options and calls this constructor correctly
-        function obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext)
+        function obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df)
             if nargin >= 3 % Set 6, symmetric, min block
                 obj.Dm = Dm;
                 obj.Lm = Lm;
@@ -82,6 +83,7 @@ classdef dualReflector
             end
             if nargin >= 8, obj.th_ext = th_ext; end
             if nargin == 9, obj.symFact_ext = symFact_ext; end
+            if nargin >= 10, obj.Df = Df; end
             
             if obj.sigma == 1
                 obj.type = ['Gregorian'];
@@ -433,4 +435,51 @@ classdef dualReflector
         
     end
     
+    % Make a ton of different constructor options...
+    methods (Static = true)
+        function obj = ODR1(Dm,F,h,Dsx,beta,sigma,th_ext,symFact_ext)
+            [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption1(Dm, F, h, Dsx, beta, sigma);
+            obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext);
+        end
+    end
+    
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

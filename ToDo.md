@@ -106,10 +106,12 @@
 ## PlaneWaveSignal
 - [ ] freq, sigPower, sigPhase frequency dependent
 - [ ] include polarization information
+- [ ] include plot for the direction and polarization vectors
 
 ## ArrayElements
 - [ ] channelErrors frequency dependent
 - [ ] different field patterns for each element
+- [ ] include plot for the element positions
 
 ## ArrayReceiver
 - [ ] Full noise coupling matrix
@@ -128,3 +130,4 @@
 
 ## ArrayBeamformer
 - [ ] ToDo
+- [ ] Include transmit array pattern calculator
