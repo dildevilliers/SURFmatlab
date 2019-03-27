@@ -26,7 +26,9 @@ for ii = 1:length(optionNames) %run through the optional inputs, check if they h
         eval([optionNames{ii},' = ',defaultOptions{ii},';']);
     end
 end
-
+if isscalar(P)
+    P = P./(4.*pi).*ones(size(ph));
+end
 %From power pattern and polarization parameters, generate E1 and E2 accordingly
 switch fieldPol
     case 'linearX' % linearly polarised along X-axis 

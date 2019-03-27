@@ -105,9 +105,11 @@
 
 ## PlaneWaveSignal
 - [ ] freq, sigPower, sigPhase frequency dependent
+- [ ] include polarization information
 
 ## ArrayElements
 - [ ] channelErrors frequency dependent
+- [ ] different field patterns for each element
 
 ## ArrayReceiver
 - [ ] Full noise coupling matrix
