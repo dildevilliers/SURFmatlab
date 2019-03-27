@@ -1,12 +1,14 @@
 function Xd = rotEuler(X,angEuler)
 
 % function Xd = rotEuler(X,angEuler)
-% Returns the Euler angle (angEuler) rotated vector Xd = [x';y';z'] of the input
-% vector X = [x;y;z] 
-% Vectors can be rows of equal length
+% Returns the Euler angle (angGRASP) rotated vector Xd = [x';y';z'] of the input
+% vector X = [x;y;z]
 
 coor_base = coordinateSystem();     % Work from global coordinate system
 % Make a GRASP rotated coordinate system
 coor_new = coordinateSystem();
 coor_new = rotEuler(coor_new,angEuler);
-Xd = changeBase(X,coor_new,coor_base);
+X = pnt3D(X(1,:),X(2,:),X(3,:));
+% Xd = changeBase(X,coor_new,coor_base);
+Xd = changeBase(X,coor_base,coor_new);
+Xd = Xd.pointMatrix;

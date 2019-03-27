@@ -860,7 +860,6 @@ classdef FarField
         
         %% Shifts and rotations of the field
 
-%         function obj = roty3D(obj,th)
         function obj = rotate(obj,rotHandle,rotAng)
             % General rotation function for FarField objects
             % rotHandle is the funciton handle for the type of rotation:
@@ -877,7 +876,7 @@ classdef FarField
             gridIn = obj.gridTypeBase;
             coorIn = obj.coorSysBase;
             xRangeIn = obj.xRangeType;
-            % Transform to sensible grid and ccordinate system for rotation
+            % Transform to sensible grid and coordinate system for rotation
             FFsph = obj.grid2PhTh;  % Always work in the PhTh coordinate system
             FFsph = FFsph.setXrange('sym'); % Always work in symmetrical xRange
             FFsph = FFsph.coor2Ludwig3(false); % And work in Ludwig1 coordinates to get rid of pole discontinuities in the fields
