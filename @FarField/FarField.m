@@ -861,24 +861,23 @@ classdef FarField
         
         %% Shifts and rotations of the field
 
-%         function obj = roty3D(obj,th)
         function obj = rotate(obj,rotHandle,rotAng)
             % General rotation function for FarField objects
             % rotHandle is the funciton handle for the type of rotation:
             %   rotx3Dsph, roty3Dsph, rotz3Dsph, rotGRASPsph, rotEulersph
             % rotAng is the associated angle in rad. Scalar for rotations
-            % around an axis, and [3x1] for GRAP or Euler rotations
+            % around an axis, and [3x1] for GRASP or Euler rotations
             
             % Test if the rotation function handle has the trailing 'sph'
             handleStr = func2str(rotHandle);
-            if ~strcmp(handleStr(end-3:end),'sph')
+            if ~strcmp(handleStr(end-2:end),'sph')
                 handleStr = [handleStr,'sph'];  % Add it if not - some user errors fixed at least!
                 rotHandle = str2func(handleStr);
             end
             gridIn = obj.gridTypeBase;
             coorIn = obj.coorSysBase;
             xRangeIn = obj.xRangeType;
-            % Transform to sensible grid and ccordinate system for rotation
+            % Transform to sensible grid and coordinate system for rotation
             FFsph = obj.grid2PhTh;  % Always work in the PhTh coordinate system
             FFsph = FFsph.setXrange('sym'); % Always work in symmetrical xRange
             FFsph = FFsph.coor2Ludwig3(false); % And work in Ludwig1 coordinates to get rid of pole discontinuities in the fields

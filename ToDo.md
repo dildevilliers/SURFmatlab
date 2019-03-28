@@ -45,10 +45,11 @@
 - [x] Make empty constructor (Brandt)
 - [x] Plot Grid (DdV)
 - [x] Weighted power integral - for antenna noise (DdV)
+- [x] Fix FarField th rotation direction (DdV)  
 
 
-## ReflectorGeometry
-# General (class not assigned yet)
+# ReflectorGeometry
+## General (class not assigned yet)
 - [ ] Change all class names to be Capital letter first 
 - [ ] Aperture efficiency calculator
 - [ ] Antenna temperature calculator
@@ -63,17 +64,17 @@
 - [x] add symmetrical Gregorian/Cassegrain class
 - [x] add offset Gregorian/Cassegrain class
 
-# @reflector
+## @reflector
 - [ ] Calculate actual area (William)
 - [ ] Write GRASP outputs
 - [x] getMaskFunction
 - [x] add more functionality for point cloud grids (polar, thinned polar)
 - [x] basic ray tracing of a reflector system
 
-# @hyperboloid
+## @hyperboloid
 - [ ] Sort out the negative e concave case like in GRASP
 
-# @dualReflector
+## @dualReflector
 - [ ] constructor function for different symmetrical design options
 - [ ] constructor function for different offset design options
 - [x] SR extensions
@@ -82,7 +83,7 @@
 - [x] path length structure
 - [x] ray trace plots
 
-# @symmetricParaboloid
+## @symmetricParaboloid
 - [ ] Remove and only keep the singleReflector class
 - [x] Ray tracing plot
 - [x] Masking of a FarField by a reflector system given the feed position and orientation
@@ -92,9 +93,42 @@
 - [x] calculate the rho-th mapping
 - [x] sort out the 2D plotting
 
-# @pnt3D
+## @pnt3D
 - [x] plot line between 2 points
 - [x] plot a ray from a point in a given direction
 
-## utils
+# utils
 - [x] rotation of spherical coordinates
+
+# Arrays
+## General
+- [ ] Make all classes frequency dependent
+
+## PlaneWaveSignal
+- [ ] freq, sigPower, sigPhase frequency dependent
+- [ ] include polarization information
+- [ ] include plot for the direction and polarization vectors
+
+## ArrayElements
+- [ ] channelErrors frequency dependent
+- [ ] different field patterns for each element
+- [ ] include plot for the element positions
+
+## ArrayReceiver
+- [ ] Full noise coupling matrix
+- [ ] LNA noise parameters specification method
+- [ ] Gains frequency dependent
+- [ ] More receiver (amp) characteristics - IP1/3, 3dB comp, etc
+
+## ArrayA2D
+- [ ] ToDo
+
+## ArrayD2A
+- [ ] ToDo
+
+## ArraySystem
+- [ ] ToDo
+
+## ArrayBeamformer
+- [ ] ToDo
+- [ ] Include transmit array pattern calculator

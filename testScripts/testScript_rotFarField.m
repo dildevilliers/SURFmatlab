@@ -8,7 +8,7 @@ coorPlot = 'spherical';
 output_1and2D = 'E2';
 
 rotHandle = @rotGRASP;
-rotAng = deg2rad([180,0,0]);
+rotAng = deg2rad([45,45,0]);
 
 % Read a test field
 pathName = 'Farfield Source [1]';

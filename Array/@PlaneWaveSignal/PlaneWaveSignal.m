@@ -54,7 +54,7 @@ classdef PlaneWaveSignal
                 case 'noise'
                     St = randn(size(t));
                     StP = rms(St);
-                    St = St.*sqrt(2.*obj.P)./StP;
+                    St = St.*sqrt(obj.P)./StP;
                 case 'GPS_L1'
                      error(['sigType: ', obj.sigType, ' not implemented yet'])
             end

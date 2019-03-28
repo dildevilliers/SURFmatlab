@@ -13,7 +13,8 @@ if Ncomp ~= 2
     end
 end
 [x,y,z] = PhTh2DirCos(sphAngIn(1,:),sphAngIn(2,:));
-Xp = rotGRASP([x;y;z],angGRASP);
+X = [x;y;z];
+Xp = rotGRASP(X,angGRASP);
 [php,thp] = DirCos2PhTh(Xp(1,:),Xp(2,:),Xp(3,:));
 sphAngOut = [php;thp];
 
