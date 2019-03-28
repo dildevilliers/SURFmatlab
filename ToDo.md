@@ -120,15 +120,18 @@
 - [ ] Gains frequency dependent
 - [ ] More receiver (amp) characteristics - IP1/3, 3dB comp, etc
 
-## ArrayA2D
-- [ ] ToDo
-
-## ArrayD2A
-- [ ] ToDo
+## ArrayDAC
+- [ ] Signed binary
+- [ ] 2s complement
 
 ## ArraySystem
-- [ ] ToDo
+- [ ] Expand plotting option for line styles etc.
+- [ ] Automate the time scale to Engineering units
 
 ## ArrayBeamformer
-- [ ] ToDo
+- [ ] Implement for analog arrays
 - [ ] Include transmit array pattern calculator
+
+## ArrayDBE
+- [ ] Sort out power levels in the PSD plots (Units)
+- [ ] plotScanBeam must be extended to handle 1D and 2D scan plots
