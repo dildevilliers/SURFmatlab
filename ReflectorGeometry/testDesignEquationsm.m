@@ -180,21 +180,51 @@ sigma = 1;
 th_ext = 0;
 symFact_ext = 0;
 
-Dm = 10;
-Lm = 5;
-th_e = deg2rad(25);
-Ls = 2;
-Df = 1;
+exNumber = 5;
+
+switch exNumber
+    case 1
+        Dm = 100;
+        Lm = 107.772;
+        th_e = deg2rad(11.8767);
+        Ls = 28.0096;
+        Df = 1;
+    case 2
+        Dm = 100;
+        Lm = 109.249;
+        th_e = deg2rad(11.9131);
+        Ls = 41.2498;
+        Df = 1;
+    case 3
+        Dm = 45;
+        Lm = 40.32365;
+        th_e = deg2rad(10.32476);
+        Ls = 21.04870;
+        Df = 1;
+    case 4
+         % Granet Dual Reflector Ex1
+        Dm = 24;
+        Lm = 34.03933;
+        th_e = deg2rad(11.50497);
+        Ls = 30.54596;
+        Df = 1;
+    case 5
+        Dm = 10;
+        Lm = 5;
+        th_e = deg2rad(25);
+        Ls = 2;
+        Df = 1;
+end
 
 DR = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
 
 %[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption1(DR.Dm,DR.Lm,DR.Ls,DR.th_e,DR.sigma);
 %[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption2(DR.Dm,DR.F,DR.Lm,DR.th_e,DR.sigma);
 %[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption3(DR.Dm,DR.F,DR.Ls,DR.th_e,DR.sigma);
-[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption4(DR.F,DR.Dsx,DR.Ls,DR.th_e,DR.sigma);
+%[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption4(DR.F,DR.Dsx,DR.Ls,DR.th_e,DR.sigma);
 %[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption5(DR.Lm,DR.Dsx,DR.Ls,DR.th_e,DR.sigma);
 %[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption6(DR.Dm,DR.F,DR.Dsx,DR.th_e,DR.sigma);
-%[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption7(DR.Dm,DR.Dsx,DR.Ls,DR.th_e,DR.sigma);
+[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption7(DR.Dm,DR.Dsx,DR.Ls,DR.th_e,DR.sigma);
 %[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption1(DR.Dm,DR.F,DR.Lm,DR.sigma);
 %[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption2(DR.Dm,DR.F,DR.th_e);
 %[Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption3(DR.Dm,DR.F,DR.Dsx);
