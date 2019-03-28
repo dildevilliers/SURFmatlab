@@ -47,6 +47,26 @@
 - [x] Weighted power integral - for antenna noise (DdV)
 - [x] Fix FarField th rotation direction (DdV)  
 
+# farFieldExpansion
+## General
+- [x] Abstract property/method definitions
+- [ ] Concrete method: interpolateCoeffs
+- [ ] Concrete method: plotCoeffs
+
+##@SWE
+- [x] Constructor
+- [x] farField2Expansion
+- [x] expansion2FarField
+- [x] Rework constructor to add Q-coefficients as property when FarFields are given as constructor input
+- [ ] Mode simplification for symmetric fields
+- [ ] Coefficient modification for field rotation
+- [ ] Lookup-table F-matrix calculation/storage/retrieval for regularly-used angular grids
+- [ ] Add mode-list option to constructor
+
+##@CBFP
+- [ ] Constructor
+- [ ] farField2Expansion
+- [ ] expansion2FarField
 
 # ReflectorGeometry
 ## General (class not assigned yet)

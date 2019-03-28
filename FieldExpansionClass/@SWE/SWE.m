@@ -15,6 +15,7 @@ classdef SWE < FarFieldExpansion
         NMAX(1,1) double {mustBeReal, mustBeFinite}
         r0(1,1) {mustBeReal}
         freq(:,1) {mustBeReal, mustBeFinite, mustBePositive}
+        coeffs
         basis %j-indexed spherical Q-modes represented as FarField objects
         nBasis %number of Q-modes in basis
     end
@@ -36,7 +37,7 @@ classdef SWE < FarFieldExpansion
             %--ang: Input specifying angular range over which basis must be
             %defined (and optionally spherical radius). May either be given
             %as [Nang x 3] vector of [r th ph] values, or as a FarField
-            %object.
+            %object (or cell array thereof).
             %--modes: Mode specifier, either through a minimum sphere
             %radius, a [2 x 1] vector of MMAX/NMAX values or a vector list
             %of Q-mode j-indices.
@@ -56,13 +57,22 @@ classdef SWE < FarFieldExpansion
             %SWE object per frequency that the target far-fields are
             %defined at.
             
-            if strcmp(class(ang),'FarField')
-                Nang = ang.Nang;
-                r = inf.*ones(size(ang.th));
-                th = ang.th;
-                ph = ang.ph;
+            if isa(ang,'FarField')
+                if all(size(ang)) == 1
+                    dummy{1} = ang;
+                    ang = dummy;
+                else
+                    error('Multiple FarField inputs must be given as cell array')
+                end
+            end
+            
+            if iscell(ang)
+                Nang = ang{1}.Nang;
+                r = inf.*ones(size(ang{1}.th));
+                th = ang{1}.th;
+                ph = ang{1}.ph;
                 if nargin < 4 %Default to highest frequency in FFobj if frequency is not explicitly specified
-                    freq = ang.freq(end);
+                    freq = ang{1}.freq(end);
                 end
             else
                 Nang = size(ang,1);
@@ -73,6 +83,7 @@ classdef SWE < FarFieldExpansion
                     disp('No frequency specified - defaulting to 1 GHz')
                     freq = 1e9;
                 end
+                coeffs = [];
             end
             
             %handle maximum numbers of modes
@@ -124,6 +135,20 @@ classdef SWE < FarFieldExpansion
             obj.basis = basis;
             obj.nBasis = length(basis);
             obj.freq = freq;
+            
+            %If 'ang' is a FarField or cell of FarFields, perform SWE
+            %expansion on each field and get the corresponding
+            %Q-coefficients
+            if iscell(ang)
+                for xx = 1:length(ang)
+                    %NB: P is currently not assigned to a property of the class, but it easily can be
+                    [Qj{xx},P{xx}] = SWE.farField2Expansion(obj,ang{xx});
+                end
+            else
+                Qj = [];
+            end
+            obj.coeffs = Qj;
+            
             
             %Validate properties inherited from abstract class (can't be validated inline like other properties...)
             mustBeReal(obj.nBasis);
@@ -206,8 +231,8 @@ classdef SWE < FarFieldExpansion
             %SWE expansion coefficients and powers.
             %Inputs:
             %--SWEobj: SWE object to perform reconstruction with
-            %--Qj: Q-coefficients struct, in the format given by farField2Expansion. 
-            %--P: optional vector of power terms, in the format given by farField2Expansion. 
+            %--Qj: Q-coefficients struct, in the format given by farField2Expansion.
+            %--P: optional vector of power terms, in the format given by farField2Expansion.
             %--iBasis: optional vector of basis indices to use in the
             %reconstruction - all basis functions not selected by their indices
             %are masked out (zero'd) in the reconstructed output FarField object.
@@ -216,6 +241,14 @@ classdef SWE < FarFieldExpansion
             th = SWEobj.basis{1}.th;
             ph = SWEobj.basis{1}.ph;
             r = inf.*ones(size(th));
+            
+            %If no Qj was given, default to Qj class property (will throw error if the property is empty)
+            if nargin < 2
+                if isempty(SWEobj.coeffs)
+                    error('No Q-coefficients given as input or found in SWR object')
+                end
+                Qj = SWEobj.coeffs;
+            end
             
             %If a set of basis indices were given as 4th input, use them to mask Q-coefficients
             Qjin = Qj;
@@ -234,12 +267,14 @@ classdef SWE < FarFieldExpansion
             end
             
             %Reconstruct pattern and pack it into FarField object output
-            if nargin < 3
-                FFstr = SWE2FF(Qjin,r,th,ph,F);
-                FFobj = FarField(FFstr.ph,FFstr.th,FFstr.Eth,FFstr.Eph,zeros(size(FFstr.Eth)),FFstr.freq);
-            else
-                FFstr = SWE2FF(Qjin,r,th,ph,F,[P.P]);
-                FFobj = FarField(FFstr.ph,FFstr.th,FFstr.Eth,FFstr.Eph,zeros(size(FFstr.Eth)),FFstr.freq,FFstr.Prad);
+            for xx = 1:length(Qjin)
+                if nargin < 3
+                    FFstr = SWE2FF(Qjin{xx},r,th,ph,F);
+                    FFobj{xx} = FarField(FFstr.ph,FFstr.th,FFstr.Eth,FFstr.Eph,zeros(size(FFstr.Eth)),FFstr.freq);
+                else
+                    FFstr = SWE2FF(Qjin{xx},r,th,ph,F,[P.P]);
+                    FFobj{xx} = FarField(FFstr.ph,FFstr.th,FFstr.Eth,FFstr.Eph,zeros(size(FFstr.Eth)),FFstr.freq,FFstr.Prad);
+                end
             end
             
         end
