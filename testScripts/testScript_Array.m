@@ -7,7 +7,7 @@ clear all
 fRF = 1.57542e9;
 th_in = deg2rad(0);
 ph_in = deg2rad(0);
-Ps = -12; % in dBm
+Ps = -50; % in dBm
 phaseSig = deg2rad(0);
 
 Nant = 4;      % Number of elements
@@ -15,7 +15,7 @@ d_lam = 2;     % Element spacing in wavelengths
 d = d_lam*(physconst('lightspeed')/fRF);    % Element spacing in m
 x = (-(Nant-1)/2:(Nant-1)/2).*d;       % Uniform linear array along x-axis
 r = pnt3D(x,0,0);
-ampErrors = [100,1,0.8,0.2];
+ampErrors = [1,1,1,1];
 phaseErrors_deg = [0,0,0,0];
 channelPhasors = ampErrors.*exp(1i.*deg2rad(phaseErrors_deg));
 
@@ -26,7 +26,7 @@ fIF = 4.096e6;
 fLO = fRF - fIF; 
 
 fSamp = 4*fIF;          % Sample rate in Hz
-Nt = 1600;                % Number of time samples
+Nt = 8000;                % Number of time samples
 delT = 1/fSamp;
 t0 = 0;
 t = t0:delT:(t0+delT*(Nt-1));
@@ -34,7 +34,11 @@ t = t0:delT:(t0+delT*(Nt-1));
 Nbits = 1;
 A = ArrayADC(Nbits);
 
-S = PlaneWaveSignal('compExp',fRF,th_in,ph_in,Ps,phaseSig);
+S1 = PlaneWaveSignal('compExp',fRF,th_in,ph_in,Ps,phaseSig);
+S2 = PlaneWaveSignal('compExp',fRF,th_in + deg2rad(40),ph_in,Ps,phaseSig+pi/2);
+S3 = PlaneWaveSignal('noise',fRF,th_in + deg2rad(-20),ph_in,Ps,phaseSig);
+% S = [S1,S2,S3];
+S = S1;
 % E = ArrayElements(r);
 % R = ArrayReceiver(Pn,LNAGain,IFGain,fLO);
 % portSigMat = E.portSignals(S,t);

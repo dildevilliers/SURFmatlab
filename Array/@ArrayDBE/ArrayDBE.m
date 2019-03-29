@@ -35,12 +35,16 @@ classdef ArrayDBE
             freq = obj.arraySystem.freqSamp*(0:(Lfft/2))/Lfft;
         end
         
-        function P = scanBeam(obj,freqRF,th,ph,x)
+        function P = scanBeam(obj,freqRF,th,ph,x,calVect)
             % freqRF is the nominal RF frequency of the system
             % th and ph are the scanning directions in spherical
             % coordinates from the origin. one can be scalar.
             % x is a typical output from ArraySystem.getPortSignal
             % A signal matrix of size [Nant, Nsamp]
+            % calVect is a vecotr of calibration phasors of size [1, Nant]
+            if nargin < 6
+                calVect = 1;
+            end
             
             % stretch ph and th if required
             th = (ph+eps(realmin))./(ph+eps(realmin)).*th;
@@ -49,7 +53,8 @@ classdef ArrayDBE
             [u,v,w] = PhTh2DirCos(ph,th);
             k_scan = 2*pi.*freqRF./physconst('lightspeed').*[u;v;w]; % [3 x Nscan]
             A_scan = exp(1i*obj.arraySystem.antPos.pointMatrix.'*k_scan); % [Nant x Nscan]
-            y = A_scan.'*x;  % [Nscan x Nsamp]
+            AC_scan = bsxfun(@times,A_scan,calVect(:));
+            y = AC_scan.'*x;  % [Nscan x Nsamp]
             P = portPower(y); % [Nscan x 1]
         end
         
