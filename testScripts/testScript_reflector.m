@@ -15,9 +15,9 @@ MR = reflector;
 % Test ellipsoid
 MR.surface = hyperboloid(4,5);
 % Shift/rotate it
-rotTh = deg2rad(-70);
-rotPh = deg2rad(115);
-rotPs = deg2rad(-45);
+rotTh = deg2rad(45);
+rotPh = deg2rad(-123);
+rotPs = deg2rad(65);
 transVect = [0.5,0.3,-0.1].';
 MR.coor = MR.coor.rotGRASP([rotTh,rotPh,rotPs]);
 MR.coor = MR.coor.translate(transVect);

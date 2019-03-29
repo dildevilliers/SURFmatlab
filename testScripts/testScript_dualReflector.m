@@ -17,7 +17,7 @@ switch exNumber
         beta = deg2rad(10.1);
         sigma = -1;
     case 2
-        % Granet Dual Reflector Ex1
+        % Granet Dual Reflector Ex2
         Dm = 100;
         Lm = 109.249;
         th_e = deg2rad(11.9131);
@@ -35,7 +35,7 @@ switch exNumber
         beta = deg2rad(6.0);
         sigma = -1;
     case 4
-         % Granet Dual Reflector Ex1
+         % Granet Dual Reflector Ex4
         Dm = 24;
         Lm = 34.03933;
         th_e = deg2rad(11.50497);
