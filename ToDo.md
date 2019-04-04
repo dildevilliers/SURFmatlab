@@ -1,14 +1,15 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
-- [ ] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
-- [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D
+- [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D (Ridalise and William)
 - [ ] Field symmetries: Add a property for x and y symmetry; full field checks and power integration only operates on existing field; plotting mirrors as required.
+- [ ] Get only the BOR1 components of the field and return as FarField object (DdV)
+- [ ] Gaussian/cosn pattern fitter
 - [ ] readFITS (DdV)
 - [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
-- [ ] Get only the BOR1 components of the field and return as FarField object (DdV)
+- [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
+- [ ] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
 - [ ] CBFP expansion (Fahmi)
 - [ ] SWE of a given field (Fahmi + Brandt)
 - [ ] Multiple frequency concat
@@ -17,7 +18,6 @@
 - [ ] writeCSTffs
 - [ ] writeFEKOfft
 - [ ] writeGRASPcut
-- [ ] Gaussian pattern fitter
 - [ ] Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
 - [ ] Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
 - [ ] Array pattern adder
