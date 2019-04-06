@@ -1125,7 +1125,7 @@ classdef FarField
         
         function obj = setSymmetryXZ(obj,symmetryType)
             % Test if the input range is valid
-            tol = 1e-10;
+            tol = 10^(-obj1.nSigDig);
             % Easy to check in TrueView
             obj1 = obj.grid2TrueView;
             assert(all(sign(obj1.y+tol) > 0) || all(sign(obj1.y-tol) < 0),'Invalid range for XZ symmetry')
@@ -1190,18 +1190,16 @@ classdef FarField
             if obj1.symXZ
                 XIn = [XIn;obj1.x]; 
                 YIn = [YIn;-obj1.y];
-                E1In = [obj1.E1;obj1.symXZ.*obj1.E1]; % Mirror according to symmetry 
-                E2In = [E2In;obj1.E2];  % Just copy
+                E1In = [E1In;obj1.symXZ.*obj1.E1]; % Mirror according to symmetry 
+                E2In = [E2In;-obj1.symXZ.*obj1.E2];  % Mirror according to symmetry 
                 E3In = [E3In;obj1.E3];  % Do nothing for FarFields...
             end
             if obj1.symYZ
-                insertInd = find(abs(obj1.ph-pi)>eps); % Everything except ph = 180
-                phIn = [];
-                phIn = [obj1.ph;2*pi - obj1.ph(insertInd)]; 
-                thIn = [obj1.th;obj1.th(insertInd)];
-                E1In = [obj1.E1;obj1.E1(insertInd,:)];  % Just copy
-                E2In = [obj1.E2;obj1.symYZ.*obj1.E2(insertInd,:)]; % Mirror according to symmetry 
-                E3In = [obj1.E3;obj1.E3(insertInd,:)];  % Do nothing for FarFields...
+                XIn = [XIn;-obj1.x]; 
+                YIn = [YIn;obj1.y];
+                E1In = [E1In;-obj1.symYZ.*obj1.E1];  % Mirror according to symmetry 
+                E2In = [E2In;obj1.symYZ.*obj1.E2]; % Mirror according to symmetry 
+                E3In = [E3In;obj1.E3];  % Do nothing for FarFields...
             end
             % Object for grid/coor transformation
             objD = FarField(XIn,YIn,E1In,E2In,E3In,...
@@ -1209,6 +1207,8 @@ classdef FarField
             obj = coorHandle(objD);
             obj = gridHandle(obj);
             obj = obj.currentForm2Base(rad2deg([stepX,stepY]));
+            % Test here for full 4pi grid, and if not, add the missing
+            % axis/pole
 
         end
         
@@ -1275,12 +1275,11 @@ classdef FarField
             % Set to the PhTh coordinate system - this is how most data
             % will be generated anyway.
             % Very quick check - necessary but not always sufficient
-            obj = obj.grid2PhTh;
-            xRange = max(obj.x) - min(obj.x);
-            yRange = max(obj.y) - min(obj.y);
+            phRange = max(obj.ph) - min(obj.ph);
+            thRange = max(obj.th) - min(obj.th);
             eps = 1e-4;
-            y = ((abs(round(rad2deg(xRange)) - (360 - obj.symmetryXZ.*180)) < eps) & (abs(round(rad2deg(yRange)) - 180) < eps)) |...
-                ((abs(round(rad2deg(xRange)) - 180) < eps) & (abs(round(rad2deg(yRange)) - 360) < eps));
+            y = ((abs(round(rad2deg(phRange)) - (360/2^(sum(abs([obj.symXZ,obj.symYZ]))))) < eps) & (abs(round(rad2deg(thRange)) - 180/2^abs(obj.symXY)) < eps)) |...
+                ((abs(round(rad2deg(phRange)) - 180) < eps) & (abs(round(rad2deg(thRange)) - 360) < eps));
         end
         
         function y = isGridUniform(obj)
