@@ -39,7 +39,10 @@ classdef FarField
         Gain_dB         % Gain in dB [1 x Nf]
         xRangeType     % 'sym' or 'pos'
         yRangeType     % '180' or '360'
-        
+        symmetryXZ = 'none'   % Type of symmetry about the xz-plane (could be electric|none|magnetic)
+        symmetryYZ = 'none'   % Type of symmetry about the yz-plane (could be electric|none|magnetic)
+        symmetryXY = 'none'   % Type of symmetry about the xy-plane (could be electric|none|magnetic)
+        symmetryBOR1 = 0 % Is the pattern a BOR1 type pattern
     end
     
     properties (SetAccess = private, Hidden = true)
@@ -53,6 +56,9 @@ classdef FarField
         E3Base
         coorSysBase
         polTypeBase
+        symXZ
+        symYZ
+        symXY
     end
     
     properties (Constant = true, Hidden = true)
@@ -60,6 +66,7 @@ classdef FarField
         eps0 = 8.854187817000001e-12;
         mu0 = 1.256637061435917e-06;
         eta0 = 3.767303134749689e+02;
+        nSigDig = 8;
     end
     
     methods
@@ -349,6 +356,7 @@ classdef FarField
                 obj.gridType = 'PhTh';
                 obj = setXYnames(obj);
                 obj = setRangeTypes(obj);
+                obj = setPhTh(obj);
             end
         end
         
@@ -359,6 +367,7 @@ classdef FarField
                 obj.gridType = 'DirCos';
                 obj = setXYnames(obj);
                 obj = setRangeTypes(obj);
+                obj = setPhTh(obj);
             end
         end
         
@@ -369,6 +378,7 @@ classdef FarField
                 obj.gridType = 'AzEl';
                 obj = setXYnames(obj);
                 obj = setRangeTypes(obj);
+                obj = setPhTh(obj);
             end
         end
         
@@ -379,6 +389,7 @@ classdef FarField
                 obj.gridType = 'ElAz';
                 obj = setXYnames(obj);
                 obj = setRangeTypes(obj);
+                obj = setPhTh(obj);
             end
         end
         
@@ -389,6 +400,7 @@ classdef FarField
                 obj.gridType = 'TrueView';
                 obj = setXYnames(obj);
                 obj = setRangeTypes(obj);
+                obj = setPhTh(obj);
             end
         end
         
@@ -399,6 +411,7 @@ classdef FarField
                 obj.gridType = 'ArcSin';
                 obj = setXYnames(obj);
                 obj = setRangeTypes(obj);
+                obj = setPhTh(obj);
             end
         end
         
@@ -413,13 +426,15 @@ classdef FarField
             obj.E1 = obj.E1(iSort);
             obj.E2 = obj.E2(iSort);
             obj.E3 = obj.E3(iSort);
+            obj.ph = obj.ph(iSort);
+            obj.th = obj.th(iSort);
         end
         
         function obj = roundGrid(obj,nSigDig)
             % Round to some significant digits for sorting (some issues can
             % arise in deg2rad and rad2deg
             if nargin < 2
-                nSigDig = 10;
+                nSigDig = obj.nSigDig;
             end
             xRound = round(obj.x*10^nSigDig)/10^nSigDig;
             yRound = round(obj.y*10^nSigDig)/10^nSigDig;
@@ -712,6 +727,7 @@ classdef FarField
             obj = setEnames(obj);
             obj = setXYnames(obj);
             obj = setRangeTypes(obj);
+            obj = setPhTh(obj);
         end
         
         function obj = grid2Base(obj)
@@ -739,8 +755,6 @@ classdef FarField
             % from the Direction Cosine transforms...
             assert(~isequal(obj1.yRangeType,'360'),'yRangeType cannot be 360 for the base representation')
             
-            nSigDig = 10;
-            
             % Set defaults
             if strcmp(obj1.gridTypeBase,'DirCos') || strcmp(obj1.gridType,'ArcSin')
                 stepX = asin(min(abs(diff(unique(obj1.xBase)))));
@@ -751,12 +765,16 @@ classdef FarField
                 ymax = max(asin(obj1.y));
             else
                 % Sort out rounding errors for degrees
-                stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^nSigDig)/10^nSigDig);
-                stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^nSigDig)/10^nSigDig);
-                xmin = min(obj1.x);
-                xmax = max(obj1.x);
-                ymin = min(obj1.y);
-                ymax = max(obj1.y);
+                stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^obj1.nSigDig)/10^obj1.nSigDig);
+                stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^obj1.nSigDig)/10^obj1.nSigDig);
+%                 xmin = min(obj1.x);
+%                 xmax = max(obj1.x);
+%                 ymin = min(obj1.y);
+%                 ymax = max(obj1.y);
+                xmin = deg2rad(round(rad2deg(min(obj1.x))*10^obj1.nSigDig)./10^obj1.nSigDig);
+                xmax = deg2rad(round(rad2deg(max(obj1.x))*10^obj1.nSigDig)./10^obj1.nSigDig);
+                ymin = deg2rad(round(rad2deg(min(obj1.y))*10^obj1.nSigDig)./10^obj1.nSigDig);
+                ymax = deg2rad(round(rad2deg(max(obj1.y))*10^obj1.nSigDig)./10^obj1.nSigDig);
             end
             
             hem = 'top';
@@ -791,13 +809,18 @@ classdef FarField
             end
             
             % Build the new grid
-            xivect = xmin:stepX:xmax;
-            yivect = ymin:stepY:ymax;
+            Nxi = round((xmax - xmin)/stepX) + 1;
+            Nyi = round((ymax - ymin)/stepY) + 1;
+            xivect = linspace(xmin,xmax,Nxi);
+            yivect = linspace(ymin,ymax,Nyi);
+%             xivect = xmin:stepX:xmax;
+%             yivect = ymin:stepY:ymax;
+%             Nxi = numel(xivect);
+%             Nyi = numel(yivect);
             [Xi,Yi] = meshgrid(xivect,yivect);
             xi = Xi(:);
             yi = Yi(:);
-            Nxi = numel(xivect);
-            Nyi = numel(yivect);
+
             % Interpolate the fields
             [E1grid,E2grid,E3grid] = deal(zeros(Nxi*Nyi,obj1.Nf));
             for ff = 1:obj1.Nf
@@ -805,6 +828,15 @@ classdef FarField
                 E2grid(:,ff) = interpolateGrid(obj1,'E2',xi,yi,ff,hem);
                 E3grid(:,ff) = interpolateGrid(obj1,'E3',xi,yi,ff,hem);
             end
+            % Remove the extra phase introduced by the interpolateGrid
+            % function - this just keeps the real/imag and phase field
+            % consistant with the plotting
+            k = 2.*pi.*obj1.freq./obj1.c0;
+            FFfact = exp(1i.*k.*obj1.r)./obj1.r;
+            E1grid = bsxfun(@times,E1grid,FFfact);
+            E2grid = bsxfun(@times,E2grid,FFfact);
+            E3grid = bsxfun(@times,E3grid,FFfact);
+            
             % Populate the new farField object
             obj = obj1;
             obj.x = xi(:);
@@ -855,14 +887,13 @@ classdef FarField
         end
         
         %% Interpolation methods
-        %         [Z] = interpolateGrid(obj,xi,yi,gridType,output,freqIndex)
         [Z] = interpolateGrid(obj,output,xi,yi,varargin)
         
         %% Shifts and rotations of the field
 
         function obj = rotate(obj,rotHandle,rotAng)
             % General rotation function for FarField objects
-            % rotHandle is the funciton handle for the type of rotation:
+            % rotHandle is the function handle for the type of rotation:
             %   rotx3Dsph, roty3Dsph, rotz3Dsph, rotGRASPsph, rotEulersph
             % rotAng is the associated angle in rad. Scalar for rotations
             % around an axis, and [3x1] for GRASP or Euler rotations
@@ -909,6 +940,7 @@ classdef FarField
             obj = obj.setXrange(xRangeIn);
             coor2handle = str2func(['coor2',coorIn]);
             obj = coor2handle(obj,false);
+            obj = obj.setPhTh;
             obj = obj.currentForm2Base();
         end
         
@@ -951,7 +983,7 @@ classdef FarField
                 obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setBase(obj);
             else
-                error('Can only add FarFields with equal base grids')
+                error('Can only subtract FarFields with equal base grids')
             end
         end
         
@@ -1029,6 +1061,7 @@ classdef FarField
             % Returns the total power in the field integrated over the
             % full available grid
             obj = reset2Base(obj);
+            symFact = 2^(sum(abs([obj.symXY,obj.symXZ,obj.symYZ])));
             assert(obj.isGridUniform,'Must have a plaid, monotonic, uniform grid for power calculation through integration');
             switch obj.gridType
                 case 'PhTh'
@@ -1043,6 +1076,7 @@ classdef FarField
                 otherwise
                     error(['pradInt not implemented for gridType = ',obj.gridType,', only for PhTh grids'])
             end
+            P = P.*symFact;
         end
         
         function obj = setPower(obj1,powerWatt)
@@ -1087,14 +1121,154 @@ classdef FarField
             obj = setBase(obj);
         end
         
+        %% Symmetry handlers
+        
+        function obj = setSymmetryXZ(obj,symmetryType)
+            % Test if the input range is valid
+            tol = 1e-10;
+            % Easy to check in TrueView
+            obj1 = obj.grid2TrueView;
+            assert(all(sign(obj1.y+tol) > 0) || all(sign(obj1.y-tol) < 0),'Invalid range for XZ symmetry')
+            obj.symmetryXZ = symmetryType;
+            switch symmetryType
+                case 'none'
+                    obj.symXZ = 0;
+                case 'electric'
+                    obj.symXZ = -1;
+                case 'magnetic'
+                    obj.symXZ = 1;
+                otherwise
+                    error(['Unknown symmetry setting: ',symmetryType])
+            end
+        end
+        
+        function obj = setSymmetryYZ(obj,symmetryType)
+            % Test if the input range is valid
+            tol = 1e-10;
+            % Easy to check in TrueView
+            obj1 = obj.grid2TrueView;
+            assert(all(sign(obj1.x+tol) > 0) || all(sign(obj1.x-tol) < 0),'Invalid range for YZ symmetry')
+            obj.symmetryYZ = symmetryType;
+            switch symmetryType
+                case 'none'
+                    obj.symYZ = 0;
+                case 'electric'
+                    obj.symYZ = -1;
+                case 'magnetic'
+                    obj.symYZ = 1;
+                otherwise
+                    error(['Unknown symmetry setting: ',symmetryType])
+            end
+        end
+        
+        function obj = getFullPattern(obj1)
+            % Returns the full pattern mirrored according to the symmetry
+            % definitions
+
+            gridTypeIn = obj1.gridType;
+            coorTypeIn = obj1.coorSys;
+            if strcmp(obj1.gridTypeBase,'DirCos') || strcmp(obj1.gridType,'ArcSin')
+                stepX = asin(min(abs(diff(unique(obj1.xBase)))));
+                stepY = asin(min(abs(diff(unique(obj1.yBase)))));
+            else
+                % Sort out rounding errors for degrees
+                stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^obj1.nSigDig)/10^obj1.nSigDig);
+                stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^obj1.nSigDig)/10^obj1.nSigDig);
+            end
+            
+            gridHandle = str2func(['grid2',gridTypeIn]);
+            coorHandle = str2func(['coor2',coorTypeIn]);
+            obj1 = obj1.grid2TrueView;
+            obj1 = obj1.coor2Ludwig3(false);   % Always work in H/V for symmetry calculations...
+            
+            % Initialise
+            XIn = [obj1.x];
+            YIn = [obj1.y];
+            E1In = [obj1.E1]; 
+            E2In = [obj1.E2];  
+            E3In = [obj1.E3];  
+            if obj1.symXZ
+                XIn = [XIn;obj1.x]; 
+                YIn = [YIn;-obj1.y];
+                E1In = [obj1.E1;obj1.symXZ.*obj1.E1]; % Mirror according to symmetry 
+                E2In = [E2In;obj1.E2];  % Just copy
+                E3In = [E3In;obj1.E3];  % Do nothing for FarFields...
+            end
+            if obj1.symYZ
+                insertInd = find(abs(obj1.ph-pi)>eps); % Everything except ph = 180
+                phIn = [];
+                phIn = [obj1.ph;2*pi - obj1.ph(insertInd)]; 
+                thIn = [obj1.th;obj1.th(insertInd)];
+                E1In = [obj1.E1;obj1.E1(insertInd,:)];  % Just copy
+                E2In = [obj1.E2;obj1.symYZ.*obj1.E2(insertInd,:)]; % Mirror according to symmetry 
+                E3In = [obj1.E3;obj1.E3(insertInd,:)];  % Do nothing for FarFields...
+            end
+            % Object for grid/coor transformation
+            objD = FarField(XIn,YIn,E1In,E2In,E3In,...
+                obj1.freq,obj1.Prad.*2,obj1.radEff,obj1.coorSys,obj1.polType,obj1.gridType,obj1.freqUnit,obj1.slant);
+            obj = coorHandle(objD);
+            obj = gridHandle(obj);
+            obj = obj.currentForm2Base(rad2deg([stepX,stepY]));
+
+        end
+        
+%         function obj = getFullPattern(obj1)
+%             % Returns the full pattern mirrored according to the symmetry
+%             % definitions
+% 
+%             gridTypeIn = obj1.gridType;
+%             coorTypeIn = obj1.coorSys;
+%             gridHandle = str2func(['get',gridTypeIn]);
+%             coorHandle = str2func(['getE',coorTypeIn]);
+%             obj1 = obj1.grid2Base;
+%             obj1 = obj1.coor2Ludwig3;   % Always work in H/V for symmetry calculations...
+%             if obj1.symXZ
+%                 insertInd = find(abs(obj1.ph-pi)>eps); % Everything except ph = 180
+%                 phIn = [obj1.ph;2*pi - obj1.ph(insertInd)]; 
+%                 thIn = [obj1.th;obj1.th(insertInd)];
+%                 E1In = [obj1.E1;obj1.symXZ.*obj1.E1(insertInd,:)]; % Mirror according to symmetry 
+%                 E2In = [obj1.E2;obj1.E2(insertInd,:)];  % Just copy
+%                 E3In = [obj1.E3;obj1.E3(insertInd,:)];  % Do nothing for FarFields...
+%             end
+%             if obj1.symYZ
+%                 insertInd = find(abs(obj1.ph-pi)>eps); % Everything except ph = 180
+%                 phIn = [];
+%                 phIn = [obj1.ph;2*pi - obj1.ph(insertInd)]; 
+%                 thIn = [obj1.th;obj1.th(insertInd)];
+%                 E1In = [obj1.E1;obj1.E1(insertInd,:)];  % Just copy
+%                 E2In = [obj1.E2;obj1.symYZ.*obj1.E2(insertInd,:)]; % Mirror according to symmetry 
+%                 E3In = [obj1.E3;obj1.E3(insertInd,:)];  % Do nothing for FarFields...
+%             end
+%             % Dummy object for grid/coor transformation
+%             objD = FarField(phIn,thIn,E1In,E2In,E3In,...
+%                 obj1.freq,obj1.Prad.*2,obj1.radEff,obj1.coorSys,obj1.polType,obj1.gridType,obj1.freqUnit,obj1.slant);
+%             [xIn,yIn] = gridHandle(objD);
+%             [E1In,E2In,E3In] = coorHandle(objD);
+%             % Sort before building the new object - to ensure the base
+%             % is sorted
+%             [~,iSort] = sortrows([xIn,yIn],[1 2]);
+%             xIn = xIn(iSort);
+%             yIn = yIn(iSort);
+%             E1In = E1In(iSort,:);
+%             E2In = E2In(iSort,:);
+%             E3In = E3In(iSort,:);
+%             obj = FarField(xIn,yIn,E1In,E2In,E3In,...
+%                 obj1.freq,obj1.Prad.*2,obj1.radEff,coorTypeIn,obj1.polType,gridTypeIn,obj1.freqUnit,obj1.slant);
+%         end
         
         %% Format and other testers
         function y = isGridEqual(obj1,obj2)
-            xEqual = isequal(obj1.x,obj2.x);
-            yEqual = isequal(obj1.y,obj2.y);
-            gridEqual = strcmp(obj1.gridType,obj2.gridType);
-            fEqual = isequal(obj1.freq,obj2.freq);
-            y = xEqual && yEqual && gridEqual && fEqual;
+            % Dont go for formal equality - floating point error just too much...
+            tol = 10^(-obj1.nSigDig);
+            if all(size(obj1.x) == size(obj2.x)) && all(size(obj1.y) == size(obj2.y))
+                xEqual = abs(obj1.x - obj2.x) < tol;
+                yEqual = abs(obj1.y - obj2.y) < tol;
+                gridEqual = strcmp(obj1.gridType,obj2.gridType);
+                fEqual = isequal(obj1.freq,obj2.freq);
+                y = all(xEqual) && all(yEqual) && gridEqual && fEqual;
+            else
+                y = 0;
+            end
         end
         
         function y = isGrid4pi(obj)
@@ -1105,7 +1279,7 @@ classdef FarField
             xRange = max(obj.x) - min(obj.x);
             yRange = max(obj.y) - min(obj.y);
             eps = 1e-4;
-            y = ((abs(round(rad2deg(xRange)) - 360) < eps) & (abs(round(rad2deg(yRange)) - 180) < eps)) |...
+            y = ((abs(round(rad2deg(xRange)) - (360 - obj.symmetryXZ.*180)) < eps) & (abs(round(rad2deg(yRange)) - 180) < eps)) |...
                 ((abs(round(rad2deg(xRange)) - 180) < eps) & (abs(round(rad2deg(yRange)) - 360) < eps));
         end
         
