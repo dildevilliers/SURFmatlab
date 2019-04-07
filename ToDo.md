@@ -2,7 +2,7 @@
 
 ## @Farfield
 - [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D (Ridalise and William)
-- [ ] Field symmetries: Add a property for x and y symmetry; full field checks and power integration only operates on existing field; plotting mirrors as required.
+- [ ] Field symmetries: XY plane (DdV)
 - [ ] Get only the BOR1 components of the field and return as FarField object (DdV)
 - [ ] Gaussian/cosn pattern fitter
 - [ ] readFITS (DdV)
@@ -46,6 +46,7 @@
 - [x] Plot Grid (DdV)
 - [x] Weighted power integral - for antenna noise (DdV)
 - [x] Fix FarField th rotation direction (DdV)  
+- [x] Field symmetries: XZ and YZ planes.
 
 
 # ReflectorGeometry

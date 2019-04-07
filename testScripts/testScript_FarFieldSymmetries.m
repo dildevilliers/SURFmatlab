@@ -38,20 +38,36 @@ FFplot.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',o
 % [eEx] = FFdelta.norm
 
 %% Get a version symmetric about y
-phYind = FF.ph >= -pi/2-eps & FF.ph <= pi/2+eps;
-FFy = FarField(FF.ph(phYind),FF.th(phYind),FF.E1(phYind,:),FF.E2(phYind,:),FF.E3(phYind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorSys,FF.polType,'PhTh',FF.freqUnit);
-FFy = FFy.setSymmetryYZ('magnetic');
-FFy = FFy.setXrange('sym');
-FFy = plotGridHandle(FFy);
-figure
-FFy.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
-% Fix to full range and plot
-FFyFull = FFy.getFullPattern;
-FFyFull = plotGridHandle(FFyFull);
-figure
-FFyFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+% phYind = FF.ph >= -pi/2-eps & FF.ph <= pi/2+eps;
+% FFy = FarField(FF.ph(phYind),FF.th(phYind),FF.E1(phYind,:),FF.E2(phYind,:),FF.E3(phYind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorSys,FF.polType,'PhTh',FF.freqUnit);
+% FFy = FFy.setSymmetryYZ('magnetic');
+% FFy = FFy.setXrange('sym');
+% FFy = plotGridHandle(FFy);
+% figure
+% FFy.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+% % Fix to full range and plot
+% FFyFull = FFy.getFullPattern;
+% FFyFull = plotGridHandle(FFyFull);
+% figure
+% FFyFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+% 
+% FFdelta = FFyFull - FF;
+% figure
+% FFdelta.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType','mag','scaleMag',scaleMag)
+% [eEy] = FFdelta.norm
 
-FFdelta = FFyFull - FF;
+%% Get a version with 2 symmetry planes
+phXYind = FF.ph >= -eps & FF.ph <= pi/2+eps;
+FFxy = FarField(FF.ph(phXYind),FF.th(phXYind),FF.E1(phXYind,:),FF.E2(phXYind,:),FF.E3(phXYind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorSys,FF.polType,'PhTh',FF.freqUnit);
+FFxy = FFxy.setSymmetryXZ('electric');
+FFxy = FFxy.setSymmetryYZ('magnetic');
+FFxy = FFxy.setXrange('sym');
+FFxy = plotGridHandle(FFxy);
 figure
-FFdelta.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType','mag','scaleMag',scaleMag)
-[eEy] = FFdelta.norm
+FFxy.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+% Fix to full range and plot
+FFxyFull = FFxy.getFullPattern;
+FFxyFull = plotGridHandle(FFxyFull);
+figure
+FFxyFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+
