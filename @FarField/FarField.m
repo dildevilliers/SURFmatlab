@@ -675,19 +675,25 @@ classdef FarField
         
         %% Polarization type getters
         function [E1lin, E2lin, E3lin] = getElin(obj)
-            switch obj.polTypeBase
+            
+            % Start at the base, transform to correct coordinate system
+            coorSysIn = obj.coorSys;
+            coorSysH = str2func(['coor2',coorSysIn]);
+            obj1 = obj.reset2Base;
+            obj1 = coorSysH(obj1,false);
+            switch obj.polTypeBase % Should be the same as the transformed object - can use obj or obj1
                 case 'linear'
-                    E1lin = obj.E1Base;
-                    E2lin = obj.E2Base;
+                    E1lin = obj1.E1;
+                    E2lin = obj1.E2;
                 case 'circular'
                     Del = 2*1i;
-                    E1lin = sqrt(2)./Del.*(1i.*obj.E1Base + 1i.*obj.E2Base);
-                    E2lin = sqrt(2)./Del.*(-obj.E1Base + obj.E2Base);
+                    E1lin = sqrt(2)./Del.*(1i.*obj1.E1 + 1i.*obj1.E2);
+                    E2lin = sqrt(2)./Del.*(-obj1.E1 + obj1.E2);
                 case 'slant'
-                    PSI = ones(size(obj.E1Base)).*obj.slant;
+                    PSI = ones(size(obj1.E1)).*obj.slant; % Slant of input object
                     Del = 1;
-                    E1lin = 1./Del.*(cos(PSI).*obj.E1Base + sin(PSI).*obj.E2Base);
-                    E2lin = 1./Del.*(-sin(PSI).*obj.E1Base + cos(PSI).*obj.E2Base);
+                    E1lin = 1./Del.*(cos(PSI).*obj1.E1 + sin(PSI).*obj1.E2);
+                    E2lin = 1./Del.*(-sin(PSI).*obj1.E1 + cos(PSI).*obj1.E2);
             end
             E3lin = zeros(size(E1lin));
         end
