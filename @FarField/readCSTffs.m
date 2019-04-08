@@ -87,11 +87,15 @@ end
 fclose(fid);
 
 %% Build the FF obj
+
+
 x = ph(:,1);
 y = th(:,1);
+
 E1 = Eth;
 E2 = Eph;
 E3 = zeros(size(E1));
+
 radEff = Prad./Pacc;
 coorSys = 'spherical';
 polType = 'linear';

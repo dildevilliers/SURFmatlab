@@ -7,10 +7,12 @@
 %                 - 1D - CO/XP
 %                 - 2D - mag of E1
 %                 - 2D - mag of E2
+%
+% Created: 12/03/2019
 
 
 % Create FarField obj
-pathName = 'UserInput.ffs';
+pathName = 'Farfield Source [1]';
 
 FF = FarField.readCSTffs(pathName);
 
