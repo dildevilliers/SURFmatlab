@@ -2,7 +2,7 @@
 %Description:
 %   Script to test the Farfield object. A patch antenna Farfield is read in from a FEKO ffe file
 %   and the use cases of its various methods are shown.
-
+clear all
 close all
 FF = FarField.readFEKOffe([pwd, '\testScripts\patch']);
 
@@ -78,26 +78,31 @@ FF2 = handlePolType(FF2);
 FF2 = FF2.setXrange(xRangeType);
 
 FF_plus = plus(FF,FF2);
+FF_plus = handleGridType(FF_plus);
+FF_plus = handleCoorType(FF_plus,0);
+FF_plus = handlePolType(FF_plus);
+FF_plus = FF_plus.setXrange(xRangeType);
+
 %FF_plus.E1(1,1)
 %FF.E1(1,1)
 %FF2.E1(1,1)
-if FF_plus.E1 ~= (FF.E1 + FF2.E1)
+if any(FF_plus.E1 ~= (FF.E1 + FF2.E1))
     warning('Plus function failed.')
 end
 FF_minus = minus(FF,FF2);
-if FF_plus.E1 ~= (FF.E1 - FF2.E1)
+if any(FF_minus.E1 ~= (FF.E1 - FF2.E1))
     warning('Minus function failed.')
 end
 FF_times = times(FF,FF2);
-if FF_plus.E1 ~= (FF.E1.*FF2.E1)
+if any(FF_times.E1 ~= (FF.E1.*FF2.E1))
     warning('Times function failed.')
 end
 FF_abs = abs(FF);
-if FF_plus.E1 ~= abs(FF_plus.E1)
+if any(FF_abs.E1 ~= abs(FF.E1))
     warning('Abs function failed.')
 end
 FF_scale = scale(FF,2);
-if FF_plus.E1 ~= FF_plus.E1.*2
+if any(FF_scale.E1 ~= FF.E1.*2)
     warning('Scale function failed.')
 end
 [normE] = norm(FF);

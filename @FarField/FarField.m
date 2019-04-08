@@ -19,7 +19,7 @@ classdef FarField
         polType(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
         gridType(1,:) char {mustBeMember(gridType,{'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin'})} = 'PhTh'
         freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
-        slant(1,1) double {mustBeReal, mustBeFinite} = 0   % slant angle in radians - measured between Exp and E1
+        slant(1,1) double {mustBeReal, mustBeFinite} = pi/4   % slant angle in radians - measured between Exp and E1
     end
     
     properties (SetAccess = private)
@@ -985,16 +985,16 @@ classdef FarField
         
         %% Maths
         function obj = plus(obj1,obj2)
-            obj1 = reset2Base(obj1);
-            obj2 = reset2Base(obj2);
+            obj1base = reset2Base(obj1);
+            obj2base = reset2Base(obj2);
             
-            if isGridEqual(obj1,obj2)
-                obj = obj1;
-                obj.E1 = obj1.E1 + obj2.E1;
-                obj.E2 = obj1.E2 + obj2.E2;
-                obj.E3 = obj1.E3 + obj2.E3;
-                obj.Prad = obj1.Prad + obj2.Prad;
-                Pt = obj1.Prad./obj1.radEff + obj2.Prad./obj2.radEff;
+            if isGridEqual(obj1base,obj2base) 
+                obj = obj1base;
+                obj.E1 = obj1base.E1 + obj2base.E1;
+                obj.E2 = obj1base.E2 + obj2base.E2;
+                obj.E3 = obj1base.E3 + obj2base.E3;
+                obj.Prad = obj1base.Prad + obj2base.Prad;
+                Pt = obj1base.Prad./obj1base.radEff + obj2base.Prad./obj2base.radEff;
                 obj.radEff = obj.Prad./Pt;
                 obj.radEff_dB = dB10(obj.radEff);
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
@@ -1003,19 +1003,31 @@ classdef FarField
             else
                 error('Can only add FarFields with equal base grids')
             end
+            
+            if typesAreEqual(obj1,obj2)
+                objGridType = obj1.gridType;
+                objCoorType = obj1.coorSys;
+                objPolType = obj1.polType;
+                handleGridType = str2func(['grid2',objGridType]);
+                handleCoorType = str2func(['coor2',objCoorType]);
+                handlePolType = str2func(['pol2',objPolType]);
+                obj = handleGridType(obj);
+                obj = handleCoorType(obj,0);
+                obj = handlePolType(obj);  
+            end
         end
         
         function obj = minus(obj1,obj2)
-            obj1 = reset2Base(obj1);
-            obj2 = reset2Base(obj2);
+            obj1base = reset2Base(obj1);
+            obj2base = reset2Base(obj2);
             
-            if isGridEqual(obj1,obj2)
-                obj = obj1;
-                obj.E1 = obj1.E1 - obj2.E1;
-                obj.E2 = obj1.E2 - obj2.E2;
-                obj.E3 = obj1.E3 - obj2.E3;
-                obj.Prad = obj1.Prad + obj2.Prad;
-                Pt = obj1.Prad./obj1.radEff + obj2.Prad./obj2.radEff;
+            if isGridEqual(obj1base,obj2base)
+                obj = obj1base;
+                obj.E1 = obj1base.E1 - obj2base.E1;
+                obj.E2 = obj1base.E2 - obj2base.E2;
+                obj.E3 = obj1base.E3 - obj2base.E3;
+                obj.Prad = obj1base.Prad + obj2base.Prad;
+                Pt = obj1base.Prad./obj1base.radEff + obj2base.Prad./obj2base.radEff;
                 obj.radEff = obj.Prad./Pt;
                 obj.radEff_dB = dB10(obj.radEff);
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
@@ -1024,17 +1036,29 @@ classdef FarField
             else
                 error('Can only subtract FarFields with equal base grids')
             end
+            
+             if typesAreEqual(obj1,obj2)
+                objGridType = obj1.gridType;
+                objCoorType = obj1.coorSys;
+                objPolType = obj1.polType;
+                handleGridType = str2func(['grid2',objGridType]);
+                handleCoorType = str2func(['coor2',objCoorType]);
+                handlePolType = str2func(['pol2',objPolType]);
+                obj = handleGridType(obj);
+                obj = handleCoorType(obj,0);
+                obj = handlePolType(obj);  
+            end
         end
         
         function obj = times(obj1,obj2)
-            obj1 = reset2Base(obj1);
-            obj2 = reset2Base(obj2);
+            obj1base = reset2Base(obj1);
+            obj2base = reset2Base(obj2);
             
-            if isGridEqual(obj1,obj2)
-                obj = obj1;
-                obj.E1 = obj1.E1.*obj2.E1;
-                obj.E2 = obj1.E2.*obj2.E2;
-                obj.E3 = obj1.E3.*obj2.E3;
+            if isGridEqual(obj1base,obj2base)
+                obj = obj1base;
+                obj.E1 = obj1base.E1.*obj2base.E1;
+                obj.E2 = obj1base.E2.*obj2base.E2;
+                obj.E3 = obj1base.E3.*obj2base.E3;
                 obj.Prad = obj.pradInt;
                 obj.radEff = ones(size(obj.Prad));
                 obj.radEff_dB = dB10(obj.radEff);
@@ -1044,26 +1068,55 @@ classdef FarField
             else
                 error('Can only multiply FarFields with equal base grids')
             end
+            
+             if typesAreEqual(obj1,obj2)
+                objGridType = obj1.gridType;
+                objCoorType = obj1.coorSys;
+                objPolType = obj1.polType;
+                handleGridType = str2func(['grid2',objGridType]);
+                handleCoorType = str2func(['coor2',objCoorType]);
+                handlePolType = str2func(['pol2',objPolType]);
+                obj = handleGridType(obj);
+                obj = handleCoorType(obj,0);
+                obj = handlePolType(obj);  
+            end
         end
         
         function obj = abs(obj1)
-            obj1 = reset2Base(obj1);
-            obj = obj1;
-            obj.E1 = abs(obj1.E1);
-            obj.E2 = abs(obj1.E2);
-            obj.E3 = abs(obj1.E3);
+            obj1base = reset2Base(obj1);
+            obj = obj1base;
+            obj.E1 = abs(obj1base.E1);
+            obj.E2 = abs(obj1base.E2);
+            obj.E3 = abs(obj1base.E3);
             obj = setBase(obj);
+            
+            objGridType = obj1.gridType;
+            objCoorType = obj1.coorSys;
+            objPolType = obj1.polType;
+            handleGridType = str2func(['grid2',objGridType]);
+            handleCoorType = str2func(['coor2',objCoorType]);
+            handlePolType = str2func(['pol2',objPolType]);
+            obj = handleGridType(obj);
+            obj = handleCoorType(obj,0);
+            obj = handlePolType(obj);  
         end
         
         function obj = scale(obj1,scaleFactor)
             % Scale the FarField object E-fields by the scaleFactor
-            obj1 = reset2Base(obj1);
-            obj = obj1;
-            obj.E1 = obj1.E1.*scaleFactor;
-            obj.E2 = obj1.E2.*scaleFactor;
-            obj.E3 = obj1.E3.*scaleFactor;
-            obj.Prad = obj1.Prad.*(scaleFactor.^2);
+            obj1base = reset2Base(obj1);
+            obj = obj1base;
+            obj.E1 = obj1base.E1.*scaleFactor;
+            obj.E2 = obj1base.E2.*scaleFactor;
+            obj.E3 = obj1base.E3.*scaleFactor;
+            obj.Prad = obj1base.Prad.*(scaleFactor.^2);
             obj = setBase(obj);
+            
+            objCoorType = obj1.coorSys;
+            objPolType = obj1.polType;
+            handleCoorType = str2func(['coor2',objCoorType]);
+            handlePolType = str2func(['pol2',objPolType]);
+            obj = handleCoorType(obj,0);
+            obj = handlePolType(obj);  
         end
         
         function [normE] = norm(obj,Ntype)
@@ -1386,6 +1439,13 @@ classdef FarField
             else
                 y = 0;
             end
+        end
+        
+        function y = typesAreEqual(obj1,obj2)
+            gridEqual = strcmp(obj1.gridType,obj2.gridType);
+            coorEqual = strcmp(obj1.coorSys,obj2.coorSys);
+            polEqual = strcmp(obj1.polType,obj2.polType);
+            y = gridEqual && coorEqual && polEqual;
         end
         
         function y = isGrid4pi(obj)
