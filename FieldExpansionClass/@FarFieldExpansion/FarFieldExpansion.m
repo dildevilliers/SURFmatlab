@@ -9,6 +9,10 @@ classdef (Abstract) FarFieldExpansion
         function plotCoeffs(obj,coeffs)
             %Write me!
         end
+
+        function plotBasis(obj)
+            %Write me!
+        end
         
         function interpolateCoeffs(obj,coeffs,absc,plotflag)
             %Write me!
@@ -18,6 +22,7 @@ classdef (Abstract) FarFieldExpansion
     methods(Abstract, Static)
         expansion2FarField
         farField2Expansion
+        %getBasisPower
     end
     
 end
