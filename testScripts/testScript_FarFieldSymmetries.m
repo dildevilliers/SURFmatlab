@@ -27,7 +27,7 @@ FFplot.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',o
 % figure
 % FFx.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
 % % Fix to full range and plot
-% FFxFull = FFx.getFullPattern;
+% FFxFull = FFx.mirrorSymmetricPattern;
 % FFxFull = plotGridHandle(FFxFull);
 % figure
 % FFxFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
@@ -46,7 +46,7 @@ FFplot.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',o
 % figure
 % FFy.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
 % % Fix to full range and plot
-% FFyFull = FFy.getFullPattern;
+% FFyFull = FFy.mirrorSymmetricPattern;
 % FFyFull = plotGridHandle(FFyFull);
 % figure
 % FFyFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
@@ -66,7 +66,7 @@ FFxy = plotGridHandle(FFxy);
 figure
 FFxy.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
 % Fix to full range and plot
-FFxyFull = FFxy.getFullPattern;
+FFxyFull = FFxy.mirrorSymmetricPattern;
 FFxyFull = plotGridHandle(FFxyFull);
 figure
 FFxyFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)

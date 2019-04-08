@@ -89,7 +89,7 @@ expectedcutConstant = {'x','y'};
 addParameter(parseobj,'cutConstant','x', @(x) any(validatestring(x,expectedcutConstant)));
 
 typeValidationcutValue = @(x) validateattributes(x,{'numeric'},{'real'},'plot','cutValue');
-addParameter(parseobj,'cutValue',[],typeValidationcutValue);
+addParameter(parseobj,'cutValue',0,typeValidationcutValue);
 
 typeValidationstep = @(x) validateattributes(x,{'numeric'},{'real'},'plot','step');
 addParameter(parseobj,'step',[],typeValidationstep);     % In degrees

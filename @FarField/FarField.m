@@ -42,7 +42,7 @@ classdef FarField
         symmetryXZ = 'none'   % Type of symmetry about the xz-plane (could be electric|none|magnetic)
         symmetryYZ = 'none'   % Type of symmetry about the yz-plane (could be electric|none|magnetic)
         symmetryXY = 'none'   % Type of symmetry about the xy-plane (could be electric|none|magnetic)
-        symmetryBOR1 = 0 % Is the pattern a BOR1 type pattern
+        symmetryBOR1 = false % Is the pattern a BOR1 type pattern
     end
     
     properties (SetAccess = private, Hidden = true)
@@ -198,6 +198,7 @@ classdef FarField
                 obj.E2 = E2;
                 obj.E3 = E3;
                 obj.freq = freq;
+                obj = setFreq(obj);
                 obj.Prad = Prad;
                 obj.radEff = radEff;
                 obj.radEff_dB = dB10(radEff);
@@ -215,7 +216,6 @@ classdef FarField
                 obj = setEnames(obj);
                 obj = setXYnames(obj);
                 obj = setBase(obj);
-                obj = setFreq(obj);
                 obj = setPhTh(obj);
                 obj = setRangeTypes(obj);
             end
@@ -242,7 +242,7 @@ classdef FarField
             % function [E1field, E2field, E3field] = getEfield(obj)
             % Returns the Efield matrices of size [Nang x Nf]
             % Efield = E*exp(-jkr)/r
-            k = 2.*pi.*obj.freq./obj.c0;
+            k = 2.*pi.*obj.freqHz./obj.c0;
             FFfact = exp(-1i.*k.*obj.r)./obj.r;
             E1field = bsxfun(@times,obj.E1,FFfact);
             E2field = bsxfun(@times,obj.E2,FFfact);
@@ -859,7 +859,7 @@ classdef FarField
             % Remove the extra phase introduced by the interpolateGrid
             % function - this just keeps the real/imag and phase field
             % consistant with the plotting
-            k = 2.*pi.*obj1.freq./obj1.c0;
+            k = 2.*pi.*obj1.freqHz./obj1.c0;
             FFfact = exp(1i.*k.*obj1.r)./obj1.r;
             E1grid = bsxfun(@times,E1grid,FFfact);
             E2grid = bsxfun(@times,E2grid,FFfact);
@@ -1101,8 +1101,16 @@ classdef FarField
                     U = obj.getU;
                     P = zeros(1,obj.Nf);
                     for ff = 1:obj.Nf
-                        integrand = reshape(U(:,ff),obj.Ny,obj.Nx).*sin(TH);
-                        P(ff) = integral2D(PH,TH,integrand);
+                        if ~obj.symmetryBOR1
+                            integrand = reshape(U(:,ff),obj.Ny,obj.Nx).*sin(TH);
+                            P(ff) = integral2D(PH,TH,integrand);
+                        else
+                            Nth = obj.Ny;
+                            th_vect = obj.y(1:Nth);
+                            integrand = (U(1:Nth,ff) + U(Nth+1:end,ff)).*sin(th_vect);
+                            P(ff) = pi*integral1D(th_vect,integrand);
+                            symFact = 1;    % Just to be sure...
+                        end
                     end
                 otherwise
                     error(['pradInt not implemented for gridType = ',obj.gridType,', only for PhTh grids'])
@@ -1153,7 +1161,6 @@ classdef FarField
         end
         
         %% Symmetry handlers
-        
         function obj = setSymmetryXZ(obj,symmetryType)
             % Test if the input range is valid
             tol = 10^(-obj.nSigDig);
@@ -1192,86 +1199,170 @@ classdef FarField
             end
         end
         
-        function obj = getFullPattern(obj1)
+        function obj = setSymmetryXY(obj,symmetryType)
+           warning('function: setSymmetryXY not implemented yet - unchanged object returned'); 
+        end
+        
+        function obj = mirrorSymmetricPattern(obj1)
             % Returns the full pattern mirrored according to the symmetry
             % definitions
-
-            gridTypeIn = obj1.gridType;
-            coorTypeIn = obj1.coorSys;
-            if strcmp(obj1.gridTypeBase,'DirCos') || strcmp(obj1.gridType,'ArcSin')
-                stepX = asin(min(abs(diff(unique(obj1.xBase)))));
-                stepY = asin(min(abs(diff(unique(obj1.yBase)))));
+            
+            if ~obj1.symXZ && ~obj1.symYZ && ~obj1.symXZ
+                obj = obj1;
             else
-                % Sort out rounding errors for degrees
-                stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^obj1.nSigDig)/10^obj1.nSigDig);
-                stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^obj1.nSigDig)/10^obj1.nSigDig);
-            end
-            
-            gridHandle = str2func(['grid2',gridTypeIn]);
-            coorHandle = str2func(['coor2',coorTypeIn]);
-            obj1 = obj1.grid2TrueView;
-            obj1 = obj1.coor2Ludwig3(false);   % Always work in H/V for symmetry calculations...
-            
-            % Initialise
-            XIn = [obj1.x];
-            YIn = [obj1.y];
-            E1In = [obj1.E1]; 
-            E2In = [obj1.E2];  
-            E3In = [obj1.E3];  
-            if obj1.symXZ
-%                 XIn = [XIn;obj1.x]; 
-%                 YIn = [YIn;-obj1.y];
-%                 E1In = [E1In;obj1.symXZ.*obj1.E1]; % Mirror according to symmetry 
-%                 E2In = [E2In;-obj1.symXZ.*obj1.E2];  % Mirror according to symmetry 
-%                 E3In = [E3In;obj1.E3];  % Do nothing for FarFields...
-                XIn = [XIn;XIn]; 
-                YIn = [YIn;-YIn];
-                E1In = [E1In;obj1.symXZ.*E1In]; % Mirror according to symmetry 
-                E2In = [E2In;-obj1.symXZ.*E2In];  % Mirror according to symmetry 
-                E3In = [E3In;E3In];  % Do nothing for FarFields...
-            end
-            if obj1.symYZ
-%                 XIn = [XIn;-obj1.x]; 
-%                 YIn = [YIn;obj1.y];
-%                 E1In = [E1In;-obj1.symYZ.*obj1.E1];  % Mirror according to symmetry 
-%                 E2In = [E2In;obj1.symYZ.*obj1.E2]; % Mirror according to symmetry 
-%                 E3In = [E3In;obj1.E3];  % Do nothing for FarFields...
-                XIn = [XIn;-XIn]; 
-                YIn = [YIn;YIn];
-                E1In = [E1In;-obj1.symYZ.*E1In];  % Mirror according to symmetry 
-                E2In = [E2In;obj1.symYZ.*E2In]; % Mirror according to symmetry 
-                E3In = [E3In;E3In];  % Do nothing for FarFields...
-            end
-            % Object for grid/coor transformation
-            objD = FarField(XIn,YIn,E1In,E2In,E3In,...
-                obj1.freq,obj1.Prad.*2,obj1.radEff,obj1.coorSys,obj1.polType,obj1.gridType,obj1.freqUnit,obj1.slant);
-            obj = coorHandle(objD);
-            obj = gridHandle(obj);
-            obj = obj.currentForm2Base(rad2deg([stepX,stepY]));
-            % Test here for full 4pi grid, and if not, add the missing
-            % axis/pole
-            if obj1.isGrid4pi && ~obj.isGrid4pi
-                % Initially test for for the azimuth angles in the angle
-                % specified grids
-                if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
-                    % We are expecting a symmetric x-grid from the TrueView
-                    % transformation earlier, so only check for {-180,180}
-                    xmin = min(obj.x);
-                    xmax = max(obj.x);
-                    tol = mean(diff(unique(obj.x)));
-                    if abs(xmin + pi) > tol/10
-                        % Insert a -pi cut from pi
-                        obj = copyAndInsertXcut(obj,pi,-pi,tol);
-                    end
-                    if abs(xmax - pi) > tol/10
-                        % Insert a pi cut from -pi
-                        obj = copyAndInsertXcut(obj,-pi,pi,tol);
-                    end
+                gridTypeIn = obj1.gridType;
+                coorTypeIn = obj1.coorSys;
+                if strcmp(obj1.gridTypeBase,'DirCos') || strcmp(obj1.gridType,'ArcSin')
+                    stepX = asin(min(abs(diff(unique(obj1.xBase)))));
+                    stepY = asin(min(abs(diff(unique(obj1.yBase)))));
                 else
-                    warning(['A full 4pi grid is expected, but not achieved.  Fix not yet implemented for gridType: ',obj.gridType]);
+                    % Sort out rounding errors for degrees
+                    stepX = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.xBase)))))*10^obj1.nSigDig)/10^obj1.nSigDig);
+                    stepY = deg2rad(round(rad2deg(min(abs(diff(unique(obj1.yBase)))))*10^obj1.nSigDig)/10^obj1.nSigDig);
+                end
+                
+                gridHandle = str2func(['grid2',gridTypeIn]);
+                coorHandle = str2func(['coor2',coorTypeIn]);
+                obj1 = obj1.grid2TrueView;
+                obj1 = obj1.coor2Ludwig3(false);   % Always work in H/V for symmetry calculations...
+                
+                % Initialise
+                XIn = [obj1.x];
+                YIn = [obj1.y];
+                E1In = [obj1.E1];
+                E2In = [obj1.E2];
+                E3In = [obj1.E3];
+                if obj1.symXZ
+                    XIn = [XIn;XIn];
+                    YIn = [YIn;-YIn];
+                    E1In = [E1In;obj1.symXZ.*E1In]; % Mirror according to symmetry
+                    E2In = [E2In;-obj1.symXZ.*E2In];  % Mirror according to symmetry
+                    E3In = [E3In;E3In];  % Do nothing for FarFields...
+                end
+                if obj1.symYZ
+                    XIn = [XIn;-XIn];
+                    YIn = [YIn;YIn];
+                    E1In = [E1In;-obj1.symYZ.*E1In];  % Mirror according to symmetry
+                    E2In = [E2In;obj1.symYZ.*E2In]; % Mirror according to symmetry
+                    E3In = [E3In;E3In];  % Do nothing for FarFields...
+                end
+                % Object for grid/coor transformation
+                objD = FarField(XIn,YIn,E1In,E2In,E3In,...
+                    obj1.freq,obj1.Prad.*2,obj1.radEff,obj1.coorSys,obj1.polType,obj1.gridType,obj1.freqUnit,obj1.slant);
+                obj = coorHandle(objD);
+                obj = gridHandle(obj);
+                obj = obj.currentForm2Base(rad2deg([stepX,stepY]));
+                % Test here for full 4pi grid, and if not, add the missing
+                % axis/pole
+                if obj1.isGrid4pi && ~obj.isGrid4pi
+                    % Initially test for for the azimuth angles in the angle
+                    % specified grids
+                    if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
+                        % We are expecting a symmetric x-grid from the TrueView
+                        % transformation earlier, so only check for {-180,180}
+                        xmin = min(obj.x);
+                        xmax = max(obj.x);
+                        tol = mean(diff(unique(obj.x)));
+                        if abs(xmin + pi) > tol/10
+                            % Insert a -pi cut from pi
+                            obj = copyAndInsertXcut(obj,pi,-pi,tol);
+                        end
+                        if abs(xmax - pi) > tol/10
+                            % Insert a pi cut from -pi
+                            obj = copyAndInsertXcut(obj,-pi,pi,tol);
+                        end
+                    else
+                        warning(['A full 4pi grid is expected, but not achieved.  Fix not yet implemented for gridType: ',obj.gridType]);
+                    end
                 end
             end
-
+        end
+        
+        function obj = getBOR1pattern(obj1)
+            % Function that expands the input FarField pattern into its BOR
+            % components, and returns a FarField object which only contains
+            % the BOR1 components.  The output field has the same th
+            % samples as the input field, but only the principle ph cuts
+            
+            tol = 10^(-obj1.nSigDig+1);
+            assert(strcmp(obj1.gridTypeBase,'PhTh'),'getBOR1pattern only operates on PhTh grid patterns');
+            assert(abs(max(obj1.xBase) - min(obj1.xBase)) - 2*pi < tol,'The ph cuts must span 2*pi for BOR1 expansion');
+            assert(obj1.isGridUniform,'A plaid, monotonic, uniform grid is expected for BOR1 expansion');
+            
+            Nph = obj1.Nx;
+            Nth = obj1.Ny;
+            th_vect = unique(obj1.y);
+            ph_vect = unique(obj1.x);
+            
+            % Calculate the DFT in ph to get the BOR components
+            % STore th variation in columns and BOR components row-wise
+            [An,Bn,Cn,Dn] = deal(zeros(floor(Nph - 1)/2+1,Nth));
+            [A1th,B1th,C1th,D1th] = deal(zeros(Nth,obj1.Nf));
+            [BOR1power] = deal(zeros(1,obj1.Nf));
+            for ff = 1:obj1.Nf
+%                 for nn = 0:floor((Nph - 1)/2)
+                for nn = 0:1 % Just get what is required for speed - can slot the rest in if more modes are needed later
+                    sin_vect = sin(nn*ph_vect);
+                    cos_vect = cos(nn*ph_vect);
+                    for tt = 1:Nth
+                        Gth_vect = obj1.E1((0:(Nph-1))*Nth+tt,ff);
+                        Gph_vect = obj1.E2((0:(Nph-1))*Nth+tt,ff);
+                        An(nn+1,tt) = 2/Nph.*sum(Gth_vect(:).*sin_vect(:));
+                        Bn(nn+1,tt) = 2/Nph.*sum(Gth_vect(:).*cos_vect(:));
+                        Cn(nn+1,tt) = 2/Nph.*sum(Gph_vect(:).*cos_vect(:));
+                        Dn(nn+1,tt) = -2/Nph.*sum(Gph_vect(:).*sin_vect(:));
+                    end
+                end
+                % Take the second rows as the BOR1 component - the first
+                % row is BOR0
+                A1th(:,ff) = An(2,:).';
+                B1th(:,ff) = Bn(2,:).';
+                C1th(:,ff) = Cn(2,:).';
+                D1th(:,ff) = Dn(2,:).';
+                
+                BOR1power_integrand = 1./(2.*obj1.eta0).*(abs(A1th(:,ff)).^2 + abs(B1th(:,ff)).^2 + abs(C1th(:,ff)).^2 + abs(D1th(:,ff)).^2).*sin(th_vect);
+                BOR1power(ff) = pi.*integral1D(th_vect,BOR1power_integrand);
+            end
+            % Build a suitable FarField class
+            % For y-pol: A1 -> Gth and D1 -> Gph
+            % For x-pol: B1 -> Gth and C1 -> Gph
+            [PH,TH] = meshgrid([0,pi/2],th_vect);
+            Eth = [B1th;A1th];  % First element corresponds to ph = 0, and second to ph = pi/2
+            Eph = [C1th;D1th];
+            obj = FarField(PH(:),TH(:),Eth,Eph,0.*Eth,obj1.freq,BOR1power,obj1.radEff,'spherical',obj1.polType,'PhTh',obj1.freqUnit,obj1.slant);
+            obj.symmetryBOR1 = true;
+        end
+        
+        function obj = expandBOR1pattern(obj1,phStepDeg)
+            % Expands a BOR1 pattern, typically generated by
+            % FarField.getBOR1pattern, into a 2*pi ph span
+            
+            if nargin < 2, phStepDeg = 5; end
+            
+            assert(obj1.symmetryBOR1,'Input object not BOR1 symmetric')
+            assert(strcmp(obj1.gridType,'PhTh'),'BOR1 patterns must be specified on a PhTh grid')
+            assert(strcmp(obj1.coorSys,'spherical'),'BOR1 patterns must be specified in a Ludwig3 coordinate system')
+            assert(isequal(unique(obj1.x),[0;pi/2]),'Expect ph cuts only at 0 and pi/2')
+            assert(obj1.isGridUniform,'A plaid, monotonic, uniform grid is expected for BOR1 field expansion');
+            
+            phStep = deg2rad(phStepDeg);
+            Nph = 2*pi/phStep + 1;
+            Nth = obj1.Ny;
+            ph_vect = linspace(0,2*pi,Nph);
+            th_vect = obj1.y(1:Nth);
+            [PH,TH] = meshgrid(ph_vect,th_vect);
+            A1 = obj1.E1(Nth+1:end,:);
+            B1 = obj1.E1(1:Nth,:);
+            C1 = obj1.E2(1:Nth,:);
+            D1 = obj1.E2(Nth+1:end,:);
+            [Eth,Eph] = deal(zeros(Nth*Nph,obj1.Nf));
+            for ff = 1:obj1.Nf
+                Gth = bsxfun(@times,sin(PH),A1(:,ff)) + bsxfun(@times,cos(PH),B1(:,ff));
+                Gph = bsxfun(@times,cos(PH),C1(:,ff)) - bsxfun(@times,sin(PH),D1(:,ff));
+                Eth(:,ff) = Gth(:);
+                Eph(:,ff) = Gph(:);
+            end
+            obj = FarField(PH(:),TH(:),Eth,Eph,0.*Eth,obj1.freq,obj1.Prad,obj1.radEff,'spherical',obj1.polType,'PhTh',obj1.freqUnit,obj1.slant);
         end
         
         %% Format and other testers

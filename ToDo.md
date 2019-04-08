@@ -5,6 +5,7 @@
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Get only the BOR1 components of the field and return as FarField object (DdV)
 - [ ] Gaussian/cosn pattern fitter
+- [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
 - [ ] readFITS (DdV)
 - [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
