@@ -3,32 +3,7 @@ classdef ArrayElements
     %   Detailed explanation goes here
     
     properties
-<<<<<<< HEAD
-<<<<<<< HEAD
-        arrayPositions(:,1) pnt3D % {mustBeFinite}
-        elementPatterns(:,1) FarField 
-    end
-    
-    methods
-        function obj = ArrayElements(arrayPositions,elementPatterns)
-            obj.arrayPositions = arrayPositions;
-            
-            if nargin < 2
-                FF = FarField;
-                FF = FF.makeIsotropic();
-                obj.elementPatterns(size(arrayPositions),1) = FF;
-            else
-                if size(arrayPositions) ~= size(elementPatterns)
-                   error('The elementPatterns must be equal in size to the arrayPositions');
-                end
-                obj.elementPatterns = elementPatterns;
-            end
-
-=======
         antPos(1,1) pnt3D = pnt3D([0,1],0,0)   % Antenna positions in 3D points - internal vector
-=======
-        antPos(1,:) pnt3D = pnt3D([0,1],0,0)   % Antenna positions in 3D points - internal vector
->>>>>>> master
         channelPhasors(1,:) double {mustBeFinite} = 1 % Vector of complex channel errors for calibration testing
     end
     
@@ -79,7 +54,6 @@ classdef ArrayElements
             
             % Multiply the signals through the channels
             portSigMat = AC*si.';
->>>>>>> master
         end
     end
 end

@@ -149,8 +149,8 @@ else
 end
 
 % Get the original grid and output
-X = reshape(obj.x,obj.Ny,obj.Nx);
-Y = reshape(obj.y,obj.Ny,obj.Nx);
+X = reshape(obj.x,obj.NyBase,obj.NxBase);
+Y = reshape(obj.y,obj.NyBase,obj.NxBase);
 if strcmp(output,'E1')
     [Z,~,~] = getEfield(obj);
 elseif strcmp(output,'E2')

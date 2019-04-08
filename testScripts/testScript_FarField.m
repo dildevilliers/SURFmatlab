@@ -11,22 +11,26 @@ coorType = {'spherical' 'Ludwig1' 'Ludwig2AE' 'Ludwig2EA' 'Ludwig3'};
 polType = {'linear' 'circular' 'slant'};
 xRangeType = 'pos';
 
-for i = 1:6
-    handleGridType = str2func(['grid2',gridType{i}]);
-    FF = handleGridType(FF);
-    figure
-    plotGrid(FF);
-end
-
-for i = 1:6
-    k = i;
-    if i > 5
+% for ii = 1:6
+%     handleGridType = str2func(['grid2',gridType{ii}]);
+%     FF = handleGridType(FF);
+%     figure
+%     plotGrid(FF);
+% end
+a = 0;
+for ii = 1:6
+    k = ii;
+    if ii > 5
         k = 1;
     end
-    for j = 1:3
-        handleGridType = str2func(['grid2',gridType{i}]);
+    for jj = 1:3
+        a = a+1;
+        if  a == 4
+            keyboard;
+        end
+        handleGridType = str2func(['grid2',gridType{ii}]);
         handleCoorType = str2func(['coor2',coorType{k}]);
-        handlePolType = str2func(['pol2',polType{j}]);
+        handlePolType = str2func(['pol2',polType{jj}]);
         FF = handleGridType(FF);
         FF = handleCoorType(FF,0);
         FF = handlePolType(FF);

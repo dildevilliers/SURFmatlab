@@ -50,6 +50,8 @@ classdef FarField
         % a DirCos projection and back...
         xBase
         yBase
+        NxBase
+        NyBase
         gridTypeBase
         E1Base
         E2Base
@@ -1429,6 +1431,8 @@ classdef FarField
         function obj = setBase(obj)
             obj.xBase = obj.x;
             obj.yBase = obj.y;
+            obj.NxBase = obj.Nx;
+            obj.NyBase = obj.Ny;
             obj.gridTypeBase = obj.gridType;
             obj.E1Base = obj.E1;
             obj.E2Base = obj.E2;
