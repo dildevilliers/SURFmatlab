@@ -38,7 +38,9 @@ classdef PlaneWaveSignal
                 obj.sigPhase = sigPhase;
             end
             obj.lambda = physconst('lightspeed')./obj.freq;
-            obj.k = 2*pi./obj.lambda.*[cos(obj.ph).*sin(obj.th);sin(obj.ph).*sin(obj.th);cos(obj.th)];
+            [u,v,w] = PhTh2DirCos(obj.ph,obj.th);
+            obj.k = 2*pi./obj.lambda.*[u;v;w];
+%             obj.k = 2*pi./obj.lambda.*[cos(obj.ph).*sin(obj.th);sin(obj.ph).*sin(obj.th);cos(obj.th)];
             obj.P = lin10(obj.sigPower-30);      % Signal power in W
         end
         
@@ -50,7 +52,7 @@ classdef PlaneWaveSignal
             t = t(:);
             switch obj.sigType
                 case 'compExp'
-                    St = sqrt(2*obj.P).*exp(1i.*(2*pi*obj.freq.*t + obj.sigPhase));
+                    St = sqrt(obj.P).*exp(1i.*(2*pi*obj.freq.*t + obj.sigPhase));
                 case 'noise'
                     St = randn(size(t));
                     StP = rms(St);

@@ -75,5 +75,10 @@ else
     warning(['Cant shift a polar grid like ', obj.gridType, ' on a cartesian grid']);
 end
 % Update the object descriptive parameters
-obj = setRangeTypes(obj);
+if ~obj.symmetryXZ
+    obj = setRangeTypes(obj); % This does not work for half space defined fields
+else
+    obj.xRangeType = type;
+end
+
 end

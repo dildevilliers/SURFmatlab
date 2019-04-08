@@ -51,8 +51,8 @@ classdef ArrayReceiver
             % SN = S + N;
             [Nsamp,Nchan] = size(St);
             Nt = getNoise(obj,Nsamp,Nchan);
-            N = lin10(obj.LNAGain).*Nt;
-            S = lin10(obj.LNAGain).*St;
+            N = lin20(obj.LNAGain).*Nt;     % Voltage gain - lin20
+            S = lin20(obj.LNAGain).*St;
             SN = S + N;
         end
         
@@ -63,7 +63,7 @@ classdef ArrayReceiver
             assert(isreal(t),'Error, t must be real');
             
             t = t(:).';
-            SNif = obj.IFGain.*bsxfun(@times,SNrf,exp(-1i*2*pi*obj.freqLO.*t));
+            SNif = lin20(obj.IFGain).*bsxfun(@times,SNrf,exp(-1i*2*pi*obj.freqLO.*t)); % Voltage gain - lin20
         end
         
         function [sn,si,sq] = sigRec(obj,portSigMat,t)

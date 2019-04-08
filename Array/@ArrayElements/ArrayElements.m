@@ -3,8 +3,8 @@ classdef ArrayElements
     %   Detailed explanation goes here
     
     properties
-        antPos(1,1) pnt3D = pnt3D([0,1],0,0)   % Antenna positions in 3D points - internal vector
-        channelErrors(1,:) double {mustBeFinite} = 1 % Vector of complex channel errors for calibration testing
+        antPos(1,:) pnt3D = pnt3D([0,1],0,0)   % Antenna positions in 3D points - internal vector
+        channelPhasors(1,:) double {mustBeFinite} = 1 % Vector of complex channel errors for calibration testing
     end
     
     properties (SetAccess = private)
@@ -12,18 +12,18 @@ classdef ArrayElements
     end
     
     methods
-        function obj = ArrayElements(antPos,channelErrors)
+        function obj = ArrayElements(antPos,channelPhasos)
             if nargin >= 1
                 obj.antPos = antPos;
             end
             if nargin >= 2
-                obj.channelErrors = channelErrors;
+                obj.channelPhasors = channelPhasos;
             end
             obj.N_elements = length(obj.antPos.x);
-            if length(obj.channelErrors) == 1
-                obj.channelErrors = repmat(obj.channelErrors,1,obj.N_elements);
+            if length(obj.channelPhasors) == 1
+                obj.channelPhasors = repmat(obj.channelPhasors,1,obj.N_elements);
             else 
-                assert(length(obj.channelErrors) == obj.N_elements,'Length of channelErrors should match the number of elements');
+                assert(length(obj.channelPhasors) == obj.N_elements,'Length of channelErrors should match the number of elements');
             end
         end
         
@@ -50,7 +50,7 @@ classdef ArrayElements
             A = exp(-1i*r*k);              % [Nant x Nsig]
             
             % Add the systematic errors in the channels
-            AC = bsxfun(@times,A,obj.channelErrors(:));
+            AC = bsxfun(@times,A,obj.channelPhasors(:));
             
             % Multiply the signals through the channels
             portSigMat = AC*si.';
