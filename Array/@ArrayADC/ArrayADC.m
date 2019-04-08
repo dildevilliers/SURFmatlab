@@ -62,7 +62,7 @@ classdef ArrayADC
         
         function x = getDigitalSignal(obj,b)
             % Returns the digital signal of the binary samples b in x.
-            % x is of size [Nsig x Nsamp]. The size of b is [size(s)xNbits].  
+            % x is of size [Nsig x Nsamp]. The size of b is [size(s) x Nbits].  
             [Nsig,Nsamp,Nbit] = size(b);
             assert(Nbit == obj.Nbits,'Error: Last dimension of b should be of size obj.Nbits');
             bV = reshape(b,Nsig*Nsamp,obj.Nbits);

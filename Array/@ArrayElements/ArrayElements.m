@@ -4,6 +4,7 @@ classdef ArrayElements
     
     properties
 <<<<<<< HEAD
+<<<<<<< HEAD
         arrayPositions(:,1) pnt3D % {mustBeFinite}
         elementPatterns(:,1) FarField 
     end
@@ -25,6 +26,9 @@ classdef ArrayElements
 
 =======
         antPos(1,1) pnt3D = pnt3D([0,1],0,0)   % Antenna positions in 3D points - internal vector
+=======
+        antPos(1,:) pnt3D = pnt3D([0,1],0,0)   % Antenna positions in 3D points - internal vector
+>>>>>>> master
         channelPhasors(1,:) double {mustBeFinite} = 1 % Vector of complex channel errors for calibration testing
     end
     
