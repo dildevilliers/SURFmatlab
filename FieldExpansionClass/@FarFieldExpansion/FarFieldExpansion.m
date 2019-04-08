@@ -10,7 +10,7 @@ classdef (Abstract) FarFieldExpansion
             %Write me!
         end
         
-        function interpolateCoeffs(obj,coeffs,absc)
+        function interpolateCoeffs(obj,coeffs,absc,plotflag)
             %Write me!
         end
     end
