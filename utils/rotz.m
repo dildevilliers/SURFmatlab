@@ -1,12 +1,12 @@
-function [Xd,M] = roty3D(X,th)
+function [Xd,M] = rotz(X,th)
 
-% function [Xd,M] = roty3D(X,th)
-% Returns the rotated about the y-axis vector Xd = [x';y';z'] of the input
+% function [Xd,M] = rotz(X,th)
+% Returns the rotated about the z-axis vector Xd = [x';y';z'] of the input
 % vector X = [x;y;z] by angle th;
 % Vectors can be rows of equal length
 % The affine transformation matrix is returned in M
 
-M = [cos(th),0,sin(th),0;0,1,0,0;-sin(th),0,cos(th),0;0,0,0,1];
+M = [cos(th),-sin(th),0,0;sin(th),cos(th),0,0;0,0,1,0;0,0,0,1];
 
 Np = length(X(1,:));
 Xd = zeros(size(X));

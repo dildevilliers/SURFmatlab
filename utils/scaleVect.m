@@ -1,6 +1,6 @@
-function [Xd,M] = scale3D(X,LAM)
+function [Xd,M] = scaleVect(X,LAM)
 
-% function [Xd,M] = scale3D(X,LAM)
+% function [Xd,M] = scaleVect(X,LAM)
 % Returns the scaled vector Xd = [x';y';z'] of the input
 % vector X = [x;y;z] scaled by distance LAM = [lx;ly;lz]
 % Vectors can be rows of equal length
