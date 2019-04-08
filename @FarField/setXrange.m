@@ -16,14 +16,20 @@ if strcmp(type,'pos')
 elseif strcmp(type,'sym')
     t = 's';
 end
-
+tol = 1e-10;
 if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
     if t == 'p'
-        iout = find(obj.x == -pi);   % Redundant
-        iin = find(obj.x == 0);      % Will become redundant after inserting
+%         iout = find(obj.x == -pi);   % Redundant
+%         iin = find(obj.x == 0);      % Will become redundant after inserting
+        iout = find(abs(obj.x + pi) < tol);   % Redundant
+        iin = find(abs(obj.x - 0) < tol);      % Will become redundant after inserting
+        if strcmp(obj.xRangeType,'pos'), return; end
     elseif t == 's'
-        iout = find(obj.x == 2*pi);   % Redundant
-        iin = find(obj.x == pi);      % Will become redundant after inserting
+%         iout = find(obj.x == 2*pi);   % Redundant
+%         iin = find(obj.x == pi);      % Will become redundant after inserting
+        iout = find(abs(obj.x - 2*pi) < tol);   % Redundant
+        iin = find(abs(obj.x - pi) < tol);      % Will become redundant after inserting
+        if strcmp(obj.xRangeType,'sym'), return; end
     end
     Nredun = min(numel(iout),numel(iin));    % How many we have to remove/add
     % Truncate the indexes to the shortest length
@@ -69,5 +75,10 @@ else
     warning(['Cant shift a polar grid like ', obj.gridType, ' on a cartesian grid']);
 end
 % Update the object descriptive parameters
-obj = setRangeTypes(obj);
+if ~obj.symmetryXZ
+    obj = setRangeTypes(obj); % This does not work for half space defined fields
+else
+    obj.xRangeType = type;
+end
+
 end

@@ -137,7 +137,7 @@ if strcmp(obj.gridType,'DirCos') || strcmp(obj.gridType,'ArcSin')
     % base definition is not a direction cosine type it can contain
     % information over the full sphere. 
     objBase = obj.grid2Base;
-    grid2DirCoshandle = str2func(['FarField.',objBase.gridType,'2DirCos']);
+    grid2DirCoshandle = str2func([objBase.gridType,'2DirCos']);
     [~,~,w] = grid2DirCoshandle(objBase.x,objBase.y);
     if strcmp(hemisphere,'top')
         valAng = w >= 0;
@@ -182,11 +182,19 @@ else
     else
         step = deg2rad(step);
     end
-    xivect = min(obj.x):step:max(obj.x);
-    yivect = min(obj.y):step:max(obj.y);
+    ximin = min(obj.x);
+    ximax = max(obj.x);
+    yimin = min(obj.y);
+    yimax = max(obj.y);
+    NxPlot = round((ximax - ximin)/step) + 1;
+    NyPlot = round((yimax - yimin)/step) + 1;
+    xivect = linspace(ximin,ximax,NxPlot);
+    yivect = linspace(yimin,yimax,NyPlot);
+%     xivect = min(obj.x):step:max(obj.x);
+%     yivect = min(obj.y):step:max(obj.y);
+%     NxPlot = numel(xivect);
+%     NyPlot = numel(yivect);
     [Xi,Yi] = meshgrid(xivect,yivect);
-    NxPlot = numel(xivect);
-    NyPlot = numel(yivect);
     switch plotType
         case {'3D','2D'}
             xi = Xi(:);
@@ -349,7 +357,7 @@ switch plotType
         xlim([min(xiplot),max(xiplot)])
         ylim([min(yiplot),max(yiplot)])
         % Handle dynamic range here
-        if strcmp(outputType,'mag')
+        if strcmp(outputType,'mag') || strcmp(outputType,'real') || strcmp(outputType,'imag')
             maxVal = max(Zplot(:));
             switch scaleMag
                 case 'dB'
@@ -372,7 +380,9 @@ switch plotType
 %                             zlim(rangeZ);
                         else
                             rangeZ = [maxVal/dr,maxVal];
-                            caxis(rangeZ);
+                            if ~(strcmp(outputType,'real') || strcmp(outputType,'imag'))
+                                caxis(rangeZ);
+                            end
 %                             zlim([rangeZ]);
                         end
                     end

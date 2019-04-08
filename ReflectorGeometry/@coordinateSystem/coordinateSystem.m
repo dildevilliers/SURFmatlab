@@ -1,6 +1,6 @@
 classdef coordinateSystem
     properties
-      origin(3,1) double {mustBeReal, mustBeFinite} = [0;0;0] % [x;y;z] in (m) 
+      origin(1,1) pnt3D = pnt3D(0,0,0) 
       x_axis(3,1) double {mustBeReal, mustBeFinite} = [1;0;0] % x-axis direction
       y_axis(3,1) double {mustBeReal, mustBeFinite} = [0;1;0] % y-axis direction
       base = [] % Can be another coordinate system object, or, if empty, is assumed to be the global coordinate system 
@@ -25,7 +25,11 @@ classdef coordinateSystem
                obj.origin = origin;
                obj.x_axis = x_axis;
                obj.y_axis = y_axis;
-               obj.base = base;
+               if ~(isempty(base.base))
+                   error('base coordinate system must be based on the global coordinates - use getInGlobal to get base coordinates in global coordinates')
+               else
+                   obj.base = base;
+               end
            end
            % Check for valid inputs
            nX = norm(obj.x_axis);
@@ -48,7 +52,7 @@ classdef coordinateSystem
        
        %% Translation
        function obj = translate(obj,delta)
-           obj.origin = trans3D(obj.origin,delta);
+           obj.origin = translate(obj.origin,delta);
        end
        
        %% Rotation
@@ -99,10 +103,10 @@ classdef coordinateSystem
        function Q = dirCosine(coor_new,coor_base)
            % Calculates the 3x3 direction cosine matrix between coordinate
            % systems.  For only one argument, the global coordinate system
-           % is assumed as the second system. 
+           % is assumed as the second (base) system. 
            % coor_new indicates the rotated system and coor_base the base system.
            % So, a point in the rotated system, which was specified in the
-           % bases system, is calculated as A_rotate = inv(Q)*A_base
+           % base system, is calculated as A_rotate = inv(Q)*A_base
            % See the note: http://homepages.engineering.auckland.ac.nz/~pkel015/SolidMechanicsBooks/Part_III/Chapter_1_Vectors_Tensors/Vectors_Tensors_05_Coordinate_Transformation_Vectors.pdf
            if nargin == 1
                coor_base = coordinateSystem();
@@ -112,51 +116,53 @@ classdef coordinateSystem
                 dot(coor_base.z_axis,coor_new.x_axis), dot(coor_base.z_axis,coor_new.y_axis), dot(coor_base.z_axis,coor_new.z_axis)];
        end
        
-       function Uprime = changeBase(U,coor_new,coor_base)
-           % Provides the points defined in the [3xN] matrix U, which are
-           % defined in the coordinate system coor_base, in the new
-           % coordinate system coor_new through translation and rotation.
-           % U can also be a coordinateSystem type, the Uprime is returned
-           % as the new coordinate system - rotated and translated... 
-           % The base class is deleted in this process.
-           if nargin == 2
-               coor_base = coordinateSystem();
-           end
-           coorClass = false;
-           if isa(U,'coordinateSystem')
-               Ncoor = numel(U); % Handle arrays or ccordinate systems
-               Utemp = zeros(3,3,Ncoor);
-               for ii = 1:Ncoor
-                   Utemp(:,:,ii) = [[0;0;0],U(ii).x_axis,U(ii).y_axis]+U(ii).origin;
-               end
-               U = reshape(Utemp,3,3*Ncoor);
-               coorClass = true;
-           end
-           [N3,~] = size(U);
-           if N3 ~= 3
-               error('U must have 3 rows indicated [x;y;z] coordinates')
-           end
+       %% Change of basis
+       function coorInGlobal = getInGlobal(obj)
+           % Returns the coordinate system, defined in obj.base, in the global coordinate system
+           % Assume obj.base is always defined in the global coordinate system
            
-           % Move points to origin reference
-           Uorigin = bsxfun(@minus,U,coor_base.origin);
-           % Rotate the points in the origin reference
-           Q = dirCosine(coor_new,coor_base);
-           UoriginPrime = Q*Uorigin;
-           % Move to new coordinate base
-           Uprime = UoriginPrime + coor_new.origin;
-           if coorClass
-               UprimeTemp = reshape(Uprime,3,3,Ncoor);
-               clear Uprime
-               Uprime(1,Ncoor) = coordinateSystem(); % Initialise an arry of coordinate systems
-               for ii = 1:Ncoor
-                   Uprime(ii) = coordinateSystem(UprimeTemp(:,1,ii),UprimeTemp(:,2,ii)-UprimeTemp(:,1,ii),UprimeTemp(:,3,ii)-UprimeTemp(:,1,ii));
-               end
+           if ~isempty(obj.base)
+               oldBase = obj.base;
+               newBase = coordinateSystem();
+               % Since the coordinate system is always defined in the global
+               % coordinate system, with a given base (which corresponds to the
+               % local global coordinate system), get the angle between the
+               % new base coordinate system and the object
+               graspAng = getGRASPangles(obj);
+               % Now rotate the base by this amount
+               baseRotated = oldBase.rotGRASP(graspAng);
+               % And shift the origin
+               Ups = changeBase(obj.origin,newBase,oldBase);
+               coorInGlobal = coordinateSystem(Ups,baseRotated.x_axis,baseRotated.y_axis);
+               coorInGlobal.base = [];
+           else
+               coorInGlobal = obj;
            end
+       end
+       
+       function coorOut = redefineToOtherBase(obj,newBase)
+           % Redefines the coordinate system in obj to be relative to the
+           % new base coordinate system newBase
+           
+           % First get both coordinate systems in the global base
+           coorIn = obj.getInGlobal;
+           baseIn = newBase.getInGlobal;
+           % Calculate the translation
+           diffGlobal = coorIn.origin.pointMatrix - baseIn.origin.pointMatrix;
+           Ox = dot(diffGlobal,baseIn.x_axis);
+           Oy = dot(diffGlobal,baseIn.y_axis);
+           Oz = dot(diffGlobal,baseIn.z_axis);
+           % Calculate the rotation
+           graspAng = getGRASPangBetweenCoors(coorIn,baseIn);
+           % Build the coordinate system
+           coorOut = coordinateSystem(pnt3D(Ox,Oy,Oz));
+           coorOut = coorOut.rotGRASP(graspAng);
+           coorOut.base = newBase;
        end
        
        function [angGRASP] = getGRASPangBetweenCoors(coor1,coor0)
            % Returns the GRASP angles (in rad) required to rotate from
-           % coor0 to coor1.  That is coor1 = coor0.rotGRASP(th,ph,ps)
+           % coor0 to coor1.  That is coor1 = coor0.rotGRASP([th,ph,ps])
            % Get the required angles to rotate back to the GC
            % See the GRASP technical description for details on the
            % definitions
@@ -178,10 +184,14 @@ classdef coordinateSystem
            
            % Now get ph
            % Get the vector which is x rotated by ph in the x-y plane 
-           Nz = cross(z,z1);
-           Nz = Nz./norm(Nz);
-           x_ph = cross(Nz,z);
-           x_ph = x_ph./norm(x_ph);
+           if ~isequal(abs(z),abs(z1))
+               Nz = cross(z,z1);
+               Nz = Nz./norm(Nz);
+               x_ph = cross(Nz,z);
+               x_ph = x_ph./norm(x_ph);
+           else
+               x_ph = x1;
+           end
            ph = angBetweenVectors(x,x_ph);
            % Sort out the sign of ph - compare to the z-axis direction
            phSign = sign(dot(cross(x,x_ph),z));
@@ -209,13 +219,14 @@ classdef coordinateSystem
            angEuler = GRASP2Euler(getGRASPangBetweenCoors(coor));
        end
        
+       %% Testers
        function  B = isequal(coor1,coor2,tol)
             % Test for equality - with a tolerance
             % Does not check the bases...
            if nargin == 2
-               tol = norm(coor1.origin).*1e-10;
+               tol = coor1.origin.r.*1e-10;
            end
-           BO = all(abs(coor1.origin - coor2.origin) < tol);
+           BO = isequal(coor1.origin,coor2.origin);
            Bx = all(abs(coor1.x_axis - coor2.x_axis) < tol);
            By = all(abs(coor1.y_axis - coor2.y_axis) < tol);
            B = BO && Bx && By;
@@ -223,6 +234,17 @@ classdef coordinateSystem
               
        %% Plotting
        function plot(obj,scale)
+           % plots the coordinate system in obj in the global coordinates
+           if nargin  == 1
+               scale = 1;
+           end
+           coorGlobalBase = obj.getInGlobal;
+           plotLocal(coorGlobalBase,scale);
+       end
+       
+       function plotLocal(obj,scale)
+           % plots the coordinate system in obj in the local base
+           % coordinates
            if nargin  == 1
                scale = 1;
            end
@@ -231,9 +253,10 @@ classdef coordinateSystem
            x = obj.x_axis.*scale;
            y = obj.y_axis.*scale;
            z = obj.z_axis.*scale;
-           xAx = [obj.origin, obj.origin+x];
-           yAx = [obj.origin, obj.origin+y];
-           zAx = [obj.origin, obj.origin+z];
+           O = [obj.origin.x;obj.origin.y;obj.origin.z];
+           xAx = [O, O+x];
+           yAx = [O, O+y];
+           zAx = [O, O+z];
            plot3(xAx(1,:),xAx(2,:),xAx(3,:),'r','LineWidth',lineWidth), hold on
            plot3(yAx(1,:),yAx(2,:),yAx(3,:),'g','LineWidth',lineWidth)
            plot3(zAx(1,:),zAx(2,:),zAx(3,:),'b','LineWidth',lineWidth)
@@ -254,9 +277,11 @@ classdef coordinateSystem
        function obj = setZaxis(obj)
            obj.z_axis = getZaxis(obj);
        end
+       
        function z = getZaxis(obj)
            z = cross(obj.x_axis,obj.y_axis);
        end
+       
        function obj = normAxis(obj)
            % Make sure we have unit vectors
            obj.x_axis = obj.x_axis/norm(obj.x_axis);

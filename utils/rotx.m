@@ -1,6 +1,6 @@
-function [Xd,M] = rotx3D(X,th)
+function [Xd,M] = rotx(X,th)
 
-% function [Xd,M] = rotx3D(X,th)
+% function [Xd,M] = rotx(X,th)
 % Returns the rotated about the x-axis vector Xd = [x';y';z'] of the input
 % vector X = [x;y;z] by angle th;
 % Vectors can be rows of equal length
