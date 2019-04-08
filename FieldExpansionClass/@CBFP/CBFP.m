@@ -1,7 +1,9 @@
 classdef CBFP < FarFieldExpansion 
     properties
+        nCoeffs
+        coeffs
         tol
-        i_FM 
+        iFM 
         UR
         SR
         VR
@@ -14,15 +16,15 @@ classdef CBFP < FarFieldExpansion
     end
     
         methods
-            function obj = CBFP(FFobj,tol,i_FM,nBasis)
-                % function obj = CBFP(FFobj,tol,i_FM,nBasis)
+            function obj = CBFP(FFobj,tol,iFM,nBasis)
+                % function obj = CBFP(FFobj,tol,iFM,nBasis)
                 % CBFP object constructor method
                 %
                 % Inputs:   FFobj   - Farfield object
                 %           tol     - Tolerance 
-                %           i_FM    - Struct of indices for CBFP support points
-                %                     i_FM.f => indices across frequency
-                %                     i_FM.x => indices across the design space
+                %           iFM     - Struct of indices for CBFP support points
+                %                     iFM.f => indices across frequency
+                %                     iFM.x => indices across the design space
                 %           nBasis  - Number of basis functions
                 %
                 % Output:   CBFPobj - CBFP object
@@ -34,10 +36,10 @@ classdef CBFP < FarFieldExpansion
                     
                     if nargin < 2
                         tol = 1e-100;
-                        i_FM = [];
+                        iFM = [];
                         nBasis = inf;
                     elseif nargin < 3 
-                        i_FM = [];
+                        iFM = [];
                         nBasis = inf;
                     elseif nargin < 4 
                         nBasis = inf;
@@ -45,7 +47,7 @@ classdef CBFP < FarFieldExpansion
 
                     % Ignore some function inputs
                     if isempty(tol), tol = 1e-100; end
-                    if isempty(i_FM), i_FM = []; end
+                    if isempty(iFM), iFM = []; end
                     if isempty(nBasis), nBasis = inf; end
                     
                     nFFobjs = length(FFobj);
@@ -54,36 +56,36 @@ classdef CBFP < FarFieldExpansion
                         
                         isFreqBasis = 1;
                         
-                        if isfield(i_FM,'x'), warning('No geometric variation. i_FM.x ignored'), end
-                        if isfield(i_FM,'f'),assert(length(i_FM.f) <= FFobj.Nf,'Specified number of indices,i_FM.f larger than number of frequency samples,FFobj.Nf'), end
-                        if isfield(i_FM,'f'),assert(max(i_FM.f) <= FFobj.Nf,'Largest specified index in i_FM.f larger than maximum possible index FFobj.Nf'), end
+                        if isfield(iFM,'x'), warning('No geometric variation. iFM.x ignored'), end
+                        if isfield(iFM,'f'),assert(length(iFM.f) <= FFobj.Nf,'Specified number of indices,iFM.f larger than number of frequency samples,FFobj.Nf'), end
+                        if isfield(iFM,'f'),assert(max(iFM.f) <= FFobj.Nf,'Largest specified index in iFM.f larger than maximum possible index FFobj.Nf'), end
                         
                         if nBasis ~= inf
-                            if isfield(i_FM,'f'), assert(nBasis <= FFobj.Nf,'nBasis should not exceed FFobj.Nf'), end
-                            if isfield(i_FM,'f'), assert(nBasis <= length(i_FM.f),'nBasis should not exceed the total number of possible basis functions, as selected by i_FM.f'), end
+                            if isfield(iFM,'f'), assert(nBasis <= FFobj.Nf,'nBasis should not exceed FFobj.Nf'), end
+                            if isfield(iFM,'f'), assert(nBasis <= length(iFM.f),'nBasis should not exceed the total number of possible basis functions, as selected by iFM.f'), end
                         end
                     else
                         Nf = FFobj(1,1).Nf;
                         if Nf == 1
-                            if isfield(i_FM,'f'), warning('Frequency treated as a normal parameter. i_FM.f ignored'), end
-                            if isfield(i_FM,'x'),assert(length(i_FM.x) <= nFFobjs,'Specified number of indices,i_FM.x larger than number of geometric variations, num of FFobjs'), end
-                            if isfield(i_FM,'x'),assert(max(i_FM.x) <= nFFobjs,'Largest specified index in i_FM.x larger than maximum possible index, num of FFobjs'), end
+                            if isfield(iFM,'f'), warning('Frequency treated as a normal parameter. iFM.f ignored'), end
+                            if isfield(iFM,'x'),assert(length(iFM.x) <= nFFobjs,'Specified number of indices,iFM.x larger than number of geometric variations, num of FFobjs'), end
+                            if isfield(iFM,'x'),assert(max(iFM.x) <= nFFobjs,'Largest specified index in iFM.x larger than maximum possible index, num of FFobjs'), end
                             
                             if nBasis ~= inf
                                 assert(nBasis <= nFFobjs,'nBasis should not exceed the maximum possible number of basis functions')
-                                if isfield(i_FM,'x'), assert(nBasis <= length(i_FM.x),'nBasis should not exceed the total number of possible basis functions, as selected by i_FM.x'), end
+                                if isfield(iFM,'x'), assert(nBasis <= length(iFM.x),'nBasis should not exceed the total number of possible basis functions, as selected by iFM.x'), end
                             end
                         else
-                            if isfield(i_FM,'f'),assert(length(i_FM.f) <= Nf,'Specified number of indices,i_FM.f larger than number of frequency samples,FFobj.Nf'), end
+                            if isfield(iFM,'f'),assert(length(iFM.f) <= Nf,'Specified number of indices,iFM.f larger than number of frequency samples,FFobj.Nf'), end
                             
-                            if isfield(i_FM,'f'),assert(max(i_FM.f) <= Nf,'Largest specified index in i_FM.f larger than maximum possible index FFobj.Nf'), end
+                            if isfield(iFM,'f'),assert(max(iFM.f) <= Nf,'Largest specified index in iFM.f larger than maximum possible index FFobj.Nf'), end
                             
-                            if isfield(i_FM,'x'),assert(length(i_FM.x) <= nFFobjs,'Specified number of indices,i_FM.x larger than number of geometric variations, num of FFobjs'), end
-                            if isfield(i_FM,'x'),assert(max(i_FM.x) <= nFFobjs,'Largest specified index in i_FM.x larger than maximum possible index, num of FFobjs'), end
+                            if isfield(iFM,'x'),assert(length(iFM.x) <= nFFobjs,'Specified number of indices,iFM.x larger than number of geometric variations, num of FFobjs'), end
+                            if isfield(iFM,'x'),assert(max(iFM.x) <= nFFobjs,'Largest specified index in iFM.x larger than maximum possible index, num of FFobjs'), end
                             
                             if nBasis ~= inf
                                 assert(nBasis <= nFFobjs,'nBasis should not exceed the maximum possible number of basis functions')
-                                if isfield(i_FM,'x'), assert(nBasis <= length(i_FM.x),'nBasis should not exceed the total number of possible basis functions, as selected by i_FM.x'), end
+                                if isfield(iFM,'x'), assert(nBasis <= length(iFM.x),'nBasis should not exceed the total number of possible basis functions, as selected by iFM.x'), end
                             end
                         end
                     end
@@ -98,8 +100,8 @@ classdef CBFP < FarFieldExpansion
                         Nang = FFobj.Nang;
                         
                         % Determine FF indices from which CBFP matrix is built                       
-                        if isfield(i_FM,'f')
-                            range_f = reshape(i_FM.f,1,length(i_FM.f));
+                        if isfield(iFM,'f')
+                            range_f = reshape(iFM.f,1,length(iFM.f));
                         else
                             range_f = 1:Nf;
                         end
@@ -178,8 +180,8 @@ classdef CBFP < FarFieldExpansion
                         
                         if Nf == 1
                             % Determine FF indices from which CBFP matrix is built                           
-                            if isfield(i_FM,'x')
-                                range_x = reshape(i_FM.x,1,length(i_FM.x));
+                            if isfield(iFM,'x')
+                                range_x = reshape(iFM.x,1,length(iFM.x));
                             else
                                 range_x = 1:nFFobjs;
                             end
@@ -249,8 +251,8 @@ classdef CBFP < FarFieldExpansion
                             end
                             
                             % Determine FF indices from which CBFP matrix is built
-                            if isfield(i_FM,'f'), range_f = reshape(i_FM.f,1,length(i_FM.f)); else, range_f = 1:Nf; end
-                            if isfield(i_FM,'x'), range_x = reshape(i_FM.x,1,length(i_FM.x)); else, range_x = 1:nFFobjs; end
+                            if isfield(iFM,'f'), range_f = reshape(iFM.f,1,length(iFM.f)); else, range_f = 1:Nf; end
+                            if isfield(iFM,'x'), range_x = reshape(iFM.x,1,length(iFM.x)); else, range_x = 1:nFFobjs; end
                             
                             c = 1;
                             for ii = range_f
@@ -331,7 +333,7 @@ classdef CBFP < FarFieldExpansion
                     obj.basis = basis;
                     obj.coeffs = W;
                     obj.tol = tol;
-                    obj.i_FM = i_FM;
+                    obj.iFM = iFM;
                     obj.UR = UR;
                     obj.SR = SR;
                     obj.VR = VR;
@@ -343,12 +345,12 @@ classdef CBFP < FarFieldExpansion
         end
         
         methods (Static)
-            function FFobj = expansion2FarField(CBFPobj,Win,tol,i_B,nBasis)
-                % function FFobj = expansion2FarField(CBFPobj,Win,tol,i_FM,nBasis)
+            function FFobj = expansion2FarField(CBFPobj,W,tol,iBasis,nBasis)
+                % function FFobj = expansion2FarField(CBFPobj,W,tol,iBasis,nBasis)
                 %
                 % Inputs:   CBFPobj - CBFP object
-                %           W       - Interpolated weights
-                %           i_B    - Array of indices for basis functions
+                %           W       - Weights
+                %           iBasis  - Array of indices for basis functions
                 %           nBasis  - Number of basis functions
                 %
                 % Output:   FFobj - FarField object
@@ -357,33 +359,33 @@ classdef CBFP < FarFieldExpansion
                 NB = CBFPobj.nBasis;
                                 
                 if nargin < 2
-                    Win = CBFPobj.coeffs;
+                    W = CBFPobj.coeffs;
                     NR = NB;
                     range_B = [1:NR];
                     
                     tol = 1e-100;
-                    i_B = [];
+                    iBasis = [];
                     nBasis = inf;
                 elseif nargin < 3
                     NR = NB;
                     range_B = [1:NR];
                                         
                     tol = 1e-100;
-                    i_B = [];
+                    iBasis = [];
                     nBasis = inf;
                 elseif nargin < 4
                     sigma = CBFPobj.sigma_n;
                     NR = length(find(sigma > tol));
                     range_B = [1:NR];
                                      
-                    i_B = [];
+                    iBasis = [];
                     nBasis = inf;
                 elseif nargin < 5
-                    assert(length(i_B) <= NB,'Number of indices specified exceeds the number of basis functions')
-                    assert(max(i_B) <= NB,'Maximum index specified exceeds the number of basis functions')
+                    assert(length(iBasis) <= NB,'Number of indices specified exceeds the number of basis functions')
+                    assert(max(iBasis) <= NB,'Maximum index specified exceeds the number of basis functions')
                     
-                    NR = length(i_B);
-                    range_B = i_B;
+                    NR = length(iBasis);
+                    range_B = iBasis;
                                     
                     nBasis = inf;
                 elseif nargin < 6
@@ -393,9 +395,9 @@ classdef CBFP < FarFieldExpansion
                 end
                               
                 % Ignore some function inputs
-                if isempty(Win), Win = CBFPobj.coeffs; freq = CBFPobj.freqRange; end
+                if isempty(W), W = CBFPobj.coeffs; freq = CBFPobj.freqRange; end
                 if isempty(tol), tol = 1e-100; end
-                if isempty(i_B), i_B = []; end
+                if isempty(iBasis), iBasis = []; end
                 if isempty(nBasis), nBasis = inf; end
                 
                 freqBasis = CBFPobj.isFreqBasis;
@@ -405,9 +407,9 @@ classdef CBFP < FarFieldExpansion
                 
                 % Expansion across Frequency
                 if freqBasis
-                    nCoeffs = length(Win(1,:));
+                    nCoeffs = length(W(1,:));
                     
-                    if nargin < 2,  freq = CBFPobj.freqRange; else, if ~isempty(Win), freq = ones(1,nCoeffs); end, end
+                    if nargin < 2,  freq = CBFPobj.freqRange; else, if ~isempty(W), freq = ones(1,nCoeffs); end, end
                     
                     for ii = range_B
                         % Get the Basis Functions
@@ -418,7 +420,7 @@ classdef CBFP < FarFieldExpansion
                     end
                     B_E = [B_E1;B_E2];
                     
-                    FF = B_E * Win(range_B,:);
+                    FF = B_E * W(range_B,:);
                     
                     % Build FarField Object
                     Nang = basisFn.Nang;
@@ -446,12 +448,13 @@ classdef CBFP < FarFieldExpansion
 %                     FFobj = setFreq(FFobj);
 %                     FFobj = setBase(FFobj);
                 else
+                    % Multiple FF Objects
                     dim = length(size(CBFPobj.basis));
                     
                     switch dim
                         case 2
                             % Frequency treated as a parameter
-                            nCoeffs = length(Win(1,:));
+                            nCoeffs = length(W(1,:));
                             
                             for ii = range_B
                                 % Get the Basis Functions
@@ -461,7 +464,7 @@ classdef CBFP < FarFieldExpansion
                                 B_E2 = [B_E2 basisFn.E2];
                             end
                             B_E = [B_E1;B_E2];
-                            FF = B_E * Win(range_B,:);
+                            FF = B_E * W(range_B,:);
                             
                             % Build FarField Objects
                             Nang = basisFn.Nang;
@@ -486,7 +489,7 @@ classdef CBFP < FarFieldExpansion
                             
                         case 3
                             % Geometric variation
-                            nCoeffs = length(Win(1,:,1));
+                            nCoeffs = length(W(1,:,1));
                             Nf = length(CBFPobj.basis(1,1,:));
                             
                             % Build FarField Objects
@@ -513,7 +516,7 @@ classdef CBFP < FarFieldExpansion
                                     B_E2 = [B_E2 basisFn.E2];
                                 end
                                 B_E = [B_E1;B_E2];
-                                FF = B_E * Win(range_B,:,ii);
+                                FF = B_E * W(range_B,:,ii);
                                 
                                 freq = CBFPobj.freqRange(1,ii);
                                 

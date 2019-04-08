@@ -100,6 +100,7 @@ classdef FarField
 %                 [TH,PH] = meshgrid(th,ph);
                 P = powerPattern(PH(:),TH(:),'gauss',th0,taper_dB,freq);
                 obj = FarField.farFieldFromPowerPattern(PH(:),TH(:),P,freq,'linearY');
+
             else
                 % Basic input error checking
                 [Nang_x, Nf_x] = size(x);
