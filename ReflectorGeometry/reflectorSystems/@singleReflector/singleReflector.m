@@ -1,12 +1,11 @@
 classdef singleReflector
     % Exactly the same as the GRASP single reflector wizard
-    properties
-        D(1,1) double {mustBeReal, mustBeFinite} = 10 % Reflector diameter in (m)
-        FoD(1,1) double {mustBeReal, mustBeFinite} = 0.5 % Reflector F/D
-        hoD(1,1) double {mustBeReal, mustBeFinite} = 0 % Reflector Offset/D
-    end
     
     properties (SetAccess = private)
+        D = 10 % Reflector diameter in (m)
+        FoD = 0.5 % Reflector F/D
+        hoD = 0 % Reflector Offset/D
+        
         F             % Reflector focal length
         h             % Reflector offset
         Dp            % Clearance between inner edge and the z-axis

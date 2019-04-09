@@ -81,6 +81,7 @@
 ## @dualReflector
 - [ ] constructor function for different symmetrical design options
 - [ ] constructor function for different offset design options
+- [ ] Bug: testScript_dualReflector, exNumber = 1; th_ext = 20 or 10 deg; symFact_ext = 1. Inner SR edge (Q1) wrong...
 - [x] SR extensions
 - [x] masking (both SR and PR masking)
 - [x] ray tracing

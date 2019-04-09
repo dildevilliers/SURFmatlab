@@ -1,8 +1,16 @@
 % Script to scratch around while developing the code
-
-%% changeBase test
 clear all
 close all
+
+
+%% Basic ellipsoid test
+GC = coordinateSystem;
+SR = reflector;
+SR.surface = ellipsoid(5,4);
+SR.plot
+
+keyboard
+%% changeBase test
 
 figure
 % Make global coor object
@@ -12,7 +20,7 @@ GC = coordinateSystem();
 MR = reflector;
 % % Test ellipsoid
 % MR.surface = ellipsoid(5,4);
-% Test ellipsoid
+% Test hyperboloid
 MR.surface = hyperboloid(4,5);
 % Shift/rotate it
 rotTh = deg2rad(45);

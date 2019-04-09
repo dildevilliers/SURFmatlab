@@ -30,6 +30,21 @@ classdef pnt3D
             obj = obj.setProps;
         end
         
+        function obj = setX(obj,x)
+            obj.x = (obj.z+eps(realmin))./(obj.z+eps(realmin)).*(obj.y+eps(realmin))./(obj.y+eps(realmin)).*x;
+            obj = obj.setProps;
+        end
+        
+        function obj = setY(obj,y)
+            obj.y = (obj.x+eps(realmin))./(obj.x+eps(realmin)).*(obj.z+eps(realmin))./(obj.z+eps(realmin)).*y;
+            obj = obj.setProps;
+        end
+        
+        function obj = setZ(obj,z)
+            obj.z = (obj.x+eps(realmin))./(obj.x+eps(realmin)).*(obj.y+eps(realmin))./(obj.y+eps(realmin)).*z;
+            obj = obj.setProps;
+        end
+        
         function obj = setProps(obj)
             [obj.ph,obj.el,obj.r] = cart2sph(obj.x,obj.y,obj.z);
             obj.th = pi/2 - obj.el;

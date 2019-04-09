@@ -3,7 +3,7 @@ clear all
 
 exNumber = 2;
 
-th_ext = deg2rad(20);
+th_ext = deg2rad(15);
 symFact_ext = 1;
 
 switch exNumber
@@ -53,11 +53,12 @@ switch exNumber
         sigma = 1;
 end
 DR = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext);
-% SP.plot
 figure
 DR.plot3D(10000,[1,1,1])
 figure
 DR.plot
+
+%%
 figure
 DR.plotRayTrace
 pathLengthStruct = DR.getPathLength

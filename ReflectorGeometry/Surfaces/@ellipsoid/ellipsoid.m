@@ -1,12 +1,10 @@
 classdef ellipsoid
     % Rotationally symmetric ellipsoid (spheroid) - two axis have the same
     % length. See the 2002 Granet paper and GRASP technical description for details. 
-    properties
-        vertexDistance(1,1) double {mustBeReal, mustBeFinite} = 2 % Major axis length in (m) = 2a
-        fociDistance(1,1) double {mustBeReal, mustBeFinite} = 1 % Interfocal distance in (m) = 2f
-    end
     
     properties (SetAccess = private)
+        vertexDistance = 2 % Major axis length in (m) = 2a
+        fociDistance = 1 % Interfocal distance in (m) = 2f
         a % Vertex (Major) half distance
         f % Focus half distance - called c in the GRASP technical description and f in the Granet paper
         e % Eccentricity
@@ -20,6 +18,20 @@ classdef ellipsoid
                 obj.vertexDistance = vertexDistance;
                 obj.fociDistance = fociDistance;
             end
+            obj = obj.setParams;
+        end
+        
+        function obj = setVertexDistance(obj,vD)
+            obj.vertexDistance = vD;
+            obj = obj.setParams;
+        end
+        
+        function obj = setFociDistance(obj,fD)
+            obj.vertexDistance = fD;
+            obj = obj.setParams;
+        end
+        
+        function obj = setParams(obj)
             obj.a = obj.vertexDistance/2;
             obj.f = obj.fociDistance/2;
             obj.e = obj.f./obj.a;

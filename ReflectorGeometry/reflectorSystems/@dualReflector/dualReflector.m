@@ -1,22 +1,23 @@
 classdef dualReflector
     % Exactly the same as the GRASP dual reflector wizard
     % Use the variable names of Granet 2002 paper
-    properties
-        Dm(1,1) double {mustBeReal, mustBeFinite} = 10 
-        Lm(1,1) double {mustBeReal, mustBeFinite} = 1  
-        Ls(1,1) double {mustBeReal, mustBeFinite} = 2.5  
-        th_e(1,1) double {mustBeReal, mustBeFinite} = deg2rad(15) 
-        th_0(1,1) double {mustBeReal, mustBeFinite} = 0
-        beta(1,1) double {mustBeReal, mustBeFinite} = 0 
-        sigma(1,1) double {mustBeReal, mustBeFinite} = 1 
-        th_ext(1,1) double {mustBeReal, mustBeFinite} = 0 % Extension angle in (rad)
-        symFact_ext(1,1) double {mustBeReal, mustBeFinite} = 0 % Symmetry factor of the SR extension. 0 is symmetric, 1 is bottom, and -1 is top extension
-        Df(1,1) double {mustBeReal, mustBeFinite} = 0.2 % Feed aperture diameter
-    end
+    % Default is the MeerKAT dish
     
     properties (SetAccess = private)
         % Granet 2002 paper for description
         % PR is used instead of MR
+        
+        Dm = 13.5 
+        Lm = 10.0254  
+        Ls = 2.419  
+        th_e = deg2rad(48.89) 
+        th_0 = deg2rad(-63.20)
+        beta = deg2rad(45.47) 
+        sigma = 1 
+        th_ext = 0 % Extension angle in (rad)
+        symFact_ext = 0 % Symmetry factor of the SR extension. 0 is symmetric, 1 is bottom, and -1 is top extension
+        Df = 0.2 % Feed aperture diameter
+        
         type % String describing the system
         F
         a
@@ -144,7 +145,9 @@ classdef dualReflector
             obj.R0 = obj.Q0;
             obj.R1 = obj.Q1;
             obj.R2 = obj.Q2;
-            [obj.R0.z,obj.R1.z,obj.R2.z] = deal(Rz);
+            obj.R0 = obj.R0.setZ(Rz);
+            obj.R1 = obj.R1.setZ(Rz);
+            obj.R2 = obj.R2.setZ(Rz);
             
             OP0 = obj.sigma*(2*obj.a-obj.Ls);   % (32)
             OP1 = -obj.sigma*obj.a*(obj.e^2-1)/(obj.e*cos(obj.th_L - obj.beta) + 1); % (33)
@@ -165,7 +168,7 @@ classdef dualReflector
             th_ext2 = (-obj.th_ext.*obj.symFact_ext + 1)/2;
             extRotAng = (th_ext2 - th_ext1)/2;
             al_cone = obj.alpha + extRotAng;
-            th_cone = obj.th_e + th_ext/2;
+            th_cone = obj.th_e + obj.th_ext/2;
             
             if obj.th_ext ~= 0
                 obj.type = ['Extended SR ', obj.type];
@@ -251,7 +254,7 @@ classdef dualReflector
                 reflCoor = coordinateSystem;
                 reflCoor = reflCoor.rotGRASP([directionPoint.th,directionPoint.ph,0]);
                 reflCoor.origin = pnt3D(pReflSR.x(rr),pReflSR.y(rr),pReflSR.z(rr));
-                [pPR,reflectDirPR(:,rr)] = obj.PR.reflectRays(reflCoor,0,0,5000);
+                [pPR,reflectDirPR(:,rr)] = obj.PR.reflectRays(reflCoor,0,0,5000); % Just pointing along the axis for this one-by-one calculation
                 [xPR(rr),yPR(rr),zPR(rr)] = deal(pPR.x,pPR.y,pPR.z);
             end
             pReflPR = pnt3D(xPR,yPR,zPR);
@@ -268,7 +271,7 @@ classdef dualReflector
             % from PR to aperture: PA
             % from feed to aperture: FA
             if nargin == 1
-                th_in = linspace(-obj.th_e,obj.th_e,21);
+                th_in = linspace(-obj.th_e*0.99,obj.th_e*0.99,21);
                 ph_in = zeros(size(th_in));
             end
             ph_in = ph_in(:).';
@@ -424,7 +427,7 @@ classdef dualReflector
             elseif nargin == 2
                 Nrefl = 101;
             end
-            th_in = linspace(-obj.th_e,obj.th_e,Nray);
+            th_in = linspace(-obj.th_e*0.99,obj.th_e*0.99,Nray);
             ph_in = zeros(size(th_in));
             obj.plot3D(Nrefl)
             hold on
@@ -442,107 +445,186 @@ classdef dualReflector
     % Make a ton of different constructor options...
     methods (Static = true)
         function obj = ODR1(Dm,F,h,Dsx,beta,sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption1(Dm, F, h, Dsx, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR2(Dm, F, h, Ls, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption2(Dm, F, h, Ls, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR3(Dm, F, h, DFPR, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption3(Dm, F, h, DFPR, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR4(Dm, F, h, Lt, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption4(Dm, F, h, Lt, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR5(Dm, F, h, Ht, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption5(Dm, F, h, Ht, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR6(Dm, F, h, dSRPR, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption6(Dm, F, h, dSRPR, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR7(Dm, th_0, dFPR, Ls, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption7(Dm, th_0, dFPR, Ls, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR8(Dm, th_0, th_e, Ls, beta, sigma,th_ext,symFact_ext,Df)
-            [F,h,th_U,th_L,e,a,f,Dsx,Dsy,alpha,Lm,dSRPR,dFPR,Lt,Ht,C_SR] = ODRoption8(Dm, th_0, th_e, Ls, beta, sigma);
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
+            [~,~,~,~,~,~,~,~,~,~,Lm] = ODRoption8(Dm, th_0, th_e, Ls, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR9(Dm, th_0, th_e, Dsx, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption9(Dm, th_0, th_e, Dsx, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR10(Dm, th_0, th_e, dSRPR, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption10(Dm, th_0, th_e, dSRPR, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR11(Dm, th_0, th_e, Lt, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption11(Dm, th_0, th_e, Lt, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = ODR12(Dm, th_0, th_e, Ht, beta, sigma,th_ext,symFact_ext,Df)
+            if nargin <= 6, th_ext = 0; end
+            if nargin <= 7, symFact_ext = 1; end
+            if nargin <= 8, Df = 0.2; end
             [Dm, th_0, th_e, Ls, Lm, beta] = ODRoption12(Dm, th_0, th_e, Ht, beta, sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
+        
         function obj = SDR1(Dm,Lm,Ls,th_e,sigma,th_ext,symFact_ext,Df)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption1(Dm,Lm,Ls,th_e,sigma);
+            if nargin <= 5, th_ext = 0; end
+            if nargin <= 6, symFact_ext = 0; end
+            if nargin <= 7, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRoption1(Dm,Lm,Ls,th_e,sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDR2(Dm,F,Lm,th_e,sigma,th_ext,symFact_ext,Df)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption2(Dm,F,Lm,th_e,sigma);
+            if nargin <= 5, th_ext = 0; end
+            if nargin <= 6, symFact_ext = 0; end
+            if nargin <= 7, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRoption2(Dm,F,Lm,th_e,sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDR3(Dm,F,Ls,th_e,sigma,th_ext,symFact_ext,Df)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption3(Dm,F,Ls,th_e,sigma);
+            if nargin <= 5, th_ext = 0; end
+            if nargin <= 6, symFact_ext = 0; end
+            if nargin <= 7, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRoption3(Dm,F,Ls,th_e,sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDR4(F,Ds,Ls,th_e,sigma,th_ext,symFact_ext,Df)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption4(F,Ds,Ls,th_e,sigma);
+            if nargin <= 5, th_ext = 0; end
+            if nargin <= 6, symFact_ext = 0; end
+            if nargin <= 7, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRoption4(F,Ds,Ls,th_e,sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDR5(Lm,Ds,Ls,th_e,sigma,th_ext,symFact_ext,Df)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption5(Lm,Ds,Ls,th_e,sigma);
+            if nargin <= 5, th_ext = 0; end
+            if nargin <= 6, symFact_ext = 0; end
+            if nargin <= 7, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRoption5(Lm,Ds,Ls,th_e,sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDR6(Dm,F,Ds,th_e,sigma,th_ext,symFact_ext,Df)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption6(Dm,F,Ds,th_e,sigma);
+            if nargin <= 5, th_ext = 0; end
+            if nargin <= 6, symFact_ext = 0; end
+            if nargin <= 7, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRoption6(Dm,F,Ds,th_e,sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDR7(Dm,Ds,Ls,th_e,sigma,th_ext,symFact_ext,Df)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRoption7(Dm,Ds,Ls,th_e,sigma);
+            if nargin <= 5, th_ext = 0; end
+            if nargin <= 6, symFact_ext = 0; end
+            if nargin <= 7, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRoption7(Dm,Ds,Ls,th_e,sigma);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDRmb1(Dm,F,Lm,sigma, Df,th_ext,symFact_ext)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption1(Dm,F,Lm,sigma, Df);
+            if nargin <= 4, th_ext = 0; end
+            if nargin <= 5, symFact_ext = 0; end
+            if nargin <= 6, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRmboption1(Dm,F,Lm,sigma, Df);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDRmb2(Dm,F,th_e, sigma, Df,th_ext,symFact_ext)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption2(Dm,F,th_e, sigma, Df);
+            if nargin <= 4, th_ext = 0; end
+            if nargin <= 5, symFact_ext = 0; end
+            if nargin <= 6, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRmboption2(Dm,F,th_e, sigma, Df);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDRmb3(Dm,F,Ds, sigma, Df,th_ext,symFact_ext)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption3(Dm,F,Ds, sigma, Df);
+            if nargin <= 4, th_ext = 0; end
+            if nargin <= 5, symFact_ext = 0; end
+            if nargin <= 6, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRmboption3(Dm,F,Ds, sigma, Df);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDRmb4(Dm,Lm,Ds, sigma, Df,th_ext,symFact_ext)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption4(Dm,Lm,Ds, sigma, Df);
+            if nargin <= 4, th_ext = 0; end
+            if nargin <= 5, symFact_ext = 0; end
+            if nargin <= 6, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRmboption4(Dm,Lm,Ds, sigma, Df);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDRmb5(Dm,Ds,th_e, sigma, Df,th_ext,symFact_ext)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption5(Dm,Ds,th_e, sigma, Df);
+            if nargin <= 4, th_ext = 0; end
+            if nargin <= 5, symFact_ext = 0; end
+            if nargin <= 6, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRmboption5(Dm,Ds,th_e, sigma, Df);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDRmb6(Dm,Lm,th_e, sigma, Df,th_ext,symFact_ext)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption6(Dm,Lm,th_e, sigma, Df);
+            if nargin <= 4, th_ext = 0; end
+            if nargin <= 5, symFact_ext = 0; end
+            if nargin <= 6, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRmboption6(Dm,Lm,th_e, sigma, Df);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
         function obj = SDRmb7(Dm,Ls,th_e, sigma, Df,th_ext,symFact_ext)
-            [Dm,F,Lm,Ds,Ls,a,f,th_e] = SDRmboption7(Dm,Ls,th_e, sigma, Df);
+            if nargin <= 4, th_ext = 0; end
+            if nargin <= 5, symFact_ext = 0; end
+            if nargin <= 6, Df = 0.2; end
+            [Dm,~,Lm,~,Ls,~,~,th_e] = SDRmboption7(Dm,Ls,th_e, sigma, Df);
             obj = dualReflector(Dm,Lm,th_e,Ls,th_0,beta,sigma,th_ext,symFact_ext,Df);
         end
     end
