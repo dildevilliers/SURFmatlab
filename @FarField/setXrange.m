@@ -16,7 +16,8 @@ if strcmp(type,'pos')
 elseif strcmp(type,'sym')
     t = 's';
 end
-tol = 1e-10;
+% tol = 1e-10;
+tol = 10^(-obj.nSigDig);
 if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
     if t == 'p'
 %         iout = find(obj.x == -pi);   % Redundant
@@ -71,6 +72,7 @@ if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.grid
     end
     % Sort
     obj = obj.sortGrid;
+    obj = obj.setPhTh;
 else
     warning(['Cant shift a polar grid like ', obj.gridType, ' on a cartesian grid']);
 end

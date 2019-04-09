@@ -50,6 +50,8 @@ classdef FarField
         % a DirCos projection and back...
         xBase
         yBase
+        phBase
+        thBase
         NxBase
         NyBase
         gridTypeBase
@@ -755,6 +757,22 @@ classdef FarField
             end
         end
         
+        %% Format transformation
+        function obj = transformTypes(obj, obj1)
+            % Function to transform the format of obj to that of obj1 -
+            % that is the grid,coor, and pol Types of obj goes to those of
+            % obj1.
+            objGridType = obj1.gridType;
+            objCoorType = obj1.coorSys;
+            objPolType = obj1.polType;
+            handleGridType = str2func(['grid2',objGridType]);
+            handleCoorType = str2func(['coor2',objCoorType]);
+            handlePolType = str2func(['pol2',objPolType]);
+            obj = handleGridType(obj);
+            obj = handleCoorType(obj,0);
+            obj = handlePolType(obj);
+        end
+
         %% Base grid functions
         function obj = reset2Base(obj)
             % Hard reset to the base format
@@ -930,7 +948,7 @@ classdef FarField
         
         %% Shifts and rotations of the field
 
-        function obj = rotate(obj,rotHandle,rotAng)
+        function obj = rotate(obj1,rotHandle,rotAng)
             % General rotation function for FarField objects
             % rotHandle is the function handle for the type of rotation:
             %   rotx3Dsph, roty3Dsph, rotz3Dsph, rotGRASPsph, rotEulersph
@@ -943,11 +961,8 @@ classdef FarField
                 handleStr = [handleStr,'sph'];  % Add it if not - some user errors fixed at least!
                 rotHandle = str2func(handleStr);
             end
-            gridIn = obj.gridTypeBase;
-            coorIn = obj.coorSysBase;
-            xRangeIn = obj.xRangeType;
             % Transform to sensible grid and coordinate system for rotation
-            FFsph = obj.grid2PhTh;  % Always work in the PhTh coordinate system
+            FFsph = obj1.grid2PhTh;  % Always work in the PhTh coordinate system
             FFsph = FFsph.setXrange('sym'); % Always work in symmetrical xRange
             FFsph = FFsph.coor2Ludwig3(false); % And work in Ludwig1 coordinates to get rid of pole discontinuities in the fields
             % Get the grid step sizes from the original
@@ -974,26 +989,11 @@ classdef FarField
             FFsph = FFsph.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
             % Reset the grid and coordinate system, and reset the base back
             % in the original format
-            grid2handle = str2func(['grid2',gridIn]);
-            obj = grid2handle(FFsph);
-            obj = obj.setXrange(xRangeIn);
-            coor2handle = str2func(['coor2',coorIn]);
-            obj = coor2handle(obj,false);
-            obj = obj.setPhTh;
+            obj = transformTypes(FFsph, obj1);
+            obj = obj.setXrange(obj1.xRangeType);
             obj = obj.currentForm2Base();
         end
         
-        function obj = transformTypes(obj, obj1)
-            objGridType = obj1.gridType;
-            objCoorType = obj1.coorSys;
-            objPolType = obj1.polType;
-            handleGridType = str2func(['grid2',objGridType]);
-            handleCoorType = str2func(['coor2',objCoorType]);
-            handlePolType = str2func(['pol2',objPolType]);
-            obj = handleGridType(obj);
-            obj = handleCoorType(obj,0);
-            obj = handlePolType(obj);  
-        end
         
         %% Maths
         function obj = plus(obj1,obj2)
@@ -1466,6 +1466,8 @@ classdef FarField
             obj.yBase = obj.y;
             obj.NxBase = obj.Nx;
             obj.NyBase = obj.Ny;
+            obj.phBase = obj.ph;
+            obj.thBase = obj.th;
             obj.gridTypeBase = obj.gridType;
             obj.E1Base = obj.E1;
             obj.E2Base = obj.E2;
@@ -1491,7 +1493,12 @@ classdef FarField
         end
         
         function obj = setPhTh(obj)
-            [obj.ph, obj.th] = getPhTh(obj);
+            % This does not operate on the base grid, but instead the
+            % current grid
+            handle2DirCos = str2func([obj.gridType,'2DirCos']);
+            [u,v,w] = handle2DirCos(obj.x,obj.y);
+            [obj.ph,obj.th] = DirCos2PhTh(u,v,w);
+            [obj.phBase, obj.thBase] = getPhTh(obj);
         end
         
         % Set the names of the 2 grid components

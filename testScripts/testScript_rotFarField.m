@@ -4,7 +4,7 @@ close all
 
 plotDim = 3;    % Select 1, 2 or 3 for 2D or 3D plots
 grid2Dplot = 'PhTh'; % Can be DirCos, TrueView, PhTh, etc
-coorPlot = 'spherical';
+coorPlot = 'Ludwig2AE';
 output_1and2D = 'E2';
 
 rotHandle = @rotGRASP;

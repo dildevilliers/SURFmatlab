@@ -103,9 +103,12 @@ zVal = Z(valAng);
 if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
     tol = deg2rad(2); % Check for points close to the edges in azimuth
     if abs(min(xVal) + pi) < tol && abs(max(xVal) - pi) < tol 
-        xVal = [xVal-2*pi;xVal;xVal+2*pi];
-        yVal = repmat(yVal,3,1);
-        zVal = repmat(zVal,3,1);
+        edgeAngDeg = 164;
+        iNeg = find(xVal > deg2rad(edgeAngDeg));
+        iPos = find(xVal < deg2rad(-edgeAngDeg));
+        xVal = [xVal(iNeg)-2*pi;xVal;xVal(iPos)+2*pi];
+        yVal = [yVal(iNeg);yVal;yVal(iPos)];
+        zVal = [zVal(iNeg);zVal;zVal(iPos)];
     end
 end
 
