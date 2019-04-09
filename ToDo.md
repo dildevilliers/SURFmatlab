@@ -1,20 +1,17 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D (Ridalise and William)
+- [ ] Shift field in 3D space - phase change
 - [ ] Field symmetries: XY plane (DdV)
-- [ ] Get only the BOR1 components of the field and return as FarField object (DdV)
 - [ ] Gaussian/cosn pattern fitter
 - [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
 - [ ] readFITS (DdV)
 - [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
 - [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
-- [ ] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
 - [ ] CBFP expansion (Fahmi)
 - [ ] SWE of a given field (Fahmi + Brandt)
 - [ ] Multiple frequency concat
-- [ ] Shift field in 3D space - phase change
 - [ ] Typical pattern parameters calculator: SLL, XP, Beamwidth, etc.
 - [ ] writeCSTffs
 - [ ] writeFEKOfft
@@ -48,6 +45,10 @@
 - [x] Weighted power integral - for antenna noise (DdV)
 - [x] Fix FarField th rotation direction (DdV)  
 - [x] Field symmetries: XZ and YZ planes.
+- [x] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
+- [x] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D (Ridalise and William)
+- [x] Get only the BOR1 components of the field and return as FarField object (DdV)
+- [x] Conjugate fields overload
 
 
 # ReflectorGeometry

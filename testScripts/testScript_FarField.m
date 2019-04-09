@@ -25,8 +25,8 @@ for ii = 1:6
     end
     for jj = 1:3
         a = a+1;
-        if  a == 4
-            keyboard;
+        if  a == 7
+%             keyboard;
         end
         handleGridType = str2func(['grid2',gridType{ii}]);
         handleCoorType = str2func(['coor2',coorType{k}]);
@@ -96,6 +96,10 @@ end
 FF_times = times(FF,FF2);
 if any(FF_times.E1 ~= (FF.E1.*FF2.E1))
     warning('Times function failed.')
+end
+FF_conj = conj(FF);
+if any(FF_conj.E1 ~= conj(FF.E1))
+    warning('Conj function failed.')
 end
 FF_abs = abs(FF);
 if any(FF_abs.E1 ~= abs(FF.E1))

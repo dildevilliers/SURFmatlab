@@ -18,24 +18,24 @@ FFplot = plotGridHandle(FF);
 FFplot.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
 
 %% Get a version symmetric about x
-phXind = FF.phBase >= pi;
-phXind = FF.phBase >= -eps;
-FFx = FarField(FF.phBase(phXind),FF.thBase(phXind),FF.E1(phXind,:),FF.E2(phXind,:),FF.E3(phXind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorSys,FF.polType,'PhTh',FF.freqUnit);
-FFx = FFx.setSymmetryXZ('electric');
-FFx = FFx.setXrange('sym');
-FFx = plotGridHandle(FFx);
-figure
-FFx.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
-% Fix to full range and plot
-FFxFull = FFx.mirrorSymmetricPattern;
-FFxFull = plotGridHandle(FFxFull);
-figure
-FFxFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
-
-FFdelta = FFxFull - FF;
-figure
-FFdelta.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType','mag','scaleMag',scaleMag)
-[eEx] = FFdelta.norm
+% phXind = FF.phBase >= pi;
+% phXind = FF.phBase >= -eps;
+% FFx = FarField(FF.phBase(phXind),FF.thBase(phXind),FF.E1(phXind,:),FF.E2(phXind,:),FF.E3(phXind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorSys,FF.polType,'PhTh',FF.freqUnit);
+% FFx = FFx.setSymmetryXZ('electric');
+% FFx = FFx.setXrange('sym');
+% FFx = plotGridHandle(FFx);
+% figure
+% FFx.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+% % Fix to full range and plot
+% FFxFull = FFx.mirrorSymmetricPattern;
+% FFxFull = plotGridHandle(FFxFull);
+% figure
+% FFxFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+% 
+% FFdelta = FFxFull - FF;
+% figure
+% FFdelta.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType','mag','scaleMag',scaleMag)
+% [eEx] = FFdelta.norm
 
 %% Get a version symmetric about y
 phYind = FF.phBase >= -pi/2-eps & FF.phBase <= pi/2+eps;
@@ -57,17 +57,17 @@ FFdelta.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',
 [eEy] = FFdelta.norm
 
 %% Get a version with 2 symmetry planes
-phXYind = FF.phBase >= -eps & FF.phBase <= pi/2+eps;
-FFxy = FarField(FF.phBase(phXYind),FF.thBase(phXYind),FF.E1(phXYind,:),FF.E2(phXYind,:),FF.E3(phXYind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorSys,FF.polType,'PhTh',FF.freqUnit);
-FFxy = FFxy.setSymmetryXZ('electric');
-FFxy = FFxy.setSymmetryYZ('magnetic');
-FFxy = FFxy.setXrange('sym');
-FFxy = plotGridHandle(FFxy);
-figure
-FFxy.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
-% Fix to full range and plot
-FFxyFull = FFxy.mirrorSymmetricPattern;
-FFxyFull = plotGridHandle(FFxyFull);
-figure
-FFxyFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
-
+% phXYind = FF.phBase >= -eps & FF.phBase <= pi/2+eps;
+% FFxy = FarField(FF.phBase(phXYind),FF.thBase(phXYind),FF.E1(phXYind,:),FF.E2(phXYind,:),FF.E3(phXYind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorSys,FF.polType,'PhTh',FF.freqUnit);
+% FFxy = FFxy.setSymmetryXZ('electric');
+% FFxy = FFxy.setSymmetryYZ('magnetic');
+% FFxy = FFxy.setXrange('sym');
+% FFxy = plotGridHandle(FFxy);
+% figure
+% FFxy.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+% % Fix to full range and plot
+% FFxyFull = FFxy.mirrorSymmetricPattern;
+% FFxyFull = plotGridHandle(FFxyFull);
+% figure
+% FFxyFull.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',outputType,'scaleMag',scaleMag)
+% 

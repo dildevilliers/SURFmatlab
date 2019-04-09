@@ -308,7 +308,7 @@ switch plotType
         if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
             % Handle dynamic range here: ToDo
             if strcmp(outputType,'mag')
-                maxVal = max(Zplot(:));
+                maxVal = max(Zplot(~isinf(Zplot)));
                 switch scaleMag
                     case 'dB'
                         if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
@@ -358,7 +358,7 @@ switch plotType
         ylim([min(yiplot),max(yiplot)])
         % Handle dynamic range here
         if strcmp(outputType,'mag') || strcmp(outputType,'real') || strcmp(outputType,'imag')
-            maxVal = max(Zplot(:));
+            maxVal = max(Zplot(~isinf(Zplot)));
             switch scaleMag
                 case 'dB'
                     if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')

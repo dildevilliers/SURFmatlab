@@ -140,9 +140,23 @@ if numel(removePoints) > 0
 end
 
 % Build the interpolant on the base grid at the valid angles
-warning('off','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
-Zf = scatteredInterpolant(xVal,yVal,zVal,'linear');
-warning('on','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
+if obj.isGridUniform && 0
+try
+    NyVal = length(unique(yVal));
+    NxVal = length(unique(xVal));
+    XVal = reshape(xVal,NyVal,NxVal);
+    YVal = reshape(yVal,NyVal,NxVal);
+    ZVal = reshape(zVal,NyVal,NxVal);
+    Zf = griddedInterpolant(XVal',YVal',ZVal.','linear');
+catch ME
+    % Grid did not work... Go to scatter
+end
+end
+if ~exist('Zf','var')
+    warning('off','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
+    Zf = scatteredInterpolant(xVal,yVal,zVal,'linear');
+    warning('on','MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId')
+end
 % Get the values on the scattered set of inputs
 Zi = Zf(xi_bGT,yi_bGT);
 Zi(~valAngi) = NaN;

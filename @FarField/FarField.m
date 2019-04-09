@@ -1047,14 +1047,14 @@ classdef FarField
         end
         
         function obj = times(obj1,obj2)
-            obj1base = reset2Base(obj1);
-            obj2base = reset2Base(obj2);
-            
-            if isGridEqual(obj1base,obj2base) && typesAreEqual(obj1base,obj2base)
-                obj = obj1base;
-                obj.E1 = obj1base.E1.*obj2base.E1;
-                obj.E2 = obj1base.E2.*obj2base.E2;
-                obj.E3 = obj1base.E3.*obj2base.E3;
+            % Don't operate in BaseGrid - straight on the actual values.
+            % This is often used with conj, which operates in the current
+            % grid.
+            if isGridEqual(obj1,obj2) && typesAreEqual(obj1,obj2)
+                obj = obj1;
+                obj.E1 = obj1.E1.*obj2.E1;
+                obj.E2 = obj1.E2.*obj2.E2;
+                obj.E3 = obj1.E3.*obj2.E3;
                 obj.Prad = obj.pradInt;
                 obj.radEff = ones(size(obj.Prad));
                 obj.radEff_dB = dB10(obj.radEff);
@@ -1062,12 +1062,15 @@ classdef FarField
                 obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setBase(obj);
             else
-                error('Can only multiply FarFields with equal base grids')
+                error('Can only multiply FarFields with equal grids')
             end
-            
-             if typesAreEqual(obj1,obj2)
-                obj = transformTypes(obj, obj1);   
-            end
+        end
+        
+        function obj = conj(obj1)
+            obj = obj1;
+            obj.E1 = conj(obj1.E1);
+            obj.E2 = conj(obj1.E2);
+            obj.E3 = conj(obj1.E3);  
         end
         
         function obj = abs(obj1)
@@ -1108,7 +1111,7 @@ classdef FarField
             
             if isGridEqual(obj1,obj2)
                 P = obj1.getU.*obj2.getU;
-                FF_T = FarField.farFieldFromPowerPattern(obj1.ph,obj1.th,P,obj1.freq);
+                FF_T = FarField.farFieldFromPowerPattern(obj1.phBase,obj1.thBase,P,obj1.freq);
                 T = FF_T.pradInt;
             else
                 error('Can only convolve FarFields with equal base grids')
@@ -1419,8 +1422,8 @@ classdef FarField
             % Set to the PhTh coordinate system - this is how most data
             % will be generated anyway.
             % Very quick check - necessary but not always sufficient
-            phRange = max(obj.ph) - min(obj.ph);
-            thRange = max(obj.th) - min(obj.th);
+            phRange = max(obj.phBase) - min(obj.phBase);
+            thRange = max(obj.thBase) - min(obj.thBase);
             eps = 1e-4;
             y = ((abs(round(rad2deg(phRange)) - (360/2^(sum(abs([obj.symXZ,obj.symYZ]))))) < eps) & (abs(round(rad2deg(thRange)) - 180/2^abs(obj.symXY)) < eps)) |...
                 ((abs(round(rad2deg(phRange)) - 180) < eps) & (abs(round(rad2deg(thRange)) - 360) < eps));
@@ -1429,22 +1432,26 @@ classdef FarField
         function y = isGridUniform(obj)
             % Test for a plaid, monotonic, uniform grid format
             
-            X = reshape(obj.x,obj.Ny,obj.Nx);
-            Y = reshape(obj.y,obj.Ny,obj.Nx);
-            % Test for equal rows in X, and equal columns in Y (plaid)
-            rowEq = all(all(bsxfun(@eq,X,X(1,:))));
-            colEq = all(all(bsxfun(@eq,Y,Y(:,1))));
-            % Test for monotonic
-            diffX = diff(X(1,:));
-            diffY = diff(Y(:,1));
-            monX = all(diffX>0);
-            monY = all(diffY>0);
-            % Test for uniform
-            eps = 1e-10;
-            unX = all(abs(diffX - median(diffX)) < eps);
-            unY = all(abs(diffY - median(diffY)) < eps);
-            % And all of them
-            y = rowEq && colEq && monX && monY && unX && unY;
+            if obj.Nx*obj.Ny == obj.Nang
+                X = reshape(obj.x,obj.Ny,obj.Nx);
+                Y = reshape(obj.y,obj.Ny,obj.Nx);
+                % Test for equal rows in X, and equal columns in Y (plaid)
+                rowEq = all(all(bsxfun(@eq,X,X(1,:))));
+                colEq = all(all(bsxfun(@eq,Y,Y(:,1))));
+                % Test for monotonic
+                diffX = diff(X(1,:));
+                diffY = diff(Y(:,1));
+                monX = all(diffX>0);
+                monY = all(diffY>0);
+                % Test for uniform
+                tol = 10^(-obj.nSigDig+1);
+                unX = all(abs(diffX - median(diffX)) < tol);
+                unY = all(abs(diffY - median(diffY)) < tol);
+                % And all of them
+                y = rowEq && colEq && monX && monY && unX && unY;
+            else
+                y = false;
+            end
         end
         
     end

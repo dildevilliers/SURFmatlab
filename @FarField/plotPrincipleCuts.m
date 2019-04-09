@@ -57,7 +57,7 @@ output = parseobj.Results.output;
 %% Plot the result
 
 % Estimate a nice step size
-step = median(diff(unique(FF.th)));
+step = median(diff(unique(FF.thBase)));
 if strcmp(FF.gridType,'DirCos') || strcmp(FF.gridType,'ArcSin')
     step = asin(step);
 end
