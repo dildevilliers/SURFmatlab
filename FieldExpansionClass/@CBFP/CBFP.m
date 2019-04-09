@@ -1,5 +1,7 @@
 classdef CBFP < FarFieldExpansion 
     properties
+        nBasis
+        basis
         nCoeffs
         coeffs
         tol
@@ -18,7 +20,6 @@ classdef CBFP < FarFieldExpansion
         methods
             function obj = CBFP(FFobj,tol,iFM,nBasis)
                 % function obj = CBFP(FFobj,tol,iFM,nBasis)
-                % CBFP object constructor method
                 %
                 % Inputs:   FFobj   - Farfield object
                 %           tol     - Tolerance 
@@ -441,12 +442,6 @@ classdef CBFP < FarFieldExpansion
                     
                     
                     FFobj = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
-                    
-%                     FFobj = setEnames(FFobj);
-%                     FFobj = setXYnames(FFobj);
-%                     FFobj = setPhTh(FFobj);
-%                     FFobj = setFreq(FFobj);
-%                     FFobj = setBase(FFobj);
                 else
                     % Multiple FF Objects
                     dim = length(size(CBFPobj.basis));
@@ -531,6 +526,283 @@ classdef CBFP < FarFieldExpansion
                             end
                     end
                 end
+            end
+            
+            function Wout = farField2Coefficients(FFobj,CBFPobj,tol,iBasis,nBasis)
+                % Wout = farField2Coefficients(FFobj,CBFPobj,tol,iBasis,nBasis)
+                %
+                % Inputs:   FFobj   - Farfield object
+                %           CBFPobj - CBFP object
+                %           tol     - Tolerance 
+                %           iBasis  - Array of indices for basis functions
+                %           nBasis  - Number of basis functions
+                %
+                % Output:   Wout - Coefficients
+                %                - For a single FFobj, output is a matrix
+                %                - For an array of FFobj, output is a cell array
+                              
+                % INPUT CHECKS
+                if nargin < 2
+                    error('Target field (FFobj) and basis functions (CBFPobj) required');
+                end
+                
+                NB = CBFPobj.nBasis;
+                
+                if nargin < 3
+                    NR = NB;
+                    range_B = [1:NR];
+                    
+                    tol = 1e-100;
+                    iBasis = [];
+                    nBasis = inf;
+                elseif nargin < 4
+                    sigma = CBFPobj.sigma_n;
+                    NR = length(find(sigma > tol));
+                    range_B = [1:NR];
+                    
+                    iBasis = [];
+                    nBasis = inf;
+                elseif nargin < 5
+                    assert(length(iBasis) <= NB,'Number of indices specified exceeds the number of basis functions')
+                    assert(max(iBasis) <= NB,'Maximum index specified exceeds the number of basis functions')
+                    
+                    NR = length(iBasis);
+                    range_B = iBasis;
+                    
+                    nBasis = inf;
+                elseif nargin < 6
+                    assert(nBasis <= NB,'Specified basis functions more than the total number of basis functions')
+                    NR = nBasis;
+                    range_B = [1:NR];
+                end
+                
+                                
+                % Ignore some function inputs
+                if isempty(tol), tol = 1e-100; end
+                if isempty(iBasis), iBasis = []; end
+                if isempty(nBasis), nBasis = inf; end
+                
+                nFFobjs = length(FFobj);
+                freqBasis = CBFPobj.isFreqBasis;
+                freqRnge = CBFPobj.freqRange;
+                
+                switch freqBasis
+                    case 1
+                        if nFFobjs == 1
+                            freqs = FFobj.freq;
+                            Nf = FFobj.Nf;
+                            
+                            if (max(freqRnge) < max(freqs)), warning('Specified maximum frequency of the target field is outside the frequency range that the basis functions were constructed from'), end
+                            
+                            B_E1 = [];
+                            B_E2 = [];
+                            for ii = range_B
+                                % Get the Basis Functions
+                                basisFn = CBFPobj.basis(1,ii);
+                        
+                                B_E1 = [B_E1 basisFn.E1];
+                                B_E2 = [B_E2 basisFn.E2];
+                            end
+                            B_E = [B_E1;B_E2];
+                            
+                            for ii = 1:Nf
+                                E1 = FFobj.E1(:,ii);
+                                E2 = FFobj.E2(:,ii);
+                                FF = [E1;E2];
+                                
+                                Wout(:,ii) = pinv(B_E)*FF;
+                            end                            
+                        else                                                       
+                            B_E1 = [];
+                            B_E2 = [];
+                            for ii = range_B
+                                % Get the Basis Functions
+                                basisFn = CBFPobj.basis(1,ii);
+                        
+                                B_E1 = [B_E1 basisFn.E1];
+                                B_E2 = [B_E2 basisFn.E2];
+                            end
+                            B_E = [B_E1;B_E2];
+                            
+                            for ii = 1:nFFobjs
+                                FF = FFobj(1,ii);
+                                assert(FF.Nf <= 1,'Multiple frequencies defined. Specify one frequency at a time')
+                                
+                                if (max(freqRnge) < max(FF.freq)), warning('Specified maximum frequency of the target field is outside the frequency range that the basis functions were constructed from'), end
+                                
+                                E1 = FF.E1(:,1);
+                                E2 = FF.E2(:,1);
+                                FF_E = [E1;E2];
+                                
+                                Wout{1,ii} = pinv(B_E)*FF_E;
+                            end
+                        end
+                    case 0
+                        % Classify how the basis functions are constructed
+                        dim = length(size(CBFPobj.basis));
+                    
+                        switch dim
+                            case 2
+                                if nFFobjs == 1
+                                    assert(FFobj.Nf <= 1,'Multiple frequencies defined. Specify one frequency at a time')
+                                    
+                                    B_E1 = [];
+                                    B_E2 = [];
+                                    for ii = range_B
+                                        % Get the Basis Functions
+                                        basisFn = CBFPobj.basis(1,ii);
+                                        
+                                        B_E1 = [B_E1 basisFn.E1];
+                                        B_E2 = [B_E2 basisFn.E2];
+                                    end
+                                    B_E = [B_E1;B_E2];
+                                    
+                                    E1 = FFobj.E1;
+                                    E2 = FFobj.E2;
+                                    FF = [E1;E2];
+                                    
+                                    Wout = pinv(B_E)*FF;
+                                else                                    
+                                    B_E1 = [];
+                                    B_E2 = [];
+                                    for ii = range_B
+                                        % Get the Basis Functions
+                                        basisFn = CBFPobj.basis(1,ii);
+                                        
+                                        B_E1 = [B_E1 basisFn.E1];
+                                        B_E2 = [B_E2 basisFn.E2];
+                                    end
+                                    B_E = [B_E1;B_E2];
+                                    
+                                    for ii = 1:nFFobjs
+                                        FF = FFobj(1,ii);
+                                        assert(FF.Nf <= 1,'Multiple frequencies defined. Specify one frequency at a time in the FarField object')
+                                        
+                                        E1 = FF.E1(:,1);
+                                        E2 = FF.E2(:,1);
+                                        FF_E = [E1;E2];
+                                        W = pinv(B_E)*FF_E;
+                                        
+                                        Wout{1,ii} = W;
+                                    end                                 
+                                end
+                            case 3
+                                if nFFobjs == 1
+                                    Nf = FFobj.Nf;
+                                    
+                                    if Nf == 1
+                                        k = ismember(freqRnge,FFobj.freq);
+                                        idx = find(k,1);
+                                        
+                                        assert(~isempty(idx),'Frequency of the Farfield object does not correspond to any of the frequencies used to build the basis functions')
+                                        
+                                        basisFns = CBFPobj.basis(1,:,idx);
+                                        
+                                        B_E1 = [];
+                                        B_E2 = [];
+                                        for ii = range_B
+                                            % Get the Basis Functions
+                                            basisFn = basisFns(1,ii);
+                                            
+                                            B_E1 = [B_E1 basisFn.E1];
+                                            B_E2 = [B_E2 basisFn.E2];
+                                        end
+                                        B_E = [B_E1;B_E2];
+                                        
+                                        E1 = FFobj.E1;
+                                        E2 = FFobj.E2;
+                                        FF = [E1;E2];
+                                        
+                                        Wout = pinv(B_E)*FF;
+                                    else
+                                        for ii = 1:Nf
+                                            k = ismember(freqRnge,FFobj.freq(1,ii));
+                                            idx = find(k,1);
+                                        
+                                            assert(~isempty(idx),'Frequency of the Farfield object does not correspond to any of the frequencies used to build the basis functions')
+                                            
+                                            basisFns = CBFPobj.basis(1,:,idx);
+                                            
+                                            B_E1 = [];
+                                            B_E2 = [];
+                                            for jj = range_B
+                                                % Get the Basis Functions
+                                                basisFn = basisFns(1,jj);
+                                                
+                                                B_E1 = [B_E1 basisFn.E1];
+                                                B_E2 = [B_E2 basisFn.E2];
+                                            end
+                                            B_E = [B_E1;B_E2];
+                                            
+                                            E1 = FFobj.E1(:,ii);
+                                            E2 = FFobj.E2(:,ii);
+                                            FF = [E1;E2];
+                                            
+                                            Wout(:,ii) = pinv(B_E)*FF;
+                                        end
+                                    end
+                                else
+                                    for ii = 1:nFFobjs
+                                        FFobj_1 = FFobj(1,ii);
+                                        Nf = FFobj_1.Nf;
+                                        W = [];
+                                        
+                                        if Nf == 1
+                                            k = ismember(freqRnge,FFobj_1.freq);
+                                            idx = find(k,1);
+                                            
+                                            assert(~isempty(idx),'Frequency of the Farfield object does not correspond to any of the frequencies used to build the basis functions')
+                                            
+                                            basisFns = CBFPobj.basis(1,:,idx);
+                                            
+                                            B_E1 = [];
+                                            B_E2 = [];
+                                            for jj = range_B
+                                                % Get the Basis Functions
+                                                basisFn = basisFns(1,jj);
+                                                
+                                                B_E1 = [B_E1 basisFn.E1];
+                                                B_E2 = [B_E2 basisFn.E2];
+                                            end
+                                            B_E = [B_E1;B_E2];
+                                            
+                                            E1 = FFobj.E1;
+                                            E2 = FFobj.E2;
+                                            FF = [E1;E2];
+                                            
+                                            W = pinv(B_E)*FF;
+                                        else
+                                            for jj = 1:Nf
+                                                k = ismember(freqRnge,FFobj.freq(1,jj));
+                                                idx = find(k,1);
+                                                
+                                                assert(~isempty(idx),'Frequency of the Farfield object does not correspond to any of the frequencies used to build the basis functions')
+                                                
+                                                basisFns = CBFPobj.basis(1,:,idx);
+                                                
+                                                B_E1 = [];
+                                                B_E2 = [];
+                                                for kk = range_B
+                                                    % Get the Basis Functions
+                                                    basisFn = basisFns(1,kk);
+                                                    
+                                                    B_E1 = [B_E1 basisFn.E1];
+                                                    B_E2 = [B_E2 basisFn.E2];
+                                                end
+                                                B_E = [B_E1;B_E2];
+                                                
+                                                E1 = FFobj.E1(:,jj);
+                                                E2 = FFobj.E2(:,jj);
+                                                FF = [E1;E2];
+                                                
+                                                W(:,jj) = pinv(B_E)*FF;
+                                            end
+                                        end
+                                        Wout{1,ii} = W;
+                                    end
+                                end
+                        end
+                end              
             end
         end
 end
