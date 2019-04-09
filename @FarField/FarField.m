@@ -983,12 +983,24 @@ classdef FarField
             obj = obj.currentForm2Base();
         end
         
+        function obj = transformTypes(obj, obj1)
+            objGridType = obj1.gridType;
+            objCoorType = obj1.coorSys;
+            objPolType = obj1.polType;
+            handleGridType = str2func(['grid2',objGridType]);
+            handleCoorType = str2func(['coor2',objCoorType]);
+            handlePolType = str2func(['pol2',objPolType]);
+            obj = handleGridType(obj);
+            obj = handleCoorType(obj,0);
+            obj = handlePolType(obj);  
+        end
+        
         %% Maths
         function obj = plus(obj1,obj2)
             obj1base = reset2Base(obj1);
             obj2base = reset2Base(obj2);
             
-            if isGridEqual(obj1base,obj2base) 
+            if isGridEqual(obj1base,obj2base) && typesAreEqual(obj1base,obj2base)
                 obj = obj1base;
                 obj.E1 = obj1base.E1 + obj2base.E1;
                 obj.E2 = obj1base.E2 + obj2base.E2;
@@ -1005,15 +1017,7 @@ classdef FarField
             end
             
             if typesAreEqual(obj1,obj2)
-                objGridType = obj1.gridType;
-                objCoorType = obj1.coorSys;
-                objPolType = obj1.polType;
-                handleGridType = str2func(['grid2',objGridType]);
-                handleCoorType = str2func(['coor2',objCoorType]);
-                handlePolType = str2func(['pol2',objPolType]);
-                obj = handleGridType(obj);
-                obj = handleCoorType(obj,0);
-                obj = handlePolType(obj);  
+                obj = transformTypes(obj, obj1); 
             end
         end
         
@@ -1021,7 +1025,7 @@ classdef FarField
             obj1base = reset2Base(obj1);
             obj2base = reset2Base(obj2);
             
-            if isGridEqual(obj1base,obj2base)
+            if isGridEqual(obj1base,obj2base) && typesAreEqual(obj1base,obj2base)
                 obj = obj1base;
                 obj.E1 = obj1base.E1 - obj2base.E1;
                 obj.E2 = obj1base.E2 - obj2base.E2;
@@ -1038,15 +1042,7 @@ classdef FarField
             end
             
              if typesAreEqual(obj1,obj2)
-                objGridType = obj1.gridType;
-                objCoorType = obj1.coorSys;
-                objPolType = obj1.polType;
-                handleGridType = str2func(['grid2',objGridType]);
-                handleCoorType = str2func(['coor2',objCoorType]);
-                handlePolType = str2func(['pol2',objPolType]);
-                obj = handleGridType(obj);
-                obj = handleCoorType(obj,0);
-                obj = handlePolType(obj);  
+                obj = transformTypes(obj, obj1);   
             end
         end
         
@@ -1054,7 +1050,7 @@ classdef FarField
             obj1base = reset2Base(obj1);
             obj2base = reset2Base(obj2);
             
-            if isGridEqual(obj1base,obj2base)
+            if isGridEqual(obj1base,obj2base) && typesAreEqual(obj1base,obj2base)
                 obj = obj1base;
                 obj.E1 = obj1base.E1.*obj2base.E1;
                 obj.E2 = obj1base.E2.*obj2base.E2;
@@ -1070,53 +1066,24 @@ classdef FarField
             end
             
              if typesAreEqual(obj1,obj2)
-                objGridType = obj1.gridType;
-                objCoorType = obj1.coorSys;
-                objPolType = obj1.polType;
-                handleGridType = str2func(['grid2',objGridType]);
-                handleCoorType = str2func(['coor2',objCoorType]);
-                handlePolType = str2func(['pol2',objPolType]);
-                obj = handleGridType(obj);
-                obj = handleCoorType(obj,0);
-                obj = handlePolType(obj);  
+                obj = transformTypes(obj, obj1);   
             end
         end
         
         function obj = abs(obj1)
-            obj1base = reset2Base(obj1);
-            obj = obj1base;
-            obj.E1 = abs(obj1base.E1);
-            obj.E2 = abs(obj1base.E2);
-            obj.E3 = abs(obj1base.E3);
-            obj = setBase(obj);
-            
-            objGridType = obj1.gridType;
-            objCoorType = obj1.coorSys;
-            objPolType = obj1.polType;
-            handleGridType = str2func(['grid2',objGridType]);
-            handleCoorType = str2func(['coor2',objCoorType]);
-            handlePolType = str2func(['pol2',objPolType]);
-            obj = handleGridType(obj);
-            obj = handleCoorType(obj,0);
-            obj = handlePolType(obj);  
+            obj = obj1;
+            obj.E1 = abs(obj1.E1);
+            obj.E2 = abs(obj1.E2);
+            obj.E3 = abs(obj1.E3);  
         end
         
         function obj = scale(obj1,scaleFactor)
             % Scale the FarField object E-fields by the scaleFactor
-            obj1base = reset2Base(obj1);
-            obj = obj1base;
-            obj.E1 = obj1base.E1.*scaleFactor;
-            obj.E2 = obj1base.E2.*scaleFactor;
-            obj.E3 = obj1base.E3.*scaleFactor;
-            obj.Prad = obj1base.Prad.*(scaleFactor.^2);
-            obj = setBase(obj);
-            
-            objCoorType = obj1.coorSys;
-            objPolType = obj1.polType;
-            handleCoorType = str2func(['coor2',objCoorType]);
-            handlePolType = str2func(['pol2',objPolType]);
-            obj = handleCoorType(obj,0);
-            obj = handlePolType(obj);  
+            obj = obj1;
+            obj.E1 = obj1.E1.*scaleFactor;
+            obj.E2 = obj1.E2.*scaleFactor;
+            obj.E3 = obj1.E3.*scaleFactor;
+            obj.Prad = obj1.Prad.*(scaleFactor.^2);
         end
         
         function [normE] = norm(obj,Ntype)
@@ -1584,7 +1551,7 @@ classdef FarField
                     error(['Unknown polType property: ', obj.polType]);
             end
         end
-        
+       
     end
     
 end
