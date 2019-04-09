@@ -1,11 +1,15 @@
 classdef pnt3D
     properties
-        x double {mustBeReal, mustBeFinite} = 0 % in (m)
-        y double {mustBeReal, mustBeFinite} = 0 % in (m)
-        z double {mustBeReal, mustBeFinite} = 0 % in (m)
+%         x double {mustBeReal, mustBeFinite} = 0 % in (m)
+%         y double {mustBeReal, mustBeFinite} = 0 % in (m)
+%         z double {mustBeReal, mustBeFinite} = 0 % in (m)
     end
     
     properties (SetAccess = private)
+        % Cartesian points
+        x double {mustBeReal, mustBeFinite} = 0 % in (m)
+        y double {mustBeReal, mustBeFinite} = 0 % in (m)
+        z double {mustBeReal, mustBeFinite} = 0 % in (m)
         % Values in other coordinate systems
         th % polar angle in radians
         ph % azimuth angle in radians
@@ -15,6 +19,7 @@ classdef pnt3D
     end
     
     methods
+        % Have to go through the constructor to set the values
         function obj = pnt3D(X,Y,Z)
             if nargin == 3
                 % Get all the same size

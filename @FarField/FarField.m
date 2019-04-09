@@ -994,6 +994,31 @@ classdef FarField
             obj = obj.currentForm2Base();
         end
         
+        function obj = shift(obj,shiftVect)
+           % Shifts the FarField by a distance specified in the pnt3D input
+           % shiftVect (only uses the first entry)
+           % shiftVect can also be a vector of length 3 with elements
+           % [delX,delY,delZ] in m
+           if nargin < 2, shiftVect = pnt3D; end
+           if ~isa(shiftVect,'pnt3D')
+               assert(numel(shiftVect)==3,'Expect a vector of length 3 for the shifVect, if not a pnt3D');
+               shiftVect = pnt3D(shiftVect(1),shiftVect(2),shiftVect(3));
+           end
+           assert(numel(shiftVect.x)==1,'Only one point allowed when shifting a FarField');
+           
+           lam = obj.c0./obj.freqHz;
+           k = 2.*pi./lam;
+           
+           r_hat = [sin(obj.th).*cos(obj.ph), sin(obj.th).*sin(obj.ph), cos(obj.th)];
+           rmat = repmat(shiftVect.pointMatrix.',obj.Nang,1);
+           rdotr = dot(rmat,r_hat,2);
+           phase = exp(1i.*bsxfun(@times,k,rdotr));
+           obj.E1 = obj.E1.*phase;
+           obj.E2 = obj.E2.*phase;
+           obj.E3 = obj.E3.*phase;
+           obj = obj.setBase;
+        end
+        
         
         %% Maths
         function obj = plus(obj1,obj2)
@@ -1100,6 +1125,18 @@ classdef FarField
            nE2 = norm(obj.E2,Ntype);
            nE3 = norm(obj.E3,Ntype);
            normE = [nE1,nE2,nE3];
+        end
+        
+        function [rmsE1,rmsE2,rmsE3] = rms(obj,DIM)
+           % Calculate the rms of the three E-field components - overloads the MATLAB rms function
+           % This is used for error checking mostly - when comparing
+           % different fields for instance...
+           if nargin < 2
+               DIM = 1;
+           end
+           rmsE1 = rms(obj.E1,DIM);
+           rmsE2 = rms(obj.E2,DIM);
+           rmsE3 = rms(obj.E3,DIM);
         end
         
         function T = convPower(obj1,obj2)

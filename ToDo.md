@@ -1,7 +1,6 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] Shift field in 3D space - phase change
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
 - [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
@@ -49,6 +48,8 @@
 - [x] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D (Ridalise and William)
 - [x] Get only the BOR1 components of the field and return as FarField object (DdV)
 - [x] Conjugate fields overload
+- [x] Shift field in 3D space - phase change
+- [x] Made a FarField.rms function to check RMS field values over angle/freq
 
 
 # ReflectorGeometry
