@@ -8,6 +8,7 @@ GC = coordinateSystem;
 SR = reflector;
 SR.surface = ellipsoid(5,4);
 SR.plot
+SR.coor.plot
 
 keyboard
 %% changeBase test
