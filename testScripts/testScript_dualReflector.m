@@ -1,7 +1,7 @@
 close all
 clear all
 
-exNumber = 2;
+exNumber = 0;
 
 th_ext = deg2rad(15);
 symFact_ext = 1;
@@ -68,12 +68,12 @@ DR.plot3D(10000,[1,1,1])
 figure
 DR.plot
 
-Px1 = DR.SR.coor.origin.pointMatrix + DR.SR.coor.x_axis.*3;
-Px2 = DR.SR.coor.origin.pointMatrix + DR.SR.coor.x_axis.*0;
-Pz1 = DR.SR.coor.origin.pointMatrix + DR.SR.coor.z_axis.*3;
-Pz2 = DR.SR.coor.origin.pointMatrix + DR.SR.coor.z_axis.*0;
-plot([Px1(1),Px2(1)],[Px1(3),Px2(3)],'k')
-plot([Pz1(1),Pz2(1)],[Pz1(3),Pz2(3)],'r')
+% Px1 = DR.SR.coor.origin.pointMatrix + DR.SR.coor.x_axis.*3;
+% Px2 = DR.SR.coor.origin.pointMatrix + DR.SR.coor.x_axis.*0;
+% Pz1 = DR.SR.coor.origin.pointMatrix + DR.SR.coor.z_axis.*3;
+% Pz2 = DR.SR.coor.origin.pointMatrix + DR.SR.coor.z_axis.*0;
+% plot([Px1(1),Px2(1)],[Px1(3),Px2(3)],'k')
+% plot([Pz1(1),Pz2(1)],[Pz1(3),Pz2(3)],'r')
 
 %%
 figure

@@ -75,9 +75,9 @@ classdef ellipsoid
             Bet = getBet(obj,x);
             Gam = getGam(obj,x,y);
             Det = Bet.^2 - 4.*Alp.*Gam;
-            zp = -Bet + sqrt(Det)./(2.*Alp);
+            zn = -(Bet + sqrt(Det))./(2.*Alp);
+            zp = -(Bet - sqrt(Det))./(2.*Alp);
             zp(Det < 0) = max(max(zp(Det > 0)));  % Do something about the points outside the acceptable range
-            zn = -Bet - sqrt(Det)./(2.*Alp);
             zn(Det < 0) = max(max(zn(Det > 0)));  % Do something about the points outside the acceptable range
         end
         
@@ -97,10 +97,6 @@ classdef ellipsoid
             z0vect = [zn0,zp0].';
             p0 = pnt3D(x0vect,y0vect,z0vect);
             xz = p0.changeBase(coordinateSystem,obj.coorRot);
-            plot(xz.x,xz.z,'.'), hold on, grid on
-            plot(p0.x,p0.z,'o')
-            axis equal
-            keyboard
         end
         
         function alpha = getAlp(obj)

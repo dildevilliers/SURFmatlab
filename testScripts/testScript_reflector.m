@@ -13,7 +13,7 @@ if testEllipse
     SR = reflector;
     SR.surface = ellipsoid(5,4.5,deg2rad(40));
     % SR.rim = ellipticalRim([0;0],[0.8;0.6]);
-    SR.rim = ellipticalRim([0;0],SR.surface.b.*0.9.*[1;1]);
+    SR.rim = ellipticalRim([-1;0],[1;1]);
     [surfPnts,rimPnts] = SR.getPointCloud;
     rho = SR.surface.getRho(rimPnts.x,rimPnts.y);
     v = rad2deg(SR.surface.getV(rimPnts.x,rimPnts.y));

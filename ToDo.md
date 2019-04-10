@@ -79,11 +79,11 @@
 - [ ] Sort out the negative e concave case like in GRASP
 
 ## @ellipsoid
-- [ ] Make rotation as in GRASP possible
+- [x] Make rotation as in GRASP possible
 
 ## @dualReflector
-- [ ] Re-implement the Gregorian case completely. Do as in legacy work with a rotated ellipsoid.  Granet method does not work on shallow systems with deep SRs.
 - [ ] Bug: testScript_dualReflector, exNumber = 1; th_ext = 20 or 10 deg; symFact_ext = 1. Inner SR edge (Q1) wrong...
+- [ ] Bug: testScript_dualReflector, exNumber = 1|3; th_ext = 20; The DR.SR.surface.F1 point is not plotted correctly for Cassegrains
 - [x] SR extensions
 - [x] masking (both SR and PR masking)
 - [x] ray tracing
@@ -91,6 +91,7 @@
 - [x] ray trace plots
 - [x] constructor function for different symmetrical design options
 - [x] constructor function for different offset design options
+- [x] Re-implement the Gregorian case completely. Do as in legacy work with a rotated ellipsoid. Fixed legacy issues with different extended and non-extended OG systems 
 
 ## @symmetricParaboloid
 - [ ] Remove and only keep the singleReflector class
