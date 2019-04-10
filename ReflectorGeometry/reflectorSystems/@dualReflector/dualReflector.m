@@ -14,12 +14,13 @@ classdef dualReflector
         th_0 = deg2rad(-63.20)
         beta = deg2rad(45.47) 
         sigma = 1 
-        th_ext = 0 % Extension angle in (rad)
-        symFact_ext = 0 % Symmetry factor of the SR extension. 0 is symmetric, 1 is bottom, and -1 is top extension
+        th_ext = deg2rad(50) % Extension angle in (rad)
+        symFact_ext = 1 % Symmetry factor of the SR extension. 0 is symmetric, 1 is bottom, and -1 is top extension
         Df = 0.2 % Feed aperture diameter
         
         type % String describing the system
         F
+        FoD
         a
         f
         e
@@ -128,8 +129,8 @@ classdef dualReflector
             if obj.th_0 == 0 && obj.beta == 0
                 obj.Ht = obj.Dm;    % Special case for symmetric - Ht gets new meaning
             end
-            FoD = cot(obj.th_e/2)/4;
-            obj.Feq = FoD.*obj.Dm;
+            obj.FoD = cot(obj.th_e/2)/4;
+            obj.Feq = obj.FoD.*obj.Dm;
             
             % Feed coordinate system needed later and in global coordinates
             feedCoor = coordinateSystem();
@@ -173,7 +174,7 @@ classdef dualReflector
             if obj.th_ext ~= 0
                 obj.type = ['Extended SR ', obj.type];
                 % Use equations on p116 of Granet - get the rim positions
-                % in the SR coordinate system
+                % in the Granet SR coordinate system
                 if obj.sigma == 1
                     ph = deg2rad([0,180]);
                 elseif obj.sigma == -1
@@ -184,7 +185,7 @@ classdef dualReflector
                 Primy = sin(th_cone).*sin(ph).*rho_sr;
                 Primz = (-sin(al_cone).*sin(th_cone).*cos(ph) + cos(al_cone).*cos(th_cone)).*rho_sr - 2.*obj.f;
                 
-                % Extension points P1e and P2e in the SR coordinate system
+                % Extension points P1e and P2e in the Granet SR coordinate system
                 PeSR = pnt3D(Primx,Primy,Primz);
                 Dsxe = abs(diff(PeSR.x));
                 % Get in Global coor
@@ -203,7 +204,7 @@ classdef dualReflector
             Cx = (distanceCart(obj.feedCoor.origin,obj.P1e)*sin(al_cone + obj.sigma.*th_cone) + distanceCart(obj.feedCoor.origin,obj.P2e).*sin(al_cone - obj.sigma.*th_cone))/2; % (38)
             Cy = 0; % (38)
             Cz = obj.a*sqrt(1 + Cx^2/(obj.f^2 - obj.a^2)) - obj.f; % (38)
-            obj.C_SR = pnt3D(Cx,Cy,Cz);
+            obj.C_SR = pnt3D(Cx,Cy,Cz);     % In the Granet SR coordinate system
             
             ph = linspace(0,2*pi,1001);
             obj.Dsy = max((2*obj.a*(obj.e^2-1)*sin(obj.th_e).*sin(ph))./(obj.e.*(-sin(obj.alpha).*sin(obj.th_e).*cos(ph) + cos(obj.alpha).*cos(obj.th_e)) - 1));   % (39)
@@ -218,10 +219,47 @@ classdef dualReflector
 
             % Build the reflectors and coordinate systems
             obj.SR = reflector;
-            obj.SR.surface = SRhandle(2*obj.a,2*obj.f);
-            obj.SR.rim = ellipticalRim([obj.C_SR.x,obj.C_SR.y],[Dsxe,Dsye]./2);
-            SRcoor = coordinateSystem;
-            obj.SR.coor = SRcoor.rotGRASP([obj.beta,0,0]);
+            if obj.sigma == -1
+                % Use the standard stuff in Granet for a Cassegrain
+                obj.SR.surface = SRhandle(2*obj.a,2*obj.f);
+                obj.SR.rim = ellipticalRim([obj.C_SR.x,obj.C_SR.y],[Dsxe,Dsye]./2);
+                SRcoor = coordinateSystem;
+                obj.SR.coor = SRcoor.rotGRASP([obj.beta,0,0]);
+            elseif obj.sigma == 1
+                % Use a different SR coordinate system for Gregorians to
+                % allow deep sub-reflectors
+                % The SR coordinate system rotated to be orthogonal to the
+                % SR rim plane with no extension
+                % If it is done to the extension points you get different
+                % reflectors for extended and not extended cases
+
+%                 SRxPlane = obj.P1e - obj.P2e; % In global coordinates (extended edge plane)
+                SRxPlane = obj.P1 - obj.P2; % In global coordinates (non-extended edge plane)
+                obj.SR.coor = coordinateSystem(pnt3D(0,0,0),SRxPlane.pointMatrix./SRxPlane.r,[0;-1;0]);
+                
+                % Project the extension edge points onto the SRcoor
+                P1sr = obj.P1e.changeBase(obj.SR.coor);
+                P2sr = obj.P2e.changeBase(obj.SR.coor);
+                % Get the midpoint
+                SRchordXline = P1sr - P2sr;
+                SRmidPoint = P2sr + SRchordXline.scale(0.5);
+                obj.SR.rim = ellipticalRim([SRmidPoint.x,SRmidPoint.y],[SRchordXline.x,obj.SR_chordY]./2);
+
+                obj.SR.surface = SRhandle(2*obj.a,2*obj.f,pi/2 + (obj.beta - SRxPlane.th));
+
+%                 % Work with Jamnejad 1980 variable names for clarity - all
+%                 % trailing *J
+%                 alphaJ = th_cone;
+%                 betaJ = pi - al_cone;
+%                 % Eqn 3.8
+%                 gammaJ = atan((cos(betaJ) + obj.e*cos(alphaJ))/sin(betaJ));
+%                 
+%                 obj.SR.surface = SRhandle(2*obj.a,2*obj.f,pi/2 - gammaJ);
+%                 obj.SR.coor = SRcoor.rotGRASP([gammaJ + obj.beta + pi/2,0,pi]);
+%                 % Calculate the midpoint of the SR rim
+                
+                
+            end
             
             obj.PR = reflector;
             obj.PR.surface = paraboloid(pnt3D(0,0,-obj.F),obj.F);
@@ -379,7 +417,21 @@ classdef dualReflector
             [surfPointsPR] = obj.PR.getPointCloud(N,'x0');
             [surfPointsSR] = obj.SR.getPointCloud(N,'x0');
             plot(surfPointsPR.x,surfPointsPR.z,'k','linewidth',lineWidthRefl), hold on, grid on
-            plot(surfPointsSR.x,surfPointsSR.z,'k','linewidth',lineWidthRefl)
+            plot(surfPointsSR.x,surfPointsSR.z,'r','linewidth',lineWidthRefl)
+            F0 = obj.SR.surface.F0.changeBase(obj.SR.coor);
+            F1 = obj.SR.surface.F1.changeBase(obj.SR.coor);
+            plot(F0.x,F0.z,'ko')
+            plot(F1.x,F1.z,'ko')
+            % Plot the original SR rim if an extension is present
+            if obj.th_ext > 0
+                objNoExt = dualReflector(obj.Dm,obj.Lm,obj.th_e,obj.Ls,obj.th_0,obj.beta,obj.sigma,0,0);
+                [surfPointsSRNoExt] =  objNoExt.SR.getPointCloud(N,'x0');
+                plot(surfPointsSRNoExt.x,surfPointsSRNoExt.z,'k','linewidth',lineWidthRefl)
+                F0noExt = objNoExt.SR.surface.F0.changeBase(objNoExt.SR.coor);
+                F1noExt = objNoExt.SR.surface.F1.changeBase(objNoExt.SR.coor);
+                plot(F0noExt.x,F0noExt.z,'ro')
+                plot(F1noExt.x,F1noExt.z,'ro')
+            end
             % Plot the feed point
             plot(obj.feedCoor.origin.x,obj.feedCoor.origin.z,'k.','markersize',2)
             % Plot the edge rays

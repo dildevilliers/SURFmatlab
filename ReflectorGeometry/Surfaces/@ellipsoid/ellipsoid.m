@@ -68,15 +68,39 @@ classdef ellipsoid
             obj.G = (obj.b./obj.a).^2;
         end
         
-        function z = getZ(obj,x,y)
+        function [zn,zp] = getZ(obj,x,y)
             % Only return the negative z of the surface 
             % see GRASP technical manual Figure 2-3
             Alp = getAlp(obj);
             Bet = getBet(obj,x);
             Gam = getGam(obj,x,y);
             Det = Bet.^2 - 4.*Alp.*Gam;
-            z = -Bet - sqrt(Det)./(2.*Alp);
-            z(Det < 0) = max(max(z(Det > 0)));  % Do something about the points outside the acceptable range
+            zp = -Bet + sqrt(Det)./(2.*Alp);
+            zp(Det < 0) = max(max(zp(Det > 0)));  % Do something about the points outside the acceptable range
+            zn = -Bet - sqrt(Det)./(2.*Alp);
+            zn(Det < 0) = max(max(zn(Det > 0)));  % Do something about the points outside the acceptable range
+        end
+        
+        function xz = getXZ(obj,N)
+            % Returns a vector of length N of all the points around
+            % the ellipse in the x-z plane.  Handy for plotting
+            if nargin < 2, N = 200; end
+            % First get the points of a non-rotated version
+            ell0 = ellipsoid(obj.vertexDistance,obj.fociDistance,0);
+            xmin0 = -ell0.b*0.999;
+            xmax0 = ell0.b*0.999;
+            x0 = linspace(xmin0,xmax0,round(N/2));
+            y0 = zeros(size(x0));
+            [zn0,zp0] = ell0.getZ(x0,y0);
+            x0vect = [x0,x0].';
+            y0vect = [y0,y0].';
+            z0vect = [zn0,zp0].';
+            p0 = pnt3D(x0vect,y0vect,z0vect);
+            xz = p0.changeBase(coordinateSystem,obj.coorRot);
+            plot(xz.x,xz.z,'.'), hold on, grid on
+            plot(p0.x,p0.z,'o')
+            axis equal
+            keyboard
         end
         
         function alpha = getAlp(obj)

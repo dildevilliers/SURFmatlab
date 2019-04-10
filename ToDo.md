@@ -78,15 +78,19 @@
 ## @hyperboloid
 - [ ] Sort out the negative e concave case like in GRASP
 
+## @ellipsoid
+- [ ] Make rotation as in GRASP possible
+
 ## @dualReflector
-- [ ] constructor function for different symmetrical design options
-- [ ] constructor function for different offset design options
+- [ ] Re-implement the Gregorian case completely. Do as in legacy work with a rotated ellipsoid.  Granet method does not work on shallow systems with deep SRs.
 - [ ] Bug: testScript_dualReflector, exNumber = 1; th_ext = 20 or 10 deg; symFact_ext = 1. Inner SR edge (Q1) wrong...
 - [x] SR extensions
 - [x] masking (both SR and PR masking)
 - [x] ray tracing
 - [x] path length structure
 - [x] ray trace plots
+- [x] constructor function for different symmetrical design options
+- [x] constructor function for different offset design options
 
 ## @symmetricParaboloid
 - [ ] Remove and only keep the singleReflector class

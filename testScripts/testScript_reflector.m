@@ -2,16 +2,16 @@
 clear all
 close all
 
-testEllipse = 0;
+testEllipse = 1;
 testChangeBase = 0;
 testGridPlot = 0;
-testMaskRayTrace = 1;
+testMaskRayTrace = 0;
 
 %% Basic ellipsoid test
 if testEllipse
     GC = coordinateSystem;
     SR = reflector;
-    SR.surface = ellipsoid(5,0.5,deg2rad(0));
+    SR.surface = ellipsoid(5,4.5,deg2rad(40));
     % SR.rim = ellipticalRim([0;0],[0.8;0.6]);
     SR.rim = ellipticalRim([0;0],SR.surface.b.*0.9.*[1;1]);
     [surfPnts,rimPnts] = SR.getPointCloud;
@@ -19,10 +19,12 @@ if testEllipse
     v = rad2deg(SR.surface.getV(rimPnts.x,rimPnts.y));
     u = rad2deg(SR.surface.getU(rimPnts.x,rimPnts.y));
     z = SR.surface.getZ(rimPnts.x,rimPnts.y);
+    xz = SR.surface.getXZ;
     SR.plot
     SR.coor.plot
     SR.surface.F0.plot
     SR.surface.F1.plot
+    xz.plot
 end
 
 %% changeBase test

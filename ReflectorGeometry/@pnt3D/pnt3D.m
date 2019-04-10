@@ -80,6 +80,13 @@ classdef pnt3D
             obj = obj.setProps;
         end
         
+        function obj = scale(obj,scaleVal)
+            obj.x = obj.x.*scaleVal;
+            obj.y = obj.y.*scaleVal;
+            obj.z = obj.z.*scaleVal;
+            obj = obj.setProps;
+        end 
+        
         function D = distanceCart(obj,obj2)
             objD = obj - obj2;
             D = objD.r;
