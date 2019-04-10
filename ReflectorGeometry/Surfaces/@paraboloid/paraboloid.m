@@ -1,8 +1,9 @@
 classdef paraboloid
     % See the GRASP technical description Chapter 6 for details
-   properties
-      vertex(1,1) pnt3D = pnt3D(0,0,0)
-      focalLength(1,1) double {mustBeReal, mustBeFinite} = 1 % in (m) 
+   properties (SetAccess = private)
+      vertex = pnt3D(0,0,0)
+      focalLength = 1 % in (m) 
+      F0 = pnt3D(0,0,1) % Focus point
    end
    methods
        function obj = paraboloid(ver,F)
@@ -13,6 +14,21 @@ classdef paraboloid
                obj.vertex = ver;
                obj.focalLength = F;
            end
+           obj = obj.setParams;
+       end
+       
+       function obj = setParams(obj)
+            obj.F0 = obj.vertex + pnt3D(0,0,obj.focalLength);
+       end
+       
+       function obj = setVertex(obj,vert)
+           obj.vertex = vert;
+           obj = obj.setParams;
+       end
+       
+       function obj = setFocalLength(obj,focLen)
+           obj.focalLength = focLen;
+           obj = obj.setParams;
        end
        
        function rho = getRho(obj,x,y)

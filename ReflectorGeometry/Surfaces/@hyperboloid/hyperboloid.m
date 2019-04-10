@@ -9,6 +9,8 @@ classdef hyperboloid
         f % Focus half distance - called c in the GRASP technical description and f in the Granet paper
         e % Eccentricity
         b 
+        F1 % First focus position (origin of coor)
+        F0 % Second focus position (where the feed goes)
     end
     
     methods
@@ -36,6 +38,8 @@ classdef hyperboloid
             obj.f = obj.fociDistance/2;
             obj.e = obj.f./obj.a;
             obj.b = sqrt(obj.f.^2 - obj.a.^2);
+            obj.F1 = pnt3D(0,0,0);
+            obj.F0 = pnt3D(0,0,-2*obj.f);
         end
         
         function z = getZ(obj,x,y)
@@ -104,9 +108,8 @@ classdef hyperboloid
         function [Cz,Ct] = getCurvature(obj,x,y)
             % Cz is the curvature in the plane containing the z-axis, and Ct
             % is in the orthogonal plane
-            v = obj.getV(x,y);
-            Cz = obj.a./obj.b.^2.*cos(obj.getU(v)).^3;
-            Ct = obj.a./obj.b.^2.*cos(obj.getU(v));
+            Cz = obj.a./obj.b.^2.*cos(obj.getU(x,y)).^3;
+            Ct = obj.a./obj.b.^2.*cos(obj.getU(x,y));
         end
         
     end
