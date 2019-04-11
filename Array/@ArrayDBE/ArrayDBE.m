@@ -35,7 +35,7 @@ classdef ArrayDBE
             freq = obj.arraySystem.freqSamp*(0:(Lfft/2))/Lfft;
         end
         
-        function P = scanBeam(obj,freqRF,th,ph,x,calVect)
+        function [P] = scanBeam(obj,freqRF,th,ph,x,calVect)
             % freqRF is the nominal RF frequency of the system
             % th and ph are the scanning directions in spherical
             % coordinates from the origin. one can be scalar.

@@ -7,7 +7,7 @@ clear all
 fRF = 1.57542e9;
 th_in = deg2rad(0);
 ph_in = deg2rad(0);
-Ps = -50; % in dBm
+Ps = -60; % in dBm
 phaseSig = deg2rad(0);
 
 Nant = 4;      % Number of elements
@@ -15,11 +15,14 @@ d_lam = 2;     % Element spacing in wavelengths
 d = d_lam*(physconst('lightspeed')/fRF);    % Element spacing in m
 x = (-(Nant-1)/2:(Nant-1)/2).*d;       % Uniform linear array along x-axis
 r = pnt3D(x,0,0);
-ampErrors = [1,1,1,1];
-phaseErrors_deg = [0,0,0,0];
+% ampErrors = [1,1,1,1];
+% phaseErrors_deg = [0,0,0,0];
+ampErrors = ones(1,Nant);
+phaseErrors_deg = zeros(1,Nant);
+phaseErrors_deg([1,2,3,4]) = [0,0,0,30]*2;
 channelPhasors = ampErrors.*exp(1i.*deg2rad(phaseErrors_deg));
 
-Pn = -110; % in dBm
+Pn = -70; % in dBm
 LNAGain = 20;
 IFGain = 60;
 fIF = 4.096e6;
@@ -54,10 +57,39 @@ arraySys = ArraySystem(r,channelPhasors,Pn,LNAGain,IFGain,fLO,fSamp,Nt,Nbits);
 arraySys.plotPortSignal(S);
 x = arraySys.getPortSignal(S);
 
-arrayDBE = ArrayDBE(arraySys);
-figure
-arrayDBE.plotPortPSD(x,1,4)
+%% Plot signal phases
+% figure
+% plot(t*1e6,phase(x(1,:))), grid on, hold on
+% plot(t*1e6,phase(x(2,:)))
+% plot(t*1e6,phase(x(3,:)))
+% plot(t*1e6,phase(x(4,:)))
+% xlabel('Time (\mu s)')
+% ylabel('Phase (deg)')
 
+% % Extract the phase from the received signals
+% r = arraySys.elements.antPos.pointMatrix;
+% 
+% Pmean = rad2deg(mean(angle(x),2));
+% figure
+% plot(Pmean), grid on
+% 
+% figure
+% plot(real(x(1,:)),imag(x(1,:)),'*'), grid on
+y = zeros(Nant-1,length(t));
+for ii = 1:Nant-1
+    y(ii,:) = x(ii+1,:)./x(ii,:);
+end
+ym = mean(rad2deg(angle(y)),2);
+err = sum(abs(ym))
+figure
+plot(ym,'o'), grid on
+
+%%
+% 
+arrayDBE = ArrayDBE(arraySys);
+% figure
+% arrayDBE.plotPortPSD(x,1,4)
+% 
 % Test the scanning
 Nscan = 501;
 th_scan_deg = linspace(-60,60,Nscan);
