@@ -19,7 +19,7 @@ classdef SWE < FarFieldExpansion
         MMAX(1,1) double {mustBeReal, mustBeFinite}
         NMAX(1,1) double {mustBeReal, mustBeFinite}
         freq(1,:) {mustBeReal, mustBeFinite, mustBePositive}
-    end    
+    end
     
     properties (Constant = true, Hidden = true)
         c0 = physconst('Lightspeed');
@@ -30,7 +30,7 @@ classdef SWE < FarFieldExpansion
     
     methods
         
-        function obj = SWE(ang,modes,modestype,freq)
+        function obj = SWE(ang,modes,modestype,freq,iBasis)
             
             %function obj = SWE(ang,modes,modestype,freq)
             %Constructor method for the SWE object.
@@ -45,18 +45,10 @@ classdef SWE < FarFieldExpansion
             %--modestype: Mode type identifier. Can be 'r0' (minimum
             %sphere), 'MNmax' (maximum azimuthal/polar modenumbers) or
             %'list' (j-index list).
-            %freq: scalar frequency (in Hz) at which SWE basis should be
-            %obtained. Note that SWE objects and their bases are defined at a single
-            %frequency only, although they may be used to
-            %decompose/reconstruct target far-fields defined over multiple
-            %frequencies and frequencies different from the SWE object's frequency.
-            %The notion of 'frequency' only relates to the wavenumber value
-            %required for parts of the Q-mode calculations (see
-            %FsmnFast.m). Users who wish to have basis function sets that
-            %vary with frequency (e.g. larger sets of modes as frequency
-            %increases for an electrically large antenna) should define one
-            %SWE object per frequency that the target far-fields are
-            %defined at.
+            %freq: scalar frequency (in Hz) at which minimum sphere should
+            %be calculated - does not need to be provided if not using r0
+            %to determine maximum modes
+            
             
             if isa(ang,'FarField')
                 if all(size(ang)) == 1
@@ -72,8 +64,8 @@ classdef SWE < FarFieldExpansion
                 r = inf.*ones(size(ang{1}.th));
                 th = ang{1}.th;
                 ph = ang{1}.ph;
-                if nargin < 4 %Default to highest frequency in FFobj if frequency is not explicitly specified
-                    freq = ang{1}.freq(end);
+                if nargin < 4 %Default to frequency range in FFobj if frequency is not explicitly specified
+                    freq = ang{1}.freqHz(end);
                 end
             else
                 Nang = size(ang,1);
@@ -81,10 +73,9 @@ classdef SWE < FarFieldExpansion
                 th = ang(:,2);
                 ph = ang(:,3);
                 if nargin < 4
-                    disp('No frequency specified - defaulting to 1 GHz')
-                    freq = 1e9;
+                    disp('No frequency specified - defaulting to 1 Hz')
+                    freq = 1;
                 end
-                coeffs = [];
             end
             
             %handle maximum numbers of modes
@@ -125,7 +116,7 @@ classdef SWE < FarFieldExpansion
                         Fth(:,1) = reshape(Fsmpn(scurr,mcurr,ncurr,:,2),Nang,1);
                         Fph(:,1) = reshape(Fsmpn(scurr,mcurr,ncurr,:,3),Nang,1);
                     end
-                    basis{jcurr} = FarField(ph,th,Fth,Fph,Fr,freq);
+                    basis{jcurr} = FarField(ph,th,Fth,Fph,Fr,freq.');
                 end
             end
             
@@ -135,21 +126,23 @@ classdef SWE < FarFieldExpansion
             obj.r0 = r0;
             obj.basis = basis;
             obj.nBasis = length(basis);
-            obj.freq = freq;
             
-            %If 'ang' is a FarField or cell of FarFields, perform SWE
-            %expansion on each field and get the corresponding
+            if nargin < 5
+                iBasis = 1:obj.nBasis;
+            end
+            
+            %If 'ang' is a cell of FarFields, perform SWE
+            %on each field and get the corresponding
             %Q-coefficients
             if iscell(ang)
-                for xx = 1:length(ang)
-                    %NB: P is currently not assigned to a property of the class, but it easily can be
-                    [Qj{xx},P{xx}] = SWE.farField2Coeffs(obj,ang{xx});
-                end
+                [Qj,P] = SWE.farField2Coeffs(obj,ang,iBasis);
+                obj.freq = ang{1}.freqHz;
             else
                 Qj = [];
+                obj.freq = [];
             end
             obj.coeffs = Qj;
-            obj.nCoeffs = size(Qj);
+            obj.nCoeffs = size(Qj{1},1);
             
             
             %Validate properties inherited from abstract class (can't be validated inline like other properties...)
@@ -184,13 +177,6 @@ classdef SWE < FarFieldExpansion
                 FFobj = FFcell;
             end
             
-            %Get this SWE object's basis functions
-            if nargin < 3
-                currBasis = SWEobj.basis;
-            else
-                currBasis = SWEobj.basis{iBasis};
-            end
-            
             for xx = 1:length(FFobj)
                 
                 %extract farfield vectors from FFobj, build farfield struct for FF2SWE function
@@ -211,7 +197,7 @@ classdef SWE < FarFieldExpansion
                 for jj = 1:SWEobj.nBasis
                     smn = j2smn(jj);
                     [scurr mcurr ncurr] = deal(smn(1),smn(2),smn(3));
-                    if abs(mcurr) <= abs(SWEobj.MMAX) && abs(mcurr) <= ncurr && ncurr <= SWEobj.NMAX
+                    if abs(mcurr) <= abs(SWEobj.MMAX) && abs(mcurr) <= ncurr && ncurr <= SWEobj.NMAX && any(jj == iBasis)
                         if mcurr == 0
                             Fsm0n(scurr,1,ncurr,:,1) = SWEobj.basis{jj}.E3;
                             Fsm0n(scurr,1,ncurr,:,2) = SWEobj.basis{jj}.E1;
@@ -231,7 +217,9 @@ classdef SWE < FarFieldExpansion
                 Fin = struct('Fsm0n',Fsm0n,'Fsmmn',Fsmmn,'Fsmpn',Fsmpn);
                 Fincell{1} = Fin;
                 %perform SWE on farfield vectors, get Q-modes and basis
-                [~,Qjout{xx},Pout{xx},~] = FF2SWE(FFstr,SWEobj.NMAX,SWEobj.MMAX,[],0,Fincell);
+                [~,Qjcurr,Pcurr,~] = FF2SWE(FFstr,SWEobj.NMAX,SWEobj.MMAX,[],0,Fincell);
+                Qjout{xx} = [Qjcurr(:).Q];
+                Pout{xx} = [Pcurr(:).P];
             end
             
         end

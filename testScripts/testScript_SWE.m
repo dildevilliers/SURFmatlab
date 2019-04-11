@@ -21,7 +21,7 @@ phsec = ph(isec);
 swe3 = SWE([inf.*ones(size(thsec)) thsec phsec], [10 10], 'MNmax');
 
 % %Create SWE object with target FarField (multiple frequencies) and MMAX/NMAX numbers
-% swe4 = SWE(FF2,[6 4],'MNmax');
+ swe4 = SWE(FF2,[6 4],'MNmax');
 % %Create SWE object with target FarField (multiple frequencies) and MMAX/NMAX numbers
 % swe5 = SWE(FF2,[10 10],'MNmax');
 % %Create SWE object with target FarField (multiple frequencies), MMAX/NMAX numbers and an explicit frequency setting

@@ -126,7 +126,7 @@ end
 for xx = 1:NX
     for ff = 1:NF
         if isfield(opts,'fekor0') && opts.fekor0 == 1
-            N =  2*floor((k(ff)*r0(xx) + 3*((k(ff)*r0(xx))^(1/3)))/2); % EXPERIMENTAL - based on FEKO docs and patterns observed in .sph files from FEKO
+            N =  2*floor((k(ff)*r0(xx) + 3*((k(ff)*r0(xx))^(1/3)))/2); % based on FEKO docs and patterns observed in .sph files from FEKO
         else
             N = ceil(k(ff)*r0(xx) + max(3.6*(k(ff)*r0(xx)).^(1/3),10));
         end
@@ -195,8 +195,12 @@ for xx = 1:NX
         end
         
         % Solve for Q - NB: Qv is divided by sqrt(eta0) to produce Q-coefficients with same magnitude as those provided by FEKO/GRASP
-%         keyboard
-        Qv = (F\E)./sqrt(eta0);   % This is for all the valid modes (not for m > n modes which are included in the matrices from FsmnFast.m)
+        i_nonzero = find(any(F ~= 0));
+        i_zero = find(all(F == 0));
+        Qv = zeros(size(F,2),1);
+        F(:,i_zero) = [];
+        Qv_trunc = (F\E)./sqrt(eta0);   % This is for all the valid modes (not for m > n modes which are included in the matrices from FsmnFast.m)
+        Qv(i_nonzero) = Qv_trunc;
 
         
         % Expand and repack Q into the standard matrices used by SWEgetField.m
