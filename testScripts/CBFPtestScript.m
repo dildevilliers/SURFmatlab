@@ -50,25 +50,25 @@ FF1 = CBFP.expansion2FarField(CBFPobj1);
 % BASIS FUNCTION
 basis1 = CBFPobj1.basis(1,1);
 
-% 1D plot
-basis1.plotPrincipleCuts('dynamicRange_dB',40,'plotType','cartesian','output','Directivity');
+% % 1D plot
+% basis1.plot('dynamicRange_dB',40,'plotType','cartesian','output','Directivity','step',1);
 
-% 2D plot
-figure('Name','Basis Function 2D - E1')
-basis1.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',40);
-
+% % 2D plot
+% figure('Name','Basis Function 2D - E1')
+% basis1.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',40);
+% 
 % 3D plot
 figure('Name','Basis Function_1')
 basis1.plot;
-
-% RECONSTRUCTED FARFIELD
-% 1D plot
-FF1.plotPrincipleCuts('dynamicRange_dB',40,'plotType','cartesian','output','Directivity');
-
-% 2D plot
-figure('Name','FarField 2D - E1')
-FF1.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',40);
-
+% 
+% % RECONSTRUCTED FARFIELD
+% % 1D plot
+% FF1.plotPrincipleCuts('dynamicRange_dB',40,'plotType','cartesian','output','Directivity');
+% 
+% % 2D plot
+% figure('Name','FarField 2D - E1')
+% FF1.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',40);
+% 
 % 3D plot
 figure('Name','FarField')
 FF1.plot;
