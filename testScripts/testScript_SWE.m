@@ -5,10 +5,10 @@ thlims = [0 pi/2];
 phlims = [0 2*pi];
 
 %Create SWE object with target FarField and MMAX/NMAX numbers
-% swe1 = SWE(FF1,[4 6],'MNmax');
+swe1 = SWE(FF1,[4 6],'MNmax');
 
 %Create SWE object with target FarField and minimum sphere radius
-% swe2 = SWE(FF1,0.01,'r0');
+swe2 = SWE(FF1,0.01,'r0');
 
 %Create SWE object with set of angle vectors and MMAX/NMAX numbers
 th = FF1.y; %linspace(0,pi,37);

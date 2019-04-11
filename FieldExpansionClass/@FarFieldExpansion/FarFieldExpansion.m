@@ -1,10 +1,9 @@
 classdef (Abstract) FarFieldExpansion
-    properties(Abstract)
+    properties(Abstract, SetAccess = private)
         nBasis
         basis
         nCoeffs
         coeffs
-        nCoeffs
     end
     
     methods
@@ -18,19 +17,9 @@ classdef (Abstract) FarFieldExpansion
     end
     
     methods(Abstract, Static)
-        expansion2FarField
-        farField2Coefficients
+        coeffs2FarField
+        farField2Coeffs
         %getBasisPower
     end
-    
-%     methods
-%         function plotCoeffs(obj,coeffs)
-%             %Write me!
-%         end
-%         
-%         function interpolateCoeffs(obj,coeffs,absc,plotflag)
-%             %Write me!
-%         end
-%     end
         
 end

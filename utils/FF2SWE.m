@@ -195,7 +195,7 @@ for xx = 1:NX
         end
         
         % Solve for Q - NB: Qv is divided by sqrt(eta0) to produce Q-coefficients with same magnitude as those provided by FEKO/GRASP
-        keyboard
+%         keyboard
         Qv = (F\E)./sqrt(eta0);   % This is for all the valid modes (not for m > n modes which are included in the matrices from FsmnFast.m)
 
         

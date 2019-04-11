@@ -10,16 +10,16 @@ classdef SWE < FarFieldExpansion
     %far-field to a set of coefficients according to the object basis, and
     %vice-versa.
     
-    properties
-        MMAX(1,1) double {mustBeReal, mustBeFinite}
-        NMAX(1,1) double {mustBeReal, mustBeFinite}
-        r0(1,1) {mustBeReal}
-        freq(:,1) {mustBeReal, mustBeFinite, mustBePositive}
+    properties (SetAccess = private)
         nBasis
         basis
-        coeffs
         nCoeffs
-    end
+        coeffs
+        r0(1,1) {mustBeReal}
+        MMAX(1,1) double {mustBeReal, mustBeFinite}
+        NMAX(1,1) double {mustBeReal, mustBeFinite}
+        freq(1,:) {mustBeReal, mustBeFinite, mustBePositive}
+    end    
     
     properties (Constant = true, Hidden = true)
         c0 = physconst('Lightspeed');
@@ -143,7 +143,7 @@ classdef SWE < FarFieldExpansion
             if iscell(ang)
                 for xx = 1:length(ang)
                     %NB: P is currently not assigned to a property of the class, but it easily can be
-                    [Qj{xx},P{xx}] = SWE.farField2Expansion(obj,ang{xx});
+                    [Qj{xx},P{xx}] = SWE.farField2Coeffs(obj,ang{xx});
                 end
             else
                 Qj = [];
@@ -167,7 +167,7 @@ classdef SWE < FarFieldExpansion
     
     methods (Static)
         
-        function [Qjout,Pout] = farField2Expansion(SWEobj,FFobj,iBasis)
+        function [Qjout,Pout] = farField2Coeffs(SWEobj,FFobj,iBasis)
             
             %function [Qjout,Pout] = farField2Expansion(SWEobj,FFobj,iBasis)
             %SWE concrete implementation of expanding a target FarField
@@ -236,7 +236,7 @@ classdef SWE < FarFieldExpansion
             
         end
         
-        function FFobj = expansion2FarField(SWEobj,Qj,P,iBasis)
+        function FFobj = coeffs2FarField(SWEobj,Qj,P,iBasis)
             
             %function FFobj = expansion2FarField(SWEobj,Qj,P,iBasis)
             %SWE concrete implementation of reconstructing a far-field from
