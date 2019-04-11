@@ -48,7 +48,7 @@ classdef hyperboloid
             z = obj.a.*sqrt(1 + obj.getRho(x,y).^2./obj.b.^2) - obj.f;
         end
         
-        function rho = getRho(obj,x,y)
+        function rho = getRho(~,x,y)
             rho = hypot(x,y);
         end
         

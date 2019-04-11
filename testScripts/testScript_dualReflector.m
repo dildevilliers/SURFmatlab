@@ -1,9 +1,9 @@
 close all
 clear all
 
-exNumber = 0;
+exNumber = 3;
 
-th_ext = deg2rad(15);
+th_ext = deg2rad(10);
 symFact_ext = 1;
 
 switch exNumber

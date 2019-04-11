@@ -418,17 +418,19 @@ classdef dualReflector
             [surfPointsSR] = obj.SR.getPointCloud(N,'x0');
             plot(surfPointsPR.x,surfPointsPR.z,'k','linewidth',lineWidthRefl), hold on, grid on
             plot(surfPointsSR.x,surfPointsSR.z,'r','linewidth',lineWidthRefl)
-            F0 = obj.SR.surface.F0.changeBase(obj.SR.coor);
-            F1 = obj.SR.surface.F1.changeBase(obj.SR.coor);
+            % Plot the foci
+            globalCoor = coordinateSystem;
+            F0 = obj.SR.surface.F0.changeBase(globalCoor,obj.SR.coor);
+            F1 = obj.SR.surface.F1.changeBase(globalCoor,obj.SR.coor);
             plot(F0.x,F0.z,'ko')
             plot(F1.x,F1.z,'ko')
-            % Plot the original SR rim if an extension is present
+            % Overlay plot the original SR if an extension is present
             if obj.th_ext > 0
                 objNoExt = dualReflector(obj.Dm,obj.Lm,obj.th_e,obj.Ls,obj.th_0,obj.beta,obj.sigma,0,0);
                 [surfPointsSRNoExt] =  objNoExt.SR.getPointCloud(N,'x0');
                 plot(surfPointsSRNoExt.x,surfPointsSRNoExt.z,'k','linewidth',lineWidthRefl)
-                F0noExt = objNoExt.SR.surface.F0.changeBase(objNoExt.SR.coor);
-                F1noExt = objNoExt.SR.surface.F1.changeBase(objNoExt.SR.coor);
+                F0noExt = objNoExt.SR.surface.F0.changeBase(globalCoor,objNoExt.SR.coor);
+                F1noExt = objNoExt.SR.surface.F1.changeBase(globalCoor,objNoExt.SR.coor);
                 plot(F0noExt.x,F0noExt.z,'ro')
                 plot(F1noExt.x,F1noExt.z,'ro')
             end

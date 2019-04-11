@@ -58,6 +58,7 @@
 - [ ] Aperture efficiency calculator
 - [ ] Antenna temperature calculator
 - [ ] include a feed picture for plotting
+- [ ] include a detail level selector in the plotting of single/dualReflector classes. Level 1 only dish, 2 rays, 3 points, etc.
 - [ ] add numeric surface class (DdV)
 - [ ] add numeric rim class (DdV)
 - [ ] add offsetGregorianShaped class
@@ -70,7 +71,7 @@
 
 ## @reflector
 - [ ] Calculate actual area (William)
-- [ ] Write GRASP outputs
+- [ ] Write GRASP outputs (William)
 - [x] getMaskFunction
 - [x] add more functionality for point cloud grids (polar, thinned polar)
 - [x] basic ray tracing of a reflector system
@@ -82,8 +83,6 @@
 - [x] Make rotation as in GRASP possible
 
 ## @dualReflector
-- [ ] Bug: testScript_dualReflector, exNumber = 1; th_ext = 20 or 10 deg; symFact_ext = 1. Inner SR edge (Q1) wrong...
-- [ ] Bug: testScript_dualReflector, exNumber = 1|3; th_ext = 20; The DR.SR.surface.F1 point is not plotted correctly for Cassegrains
 - [x] SR extensions
 - [x] masking (both SR and PR masking)
 - [x] ray tracing
@@ -92,16 +91,8 @@
 - [x] constructor function for different symmetrical design options
 - [x] constructor function for different offset design options
 - [x] Re-implement the Gregorian case completely. Do as in legacy work with a rotated ellipsoid. Fixed legacy issues with different extended and non-extended OG systems 
-
-## @symmetricParaboloid
-- [ ] Remove and only keep the singleReflector class
-- [x] Ray tracing plot
-- [x] Masking of a FarField by a reflector system given the feed position and orientation
-- [x] build a FarField object of the mask
-- [x] calculate a path length structure
-- [x] Calculate projected area
-- [x] calculate the rho-th mapping
-- [x] sort out the 2D plotting
+- [x] Fixed Bug: testScript_dualReflector, exNumber = 1|3; th_ext = 20; The DR.SR.surface.F1 point is not plotted correctly for Cassegrains
+- [x] Fixed Bug: testScript_dualReflector, exNumber = 1; th_ext = 20 or 10 deg; symFact_ext = 1. Inner SR edge (Q1) wrong...
 
 ## @pnt3D
 - [x] plot line between 2 points
