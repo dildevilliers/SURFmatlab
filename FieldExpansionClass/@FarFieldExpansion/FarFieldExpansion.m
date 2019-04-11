@@ -3,14 +3,11 @@ classdef (Abstract) FarFieldExpansion
         nBasis
         basis
         coeffs
+        nCoeffs
     end
     
     methods
         function plotCoeffs(obj,coeffs)
-            %Write me!
-        end
-
-        function plotBasis(obj)
             %Write me!
         end
         

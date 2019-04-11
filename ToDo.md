@@ -65,8 +65,8 @@
 - [ ] Add mode-list option to constructor
 
 ##@CBFP
-- [ ] Constructor
-- [ ] farField2Expansion
+- [x] Constructor
+- [x] farField2Expansion
 - [ ] expansion2FarField
 
 # ReflectorGeometry

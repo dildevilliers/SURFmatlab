@@ -15,9 +15,10 @@ classdef SWE < FarFieldExpansion
         NMAX(1,1) double {mustBeReal, mustBeFinite}
         r0(1,1) {mustBeReal}
         freq(:,1) {mustBeReal, mustBeFinite, mustBePositive}
+        nBasis
+        basis
         coeffs
-        basis %j-indexed spherical Q-modes represented as FarField objects
-        nBasis %number of Q-modes in basis
+        nCoeffs
     end
     
     properties (Constant = true, Hidden = true)
@@ -148,6 +149,7 @@ classdef SWE < FarFieldExpansion
                 Qj = [];
             end
             obj.coeffs = Qj;
+            obj.nCoeffs = size(Qj);
             
             
             %Validate properties inherited from abstract class (can't be validated inline like other properties...)
@@ -177,6 +179,11 @@ classdef SWE < FarFieldExpansion
             %expansion - all basis functions not selected by their indices
             %are masked out (zero'd) in the output expansion.
             
+            if ~iscell(FFobj)
+                FFcell{1} = FFobj;
+                FFobj = FFcell;
+            end
+            
             %Get this SWE object's basis functions
             if nargin < 3
                 currBasis = SWEobj.basis;
@@ -184,44 +191,49 @@ classdef SWE < FarFieldExpansion
                 currBasis = SWEobj.basis{iBasis};
             end
             
-            %extract farfield vectors from FFobj, build farfield struct for FF2SWE function
-            [Eth, Eph, ~] = FFobj.getEspherical;
-            FFstr.Eth = Eth;
-            FFstr.Eph = Eph;
-            FFstr.th = FFobj.th;
-            FFstr.ph = FFobj.ph;
-            FFstr.Nth = length(unique(FFobj.th));
-            FFstr.Nph = length(unique(FFobj.ph));
-            FFstr.freq = FFobj.freq;
-            FFstr.Nf = FFobj.Nf;
-            
-            %Turn basis FarField objects into a useable F struct for FF2SWE
-            Fsm0n = zeros(2,1,SWEobj.NMAX,SWEobj.basis{1}.Nang,3);
-            Fsmmn = zeros(2,SWEobj.MMAX,SWEobj.NMAX,SWEobj.basis{1}.Nang,3);
-            Fsmpn = zeros(2,SWEobj.MMAX,SWEobj.NMAX,SWEobj.basis{1}.Nang,3);
-            for jj = 1:SWEobj.nBasis
-                smn = j2smn(jj);
-                [scurr mcurr ncurr] = deal(smn(1),smn(2),smn(3));
-                if abs(mcurr) <= abs(SWEobj.MMAX) && ncurr <= SWEobj.NMAX
-                    if mcurr == 0
-                        Fsm0n(scurr,1,ncurr,:,1) = SWEobj.basis{jj}.E3;
-                        Fsm0n(scurr,1,ncurr,:,2) = SWEobj.basis{jj}.E1;
-                        Fsm0n(scurr,1,ncurr,:,3) = SWEobj.basis{jj}.E2;
-                    elseif mcurr < 0
-                        Fsmmn(scurr,-mcurr,ncurr,:,1) = SWEobj.basis{jj}.E3;
-                        Fsmmn(scurr,-mcurr,ncurr,:,2) = SWEobj.basis{jj}.E1;
-                        Fsmmn(scurr,-mcurr,ncurr,:,3) = SWEobj.basis{jj}.E2;
+            for xx = 1:length(FFobj)
+                
+                %extract farfield vectors from FFobj, build farfield struct for FF2SWE function
+                [Eth, Eph, ~] = FFobj{xx}.getEspherical;
+                FFstr.Eth = Eth;
+                FFstr.Eph = Eph;
+                FFstr.th = FFobj{xx}.th;
+                FFstr.ph = FFobj{xx}.ph;
+                FFstr.Nth = length(unique(FFobj{xx}.th));
+                FFstr.Nph = length(unique(FFobj{xx}.ph));
+                FFstr.freq = FFobj{xx}.freq;
+                FFstr.Nf = FFobj{xx}.Nf;
+                
+                %Turn basis FarField objects into a useable F struct for FF2SWE
+                Fsm0n = zeros(2,1,SWEobj.NMAX,SWEobj.basis{1}.Nang,3);
+                Fsmmn = zeros(2,SWEobj.MMAX,SWEobj.NMAX,SWEobj.basis{1}.Nang,3);
+                Fsmpn = zeros(2,SWEobj.MMAX,SWEobj.NMAX,SWEobj.basis{1}.Nang,3);
+                for jj = 1:SWEobj.nBasis
+                    smn = j2smn(jj);
+                    [scurr mcurr ncurr] = deal(smn(1),smn(2),smn(3));
+                    if abs(mcurr) <= abs(SWEobj.MMAX) && abs(mcurr) <= ncurr && ncurr <= SWEobj.NMAX
+                        if mcurr == 0
+                            Fsm0n(scurr,1,ncurr,:,1) = SWEobj.basis{jj}.E3;
+                            Fsm0n(scurr,1,ncurr,:,2) = SWEobj.basis{jj}.E1;
+                            Fsm0n(scurr,1,ncurr,:,3) = SWEobj.basis{jj}.E2;
+                        elseif mcurr < 0
+                            Fsmmn(scurr,-mcurr,ncurr,:,1) = SWEobj.basis{jj}.E3;
+                            Fsmmn(scurr,-mcurr,ncurr,:,2) = SWEobj.basis{jj}.E1;
+                            Fsmmn(scurr,-mcurr,ncurr,:,3) = SWEobj.basis{jj}.E2;
+                        else
+                            Fsmpn(scurr,mcurr,ncurr,:,1) = SWEobj.basis{jj}.E3;
+                            Fsmpn(scurr,mcurr,ncurr,:,2) = SWEobj.basis{jj}.E1;
+                            Fsmpn(scurr,mcurr,ncurr,:,3) = SWEobj.basis{jj}.E2;
+                        end
                     else
-                        Fsmpn(scurr,mcurr,ncurr,:,1) = SWEobj.basis{jj}.E3;
-                        Fsmpn(scurr,mcurr,ncurr,:,2) = SWEobj.basis{jj}.E1;
-                        Fsmpn(scurr,mcurr,ncurr,:,3) = SWEobj.basis{jj}.E2;
                     end
                 end
+                Fin = struct('Fsm0n',Fsm0n,'Fsmmn',Fsmmn,'Fsmpn',Fsmpn);
+                Fincell{1} = Fin;
+                %perform SWE on farfield vectors, get Q-modes and basis
+                [~,Qjout{xx},Pout{xx},~] = FF2SWE(FFstr,SWEobj.NMAX,SWEobj.MMAX,[],0,Fincell);
             end
-            Fin = struct('Fsm0n',Fsm0n,'Fsmmn',Fsmmn,'Fsmpn',Fsmpn);
-            Fincell{1} = Fin;
-            %perform SWE on farfield vectors, get Q-modes and basis
-            [~,Qjout,Pout,~] = FF2SWE(FFstr,SWEobj.NMAX,SWEobj.MMAX,[],0,Fincell);
+            
         end
         
         function FFobj = expansion2FarField(SWEobj,Qj,P,iBasis)
@@ -272,7 +284,7 @@ classdef SWE < FarFieldExpansion
                     FFstr = SWE2FF(Qjin{xx},r,th,ph,F);
                     FFobj{xx} = FarField(FFstr.ph,FFstr.th,FFstr.Eth,FFstr.Eph,zeros(size(FFstr.Eth)),FFstr.freq);
                 else
-                    FFstr = SWE2FF(Qjin{xx},r,th,ph,F,[P.P]);
+                    FFstr = SWE2FF(Qjin{xx},r,th,ph,F,[P{xx}.P]);
                     FFobj{xx} = FarField(FFstr.ph,FFstr.th,FFstr.Eth,FFstr.Eph,zeros(size(FFstr.Eth)),FFstr.freq,FFstr.Prad);
                 end
             end
