@@ -98,38 +98,38 @@ classdef dualReflector
                 obj.type = ['Cassegrain'];
                 SRhandle = str2func('hyperboloid');
             end
-
+            
             % Build the geometry
             if obj.th_0 == 0 && obj.beta == 0
-                % Symmetrical case
+                % Symmetrical case - set Number 1 in Granet
                 obj.type = ['Symmetric ',obj.type];
-                obj.f = obj.Ls*(obj.sigma.*obj.Dm - 4.*obj.Lm.*tan(obj.th_e/2))./(2.*obj.sigma.*obj.Dm + 8.*obj.Ls.*tan(obj.th_e/2));   % (4)
-                obj.F = obj.Lm + 2.*obj.f;  % (5)
-                obj.a = obj.Ls - obj.f; % (6)
-                obj.Dsx = 4.*(obj.Ls - obj.f)./(1./sin(obj.th_e) + obj.sigma.*(16.*obj.F.^2 + obj.Dm.^2)./(8.*obj.F.*obj.Dm));   % (7)
+                obj.f = SDReq4(obj.Ls,obj.sigma,obj.Dm,obj.Lm,obj.th_e);
+                obj.F = SDReq5(obj.Lm,obj.f);
+                obj.a = SDReq6(obj.Ls,obj.f);
+                obj.Dsx = SDReq7(obj.Ls,obj.f,obj.th_e,obj.sigma,obj.F,obj.Dm);
                 obj.e = obj.f./obj.a;
                 obj.alpha = 0;
                 obj.th_U = -2.*atan(obj.Dm/(4.*obj.F));
-            else % Offset Case
+            else % Offset Case - option 8 in Granet
                 obj.type = ['Offset ',obj.type];
-                obj.e = (1 - obj.sigma*sqrt(tan(obj.beta/2)/tan((obj.beta - obj.th_0)/2)))./(1 + obj.sigma*sqrt(tan(obj.beta/2)/tan((obj.beta - obj.th_0)/2)));  % (5)
-                obj.alpha = 2*atan((obj.e+1)/(obj.e-1)*tan(obj.beta/2));   % (6)
-                obj.a = obj.Ls/(2 + (obj.e^2-1)/(obj.e*cos(obj.beta-obj.th_0) + 1));  % (22)
-                obj.f = obj.a*obj.e;    % (15)
-                obj.th_U = 2*atan((1+obj.e)/(1-obj.e)*tan((obj.alpha-obj.sigma*obj.th_e)/2)) + obj.beta;   % (3)
-                obj.F = obj.Dm/(4*(tan(-obj.th_U/2) - tan(-obj.th_0/2)));   % (26)
+                obj.e = ODReq5(obj.sigma,obj.beta,obj.th_0);
+                obj.alpha = ODReq6(obj.e,obj.beta);
+                obj.a = ODReq22(obj.Ls,obj.e,obj.beta,obj.th_0);    
+                obj.f = ODReq15(obj.a,obj.e);
+                obj.th_U = ODReq3(obj.e,obj.alpha,obj.sigma,obj.th_e,obj.beta);
+                obj.F = ODReq26(obj.Dm,obj.th_U,obj.th_0);
             end
-            obj.h = 2*obj.F*tan(-obj.th_0/2);   % (23)
-            obj.th_L = -2*atan((2*obj.h-obj.Dm)/(4*obj.F)); % (4)
-            obj.Dsx = -obj.sigma*obj.a*(((obj.e^2-1)*sin(obj.beta-obj.th_U))/(obj.e*cos(obj.beta-obj.th_U)+1) - ((obj.e^2-1)*sin(obj.beta-obj.th_L))/(obj.e*cos(obj.beta-obj.th_L)+1));    % (27)
-            obj.dSRPR = obj.h - obj.Dm/2 - obj.a*(obj.sigma-1)/2*(obj.e^2-1)*sin(obj.th_U)/(obj.e*cos(obj.beta-obj.th_U)+1) + obj.a*(obj.sigma+1)/2*(obj.e^2-1)*sin(obj.th_L)/(obj.e*cos(obj.beta-obj.th_L)+1); % (11)
-            obj.dFPR = obj.h - obj.Dm/2 + 2*obj.f*sin(obj.beta);   % (10)
-            obj.Lt = -obj.a*((obj.sigma + 1)/2)*(((obj.e^2-1)*cos(obj.th_L))/(obj.e*cos(obj.beta-obj.th_L) + 1)) + obj.a*((obj.sigma - 1)/2)*(((obj.e^2-1)*cos(obj.th_U))/(obj.e*cos(obj.beta-obj.th_U) + 1)) - (2*obj.h - obj.Dm)^2/(16*obj.F) + obj.F;  % (12)
-            obj.Ht = obj.h + obj.Dm/2 - obj.a*((obj.sigma - 1)/2)*(((obj.e^2-1)*sin(obj.th_L))/(obj.e*cos(obj.beta-obj.th_L) + 1)) + obj.a*((obj.sigma + 1)/2)*(((obj.e^2-1)*sin(obj.th_U))/(obj.e*cos(obj.beta-obj.th_U) + 1));  % (13)
+            obj.h = ODReq23(obj.F,obj.th_0);
+            obj.th_L = ODReq4(obj.h,obj.Dm,obj.F);
+            obj.Dsx = ODReq27(obj.a,obj.sigma,obj.e,obj.beta,obj.th_U,obj.th_L);
+            obj.dSRPR = ODReq11(obj.h,obj.Dm,obj.a,obj.sigma,obj.e,obj.th_U,obj.beta,obj.th_L);
+            obj.dFPR = ODReq10(obj.h,obj.Dm,obj.f,obj.beta);
+            obj.Lt = ODReq12(obj.a,obj.sigma,obj.e,obj.th_L,obj.beta,obj.th_U,obj.Dm,obj.F,obj.h);
+            obj.Ht = ODReq13(obj.h,obj.Dm,obj.a,obj.sigma,obj.e,obj.th_L,obj.beta,obj.th_U);
             if obj.th_0 == 0 && obj.beta == 0
                 obj.Ht = obj.Dm;    % Special case for symmetric - Ht gets new meaning
             end
-            obj.FoD = cot(obj.th_e/2)/4;
+            obj.FoD = th02fd(obj.th_e);
             obj.Feq = obj.FoD.*obj.Dm;
             
             % Feed coordinate system needed later and in global coordinates
@@ -150,10 +150,10 @@ classdef dualReflector
             obj.R1 = obj.R1.setZ(Rz);
             obj.R2 = obj.R2.setZ(Rz);
             
-            OP0 = obj.sigma*(2*obj.a-obj.Ls);   % (32)
-            OP1 = -obj.sigma*obj.a*(obj.e^2-1)/(obj.e*cos(obj.th_L - obj.beta) + 1); % (33)
-            OP2 = -obj.sigma*obj.a*(obj.e^2-1)/(obj.e*cos(obj.th_U - obj.beta) + 1); % (34)
-            
+            OP0 = ODReq32c(obj.a,obj.sigma,obj.Ls);
+            OP1 = ODReq33(obj.a,obj.sigma,obj.e,obj.beta,obj.th_L);
+            OP2 = ODReq34(obj.a,obj.sigma,obj.e,obj.beta,obj.th_U);
+
             obj.P0 = pnt3D(obj.sigma*OP0*sin(obj.th_0),0,obj.sigma*OP0*cos(obj.th_0));
             obj.P1 = pnt3D(obj.sigma*OP1*sin(obj.th_L),0,obj.sigma*OP1*cos(obj.th_L));
             obj.P2 = pnt3D(obj.sigma*OP2*sin(obj.th_U),0,obj.sigma*OP2*cos(obj.th_U));
@@ -181,6 +181,7 @@ classdef dualReflector
                     ph = deg2rad([180,0]);
                 end
                 rho_sr = obj.a*(obj.e^2 - 1)./(obj.e*(-sin(al_cone).*sin(th_cone).*cos(ph) + cos(al_cone).*cos(th_cone)) - 1);   % P117 Granet top right
+                % Granet p.116 top right
                 Primx = (cos(al_cone).*sin(th_cone).*cos(ph) + sin(al_cone).*cos(th_cone)).*rho_sr;
                 Primy = sin(th_cone).*sin(ph).*rho_sr;
                 Primz = (-sin(al_cone).*sin(th_cone).*cos(ph) + cos(al_cone).*cos(th_cone)).*rho_sr - 2.*obj.f;
@@ -201,14 +202,10 @@ classdef dualReflector
             end
             
             % Use the extension cone for this calculation
-            Cx = (distanceCart(obj.feedCoor.origin,obj.P1e)*sin(al_cone + obj.sigma.*th_cone) + distanceCart(obj.feedCoor.origin,obj.P2e).*sin(al_cone - obj.sigma.*th_cone))/2; % (38)
-            Cy = 0; % (38)
-            Cz = obj.a*sqrt(1 + Cx^2/(obj.f^2 - obj.a^2)) - obj.f; % (38)
-            obj.C_SR = pnt3D(Cx,Cy,Cz);     % In the Granet SR coordinate system
+            obj.C_SR = ODReq38length(distanceCart(obj.feedCoor.origin,obj.P1e),distanceCart(obj.feedCoor.origin,obj.P2e),obj.a,obj.sigma,th_cone,al_cone,obj.f);
             
-            ph = linspace(0,2*pi,1001);
-            obj.Dsy = max((2*obj.a*(obj.e^2-1)*sin(obj.th_e).*sin(ph))./(obj.e.*(-sin(obj.alpha).*sin(obj.th_e).*cos(ph) + cos(obj.alpha).*cos(obj.th_e)) - 1));   % (39)
-            Dsye = max((2*obj.a*(obj.e^2-1)*sin(th_cone).*sin(ph))./(obj.e.*(-sin(al_cone).*sin(th_cone).*cos(ph) + cos(al_cone).*cos(th_cone)) - 1));   % (39)
+            obj.Dsy = ODReq39(obj.a,obj.e,obj.th_e,obj.alpha);
+            Dsye = ODReq39(obj.a,obj.e,th_cone,al_cone);
 
             % Derived geometry
             obj.PR_chordX = distanceCart(obj.Q2,obj.Q1);
@@ -246,19 +243,6 @@ classdef dualReflector
                 obj.SR.rim = ellipticalRim([SRmidPoint.x,SRmidPoint.y],[SRchordXline.x,obj.SR_chordY]./2);
 
                 obj.SR.surface = SRhandle(2*obj.a,2*obj.f,pi/2 + (obj.beta - SRxPlane.th));
-
-%                 % Work with Jamnejad 1980 variable names for clarity - all
-%                 % trailing *J
-%                 alphaJ = th_cone;
-%                 betaJ = pi - al_cone;
-%                 % Eqn 3.8
-%                 gammaJ = atan((cos(betaJ) + obj.e*cos(alphaJ))/sin(betaJ));
-%                 
-%                 obj.SR.surface = SRhandle(2*obj.a,2*obj.f,pi/2 - gammaJ);
-%                 obj.SR.coor = SRcoor.rotGRASP([gammaJ + obj.beta + pi/2,0,pi]);
-%                 % Calculate the midpoint of the SR rim
-                
-                
             end
             
             obj.PR = reflector;
@@ -269,6 +253,70 @@ classdef dualReflector
             obj.apCoor = coordinateSystem(obj.R0);
         end
         
+        function Dish = getLegacyStruct(obj)
+            % returns a structure in the legacy format
+            Dish.sigma = obj.sigma;
+            Dish.FoD = obj.FoD;
+            Dish.bet = obj.beta;
+            Dish.th_0 = obj.th_0;
+            Dish.th_e = obj.th_e;
+            Dish.Dm = obj.Dm;
+            Dish.L_MR_SR = obj.dSRPR;
+            Dish.Feq = obj.Feq;
+            Dish.e = obj.e;
+            Dish.alp = obj.alpha;
+            if obj.th_U > pi
+                Dish.th_U = obj.th_U - 2*pi;
+            else
+                Dish.th_U = obj.th_U;
+            end
+            Dish.F = obj.F;
+            Dish.h = obj.h;
+            Dish.th_L = obj.th_L;
+            Dish.a = obj.a;
+            Dish.f = obj.f;
+            Dish.Ds_x = obj.Dsx;
+            Dish.Ls = obj.Ls;
+            Dish.Lm = obj.Lm;
+            Dish.d_sr_mr = obj.dSRPR;
+            Dish.d_f_mr = obj.dFPR;
+            Dish.Lt = obj.Lt;
+            Dish.Ht = obj.Ht;
+            Dish.F0 = obj.feedCoor.origin.pointMatrix;
+            Dish.Q0 = obj.Q0.pointMatrix;
+            Dish.Q1 = obj.Q1.pointMatrix;
+            Dish.Q2 = obj.Q2.pointMatrix;
+            Dish.R0 = obj.R0.pointMatrix;
+            Dish.R1 = obj.R1.pointMatrix;
+            Dish.R2 = obj.R2.pointMatrix;
+            Dish.P0 = obj.P0.pointMatrix;
+            Dish.P1 = obj.P1.pointMatrix;
+            Dish.P2 = obj.P2.pointMatrix;
+            Dish.P3 = obj.P2e.pointMatrix;   % Senseless if not Offset Gregorian
+            Dish.C_sr = obj.C_SR.pointMatrix;
+            Dish.Ds_y = obj.Dsy;
+            Dish.MRlength = obj.PR_chordX;
+            Dish.SRwidth = obj.SR_chordY;
+            Dish.SRlength = obj.SR_chordX;
+            boomVect = obj.Q1 - obj.P2e;
+            Dish.Boomlength = boomVect.r;   % Nonsense of not Offset Gregorian
+            Dish.MRcoor0 = obj.PR.coor.origin.pointMatrix;
+            Dish.rmx_hat = obj.PR.coor.x_axis;
+            Dish.rmy_hat = obj.PR.coor.y_axis;
+            Dish.SRcoor0 = obj.SR.coor.origin.pointMatrix;
+            Dish.rsx_hat = obj.SR.coor.x_axis;
+            Dish.rsy_hat = obj.SR.coor.y_axis;
+            Dish.Feedcoor0 = obj.feedCoor.origin.pointMatrix;
+            Dish.rfx_hat = obj.feedCoor.x_axis;
+            Dish.rfy_hat = obj.feedCoor.y_axis;
+            Dish.APcoor0 = obj.apCoor.origin.pointMatrix;
+            Dish.rax_hat = obj.apCoor.x_axis;
+            Dish.ray_hat = obj.apCoor.y_axis;
+            Dish.L_SR = norm(Dish.P1 - Dish.P2);
+            Dish.L_MR = norm(Dish.Q1 - Dish.Q2);
+            Dish.th_ext = obj.th_ext;
+        end
+
         function [rho,drho_dth] = getThRhoMapping(obj,th)
             % Returns the th->rho mapping and its derivative 
             rho = 2.*obj.Feq.*tan(th./2);
