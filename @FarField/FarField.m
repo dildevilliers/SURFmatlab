@@ -946,7 +946,8 @@ classdef FarField
         %% Interpolation methods
         [Z] = interpolateGrid(obj,output,xi,yi,varargin)
         
-        %% Shifts and rotations of the field
+        %% Phase centre/shifts/rotations of the field
+        [Z, Delta, delta0, eta_pd] = phaseCentreKildal(FF,pol,th_M)
 
         function obj = rotate(obj1,rotHandle,rotAng)
             % General rotation function for FarField objects
@@ -955,6 +956,12 @@ classdef FarField
             % rotAng is the associated angle in rad. Scalar for rotations
             % around an axis, and [3x1] for GRASP or Euler rotations
             
+            % THis will probably depent on the pattern type which one is
+            % best.  Only have spherical and Ludwig 3 implemented for now,
+            % so hard-coded.
+            baseCoorType = 'Ludwig3';
+            coorHandle = str2func(['coor2',baseCoorType]);
+
             % Test if the rotation function handle has the trailing 'sph'
             handleStr = func2str(rotHandle);
             if ~strcmp(handleStr(end-2:end),'sph')
@@ -964,7 +971,28 @@ classdef FarField
             % Transform to sensible grid and coordinate system for rotation
             FFsph = obj1.grid2PhTh;  % Always work in the PhTh coordinate system
             FFsph = FFsph.setXrange('sym'); % Always work in symmetrical xRange
-            FFsph = FFsph.coor2Ludwig3(false); % And work in Ludwig1 coordinates to get rid of pole discontinuities in the fields
+            FFsph = coorHandle(FFsph,false);
+            
+%             % Force all the th = 0|180 fields to be identical - fixes pole
+%             % interpolation problems
+%             tol = 10^(-obj1.nSigDig);
+%             i_0_0 = find(abs(FFsph.th) < tol & abs(FFsph.ph) < tol);
+%             i_180_0 = find(abs(FFsph.th - pi) < tol & abs(FFsph.ph) < tol);
+%             if ~isempty(i_0_0)
+%                 E1_0_0 = obj1.E1(i_0_0(1),:);
+%                 E2_0_0 = obj1.E2(i_0_0(1),:);
+%                 i_0 = find(abs(FFsph.th - 0)<tol);
+%                 FFsph.E1(i_0,:) = repmat(E1_0_0,length(i_0),1);
+%                 FFsph.E2(i_0,:) = repmat(E2_0_0,length(i_0),1);
+%             end
+%             if ~isempty(i_180_0)
+%                 E1_180_0 = obj1.E1(i_180_0(1),:);
+%                 E2_180_0 = obj1.E2(i_180_0(1),:);
+%                 i_180 = find(abs(FFsph.th - pi)<tol);
+%                 FFsph.E1(i_180,:) = repmat(E1_180_0,length(i_180),1);
+%                 FFsph.E2(i_180,:) = repmat(E2_180_0,length(i_180),1);
+%             end
+
             % Get the grid step sizes from the original
             stepx = (max(FFsph.x) - min(FFsph.x))./(FFsph.Nx-1);
             stepy = (max(FFsph.y) - min(FFsph.y))./(FFsph.Ny-1);
@@ -973,7 +1001,7 @@ classdef FarField
             xmax = max(FFsph.x);
             ymin = min(FFsph.y);
             ymax = max(FFsph.y);
-            % Perform the rotation
+            % Perform the rotation of the grid
             phIn = FFsph.x.';
             thIn = FFsph.y.';
             sphAngIn = [phIn;thIn];
@@ -982,6 +1010,48 @@ classdef FarField
             thOut = sphAngRot(2,:).';
             FFsph.x = phOut;
             FFsph.y = thOut;
+
+            % Perform the rotation of the field vectors
+            % Coordinate systems
+            C0 = coordinateSystem;
+            rotHandleStr = func2str(rotHandle);
+            rotHandleCoor = str2func(rotHandleStr(1:end-3));
+            Crot = rotHandleCoor(C0,rotAng);
+            
+            % Vector origin points before rotation
+            [OIx,OIy,OIz] = PhTh2DirCos(phIn,thIn);
+            origin_In = pnt3D(OIx(:).',OIy(:).',OIz(:).');
+            origin_out = origin_In.changeBase(C0,Crot);
+
+            % local unit vector directions before and after rotation
+            switch baseCoorType
+                case 'spherical'
+                    [xHatIn,yHatIn,~] = unitVectorsSpherical(thIn,phIn);
+                    [xHatOut,yHatOut,~] = unitVectorsSpherical(thOut,phOut);
+                    [E1sign,E2sign] = deal(1,1);
+                case 'Ludwig3'
+                    [xHatIn,yHatIn] = unitVectorsDirCos(thIn,phIn);
+                    [xHatOut,yHatOut] = unitVectorsDirCos(thOut,phOut);
+                    [E1sign,E2sign] = deal(-1,-1);
+            end
+            % Vector tip points before rotation
+            xTipIn = origin_In + xHatIn;
+            yTipIn = origin_In + yHatIn;
+            % Rotate all the points
+            xTipOut = xTipIn.changeBase(C0,Crot);
+            yTipOut = yTipIn.changeBase(C0,Crot);
+            xOut = xTipOut - origin_out;
+            yOut = yTipOut - origin_out;
+            % Project onto the local unit vectors
+            xx = dot(xOut.pointMatrix,xHatOut.pointMatrix);
+            xy = dot(xOut.pointMatrix,yHatOut.pointMatrix);
+            yx = dot(yOut.pointMatrix,xHatOut.pointMatrix);
+            yy = dot(yOut.pointMatrix,yHatOut.pointMatrix);
+            E1rot = FFsph.E1.*repmat(xx(:),1,FFsph.Nf) + FFsph.E2.*repmat(yx(:),1,FFsph.Nf);
+            E2rot = FFsph.E1.*repmat(xy(:),1,FFsph.Nf) + FFsph.E2.*repmat(yy(:),1,FFsph.Nf);
+            FFsph.E1 = E1sign.*E1rot;
+            FFsph.E2 = E2sign.*E2rot;
+
             % Set the baseGrid of the rotated object.  This is required
             % since all transformations operate from the base grid
             FFsph = FFsph.sortGrid;
@@ -1353,9 +1423,10 @@ classdef FarField
             % samples as the input field, but only the principle ph cuts
             
             tol = 10^(-obj1.nSigDig+1);
-            assert(strcmp(obj1.gridTypeBase,'PhTh'),'getBOR1pattern only operates on PhTh grid patterns');
-            assert(abs(max(obj1.xBase) - min(obj1.xBase)) - 2*pi < tol,'The ph cuts must span 2*pi for BOR1 expansion');
+            assert(strcmp(obj1.gridType,'PhTh'),'getBOR1pattern only operates on PhTh grid patterns');
+            assert(abs(max(obj1.x) - min(obj1.x)) - 2*pi < tol,'The ph cuts must span 2*pi for BOR1 expansion');
             assert(obj1.isGridUniform,'A plaid, monotonic, uniform grid is expected for BOR1 expansion');
+            assert(strcmp(obj1.coorSys,'spherical'),'getBOR1pattern only operates on spherical coorType');
             
             Nph = obj1.Nx;
             Nth = obj1.Ny;
@@ -1419,10 +1490,7 @@ classdef FarField
             ph_vect = linspace(0,2*pi,Nph);
             th_vect = obj1.y(1:Nth);
             [PH,TH] = meshgrid(ph_vect,th_vect);
-            A1 = obj1.E1(Nth+1:end,:);
-            B1 = obj1.E1(1:Nth,:);
-            C1 = obj1.E2(1:Nth,:);
-            D1 = obj1.E2(Nth+1:end,:);
+            [A1,B1,C1,D1] = obj1.getBOR1comps;
             [Eth,Eph] = deal(zeros(Nth*Nph,obj1.Nf));
             for ff = 1:obj1.Nf
                 Gth = bsxfun(@times,sin(PH),A1(:,ff)) + bsxfun(@times,cos(PH),B1(:,ff));
@@ -1431,6 +1499,19 @@ classdef FarField
                 Eph(:,ff) = Gph(:);
             end
             obj = FarField(PH(:),TH(:),Eth,Eph,0.*Eth,obj1.freq,obj1.Prad,obj1.radEff,'spherical',obj1.polType,'PhTh',obj1.freqUnit,obj1.slant);
+        end
+        
+        function [A1,B1,C1,D1] = getBOR1comps(obj1)
+            assert(obj1.symmetryBOR1,'Input object not BOR1 symmetric')
+            assert(strcmp(obj1.gridType,'PhTh'),'BOR1 patterns must be specified on a PhTh grid')
+            assert(strcmp(obj1.coorSys,'spherical'),'BOR1 patterns must be specified in a Ludwig3 coordinate system')
+            assert(isequal(unique(obj1.x),[0;pi/2]),'Expect ph cuts only at 0 and pi/2')
+            assert(obj1.isGridUniform,'A plaid, monotonic, uniform grid is expected for BOR1 field expansion');
+            Nth = obj1.Ny;
+            A1 = obj1.E1(Nth+1:end,:);
+            B1 = obj1.E1(1:Nth,:);
+            C1 = obj1.E2(1:Nth,:);
+            D1 = obj1.E2(Nth+1:end,:);
         end
         
         %% Format and other testers
