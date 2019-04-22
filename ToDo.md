@@ -1,6 +1,7 @@
 # ToDo list for new code
 
 ## @Farfield
+- [ ] Move all parameters to setAccess private, and make setters as required
 - [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
@@ -69,6 +70,9 @@
 - [x] add offsetParaboloid class (William)
 - [x] add symmetrical Gregorian/Cassegrain class
 - [x] add offset Gregorian/Cassegrain class
+
+## coordinateSystem
+- [x] make x_axis and y_axis private SetAccess properties 
 
 ## @reflector
 - [ ] Calculate actual area (William)

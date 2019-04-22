@@ -566,7 +566,7 @@ classdef FarField
                     Eaz = (1./cosEl).*(cos(PH).*Eth - cos(TH).*sin(PH).*Eph);
                     Eel = (1./cosEl).*(cos(TH).*sin(PH).*Eth + cos(PH).*Eph);
                     E3 = zeros(size(Eaz));
-                    % Sort out singularities poles
+                    % Sort out singularities poles - ToDo
                     phPoles = deg2rad([-270,-90,90,270].');
                     poleMat = [ones(4,1).*deg2rad(90),phPoles]; % [th=90,ph]
                     [~,iPole] = ismember(poleMat,[obj.th,obj.ph],'rows');
@@ -590,7 +590,7 @@ classdef FarField
                     Eal = (1./cosAl).*(cos(TH).*cos(PH).*Eth - sin(PH).*Eph);
                     Eep = (1./cosAl).*(sin(PH).*Eth + cos(TH).*cos(PH).*Eph);
                     E3 = zeros(size(Eal));
-                    % Sort out singularities poles
+                    % Sort out singularities poles - ToDo
                     phPoles = deg2rad([-360,-180,0,180,360].');
                     poleMat = [ones(5,1).*deg2rad(90),phPoles]; % [th=90,ph]
                     [~,iPole] = ismember(poleMat,[obj.th,obj.ph],'rows');
@@ -1181,7 +1181,7 @@ classdef FarField
             obj.E1 = obj1.E1.*scaleFactor;
             obj.E2 = obj1.E2.*scaleFactor;
             obj.E3 = obj1.E3.*scaleFactor;
-            obj.Prad = obj1.Prad.*(scaleFactor.^2);
+            obj.Prad = obj1.Prad.*(abs(scaleFactor).^2);
         end
         
         function [normE] = norm(obj,Ntype)

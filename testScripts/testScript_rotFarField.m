@@ -2,7 +2,7 @@
 clear all
 close all
 
-plotDim = 2;    % Select 1, 2 or 3 for 2D or 3D plots
+plotDim = 3;    % Select 1, 2 or 3 for 2D or 3D plots
 grid2Dplot = 'PhTh'; % Can be DirCos, TrueView, PhTh, etc
 coorPlot = 'spherical';
 output = 'E2';

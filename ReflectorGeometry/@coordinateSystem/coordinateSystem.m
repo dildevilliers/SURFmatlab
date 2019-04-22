@@ -1,15 +1,15 @@
 classdef coordinateSystem
     properties
       origin(1,1) pnt3D = pnt3D(0,0,0) 
-      x_axis(3,1) double {mustBeReal, mustBeFinite} = [1;0;0] % x-axis direction
-      y_axis(3,1) double {mustBeReal, mustBeFinite} = [0;1;0] % y-axis direction
       base = [] % Can be another coordinate system object, or, if empty, is assumed to be the global coordinate system 
     end
    
     properties (SetAccess = private)
-       z_axis 
+        x_axis = [1;0;0] % x-axis direction
+        y_axis = [0;1;0] % y-axis direction
+        z_axis
     end
-   methods
+    methods
        function obj = coordinateSystem(origin,x_axis,y_axis,base)
            if nargin == 0
            elseif nargin == 1
