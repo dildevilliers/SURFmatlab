@@ -1572,6 +1572,9 @@ classdef FarField
             end
         end
         
+        %% File Output methods
+        writeGRASPcut(obj,pathName)
+        
     end
     
     methods (Static = true)
@@ -1579,6 +1582,7 @@ classdef FarField
         obj = readGRASPgrd(pathName);
         obj = readFEKOffe(pathName);
         obj = readCSTffs(pathName);
+        obj = readGRASPcut(pathName,nr_freq,nr_cuts);
         obj = farFieldFromPowerPattern(x,y,P,freq,Pdim,coorSys,polType,gridType,freqUnit,slant);
         
     end
@@ -1620,10 +1624,15 @@ classdef FarField
         function obj = setPhTh(obj)
             % This does not operate on the base grid, but instead the
             % current grid
-            handle2DirCos = str2func([obj.gridType,'2DirCos']);
-            [u,v,w] = handle2DirCos(obj.x,obj.y);
-            [obj.ph,obj.th] = DirCos2PhTh(u,v,w);
-            [obj.phBase, obj.thBase] = getPhTh(obj);
+            if strcmp(obj.gridType,'PhTh')
+                obj.ph = obj.x;
+                obj.th = obj.y;
+            else
+                handle2DirCos = str2func([obj.gridType,'2DirCos']);
+                [u,v,w] = handle2DirCos(obj.x,obj.y);
+                [obj.ph,obj.th] = DirCos2PhTh(u,v,w);
+                [obj.phBase, obj.thBase] = getPhTh(obj);
+            end
         end
         
         % Set the names of the 2 grid components

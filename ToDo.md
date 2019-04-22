@@ -2,12 +2,13 @@
 
 ## @Farfield
 - [ ] Move all parameters to setAccess private, and make setters as required
+- [ ] setFreq should not be private. Use to set both freq and freqHz, with varargin for backwards compatibility.
+- [ ] readMeasurements
 - [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
 - [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
 - [ ] readFITS (DdV)
-- [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
 - [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
 - [ ] CBFP expansion (Fahmi)
@@ -16,13 +17,11 @@
 - [ ] Typical pattern parameters calculator: SLL, XP, Beamwidth, etc.
 - [ ] writeCSTffs
 - [ ] writeFEKOfft
-- [ ] writeGRASPcut
 - [ ] Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
 - [ ] Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
 - [ ] Array pattern adder
 - [ ] plot on a spherical surface
 - [ ] Fix 3D plot for negative y-(th)axis cases
-- [ ] readMeasurements
 - [ ] Jones getter
 - [ ] Jones plotter (fix up)
 - [ ] Stokes getter
@@ -52,6 +51,8 @@
 - [x] Conjugate fields overload
 - [x] Shift field in 3D space - phase change
 - [x] Made a FarField.rms function to check RMS field values over angle/freq
+- [x] readGRASPcut (DdV)
+- [x] writeGRASPcut
 
 
 # ReflectorGeometry
