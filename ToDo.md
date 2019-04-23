@@ -10,7 +10,6 @@
 - [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
 - [ ] readFITS (DdV)
 - [ ] Overlap integral calculator (DdV)
-- [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
 - [ ] CBFP expansion (Fahmi)
 - [ ] SWE of a given field (Fahmi + Brandt)
 - [ ] Multiple frequency concat
@@ -54,6 +53,7 @@
 - [x] readGRASPcut (DdV)
 - [x] writeGRASPcut
 - [x] setFreq should not be private. Use to set both freq and freqHz, with varargin for backwards compatibility.
+- [x] Rename coorSys to coorType to avoid confusion with coordinateSystem class
 
 
 # ReflectorGeometry

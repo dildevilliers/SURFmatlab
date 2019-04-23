@@ -6,12 +6,12 @@ classdef FarField
     % all directional polarization types.
     
     properties
-        x(:,1) double {mustBeReal, mustBeFinite}
-        y(:,1) double {mustBeReal, mustBeFinite}
-        r(1,1) double {mustBeReal, mustBeFinite} = 1
-        E1(:,:) double %{mustBeFinite}
-        E2(:,:) double %{mustBeFinite}
-        E3(:,:) double %{mustBeFinite}
+%         x(:,1) double {mustBeReal, mustBeFinite}
+%         y(:,1) double {mustBeReal, mustBeFinite}
+%         r(1,1) double {mustBeReal, mustBeFinite} = 1
+%         E1(:,:) double %{mustBeFinite}
+%         E2(:,:) double %{mustBeFinite}
+%         E3(:,:) double %{mustBeFinite}
         Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
         coorType(1,:) char {mustBeMember(coorType,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
@@ -21,6 +21,12 @@ classdef FarField
     end
     
     properties (SetAccess = private)
+        x(:,1) double {mustBeReal, mustBeFinite}
+        y(:,1) double {mustBeReal, mustBeFinite}
+        r(1,1) double {mustBeReal, mustBeFinite} = 1
+        E1(:,:) double %{mustBeFinite}
+        E2(:,:) double %{mustBeFinite}
+        E3(:,:) double %{mustBeFinite}
         E1name  % ['Eth', 'Ex', 'Eaz', 'Eal', 'Eh', 'Elh', 'Exp'] - depends on coorType and polType
         E2name  % ['Eph', 'Ey', 'Eel', 'Eep', 'Ev', 'Erh', 'Eco'] - depends on coorType and polType
         xname
@@ -100,7 +106,6 @@ classdef FarField
                 taper_dB = -10;
                 freq = 1e9;
                 [PH,TH] = meshgrid(ph,th);
-%                 [TH,PH] = meshgrid(th,ph);
                 P = powerPattern(PH(:),TH(:),'gauss',th0,taper_dB,freq);
                 obj = FarField.farFieldFromPowerPattern(PH(:),TH(:),P,freq,'linearY');
             else
@@ -209,7 +214,6 @@ classdef FarField
                 obj.polType = polType;
                 obj.gridType = gridType;
                 obj.slant = slant;
-                obj.Nf = Nf;
                 obj.Nang = Nang;
                 obj.Nx = length(unique(x));
                 obj.Ny = length(unique(y));
@@ -217,8 +221,8 @@ classdef FarField
                 obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setEnames(obj);
                 obj = setXYnames(obj);
-                obj = setBase(obj);
                 obj = setPhTh(obj);
+                obj = setBase(obj);
                 obj = setRangeTypes(obj);
             end
         end
@@ -226,6 +230,7 @@ classdef FarField
         %% Setters
         function obj = setFreq(obj,freq,freqUnit)
             if nargin > 1
+                assert(numel(freq) == size(obj.E1,2),'Error, freq must be the same length as the number of columns in E1')
                 obj.freq = freq;
             end
             if nargin > 2
@@ -244,6 +249,7 @@ classdef FarField
                     freqMult = 1e12;
             end
             obj.freqHz = obj.freq*freqMult;
+            obj.Nf = numel(obj.freq);
         end
         
         %% Pattern getters
