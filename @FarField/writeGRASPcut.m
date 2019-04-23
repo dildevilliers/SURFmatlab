@@ -25,13 +25,13 @@ V_INI = rad2deg(th_vect(1));
 V_INC = rad2deg(thD);
 V_NUM = Nth;
 if strcmp(obj.polType,'linear')
-    if strcmp(obj.coorSys,'spherical')
+    if strcmp(obj.coorType,'spherical')
         ICOMP = 1;  % linear th ph polarization...
         E1real = real(obj.E1);
         E1imag = imag(obj.E1);
         E2real = real(obj.E2);
         E2imag = imag(obj.E2);
-    elseif strcmp(obj.coorSys,'Ludwig3')
+    elseif strcmp(obj.coorType,'Ludwig3')
         ICOMP = 3;  % linear Ludwig3 polarization...
         E1real = real(obj.E2);
         E1imag = imag(obj.E2);

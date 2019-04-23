@@ -6,12 +6,6 @@ classdef FarField
     % all directional polarization types.
     
     properties
-%         x(:,1) double {mustBeReal, mustBeFinite}
-%         y(:,1) double {mustBeReal, mustBeFinite}
-%         r(1,1) double {mustBeReal, mustBeFinite} = 1
-%         E1(:,:) double %{mustBeFinite}
-%         E2(:,:) double %{mustBeFinite}
-%         E3(:,:) double %{mustBeFinite}
         Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
         coorType(1,:) char {mustBeMember(coorType,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
@@ -34,12 +28,7 @@ classdef FarField
         ph
         th
         freq(1,:) double {mustBeReal, mustBeFinite} = 1
-        freqHz
         freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
-        Nf      % number of frequencies
-        Nx     % number of unique x angles
-        Ny     % number of unique y angles
-        Nang    % number of angle combinations [Nx x Ny]
         radEff_dB       % radiation efficiency in dB [1 x Nf]
         Directivity_dBi % directivity in dBi [1 x Nf]
         Gain_dB         % Gain in dB [1 x Nf]
@@ -49,6 +38,14 @@ classdef FarField
         symmetryYZ = 'none'   % Type of symmetry about the yz-plane (could be electric|none|magnetic)
         symmetryXY = 'none'   % Type of symmetry about the xy-plane (could be electric|none|magnetic)
         symmetryBOR1 = false % Is the pattern a BOR1 type pattern
+    end
+    
+    properties (Dependent = true)
+        Nf      % number of frequencies
+        Nx     % number of unique x angles
+        Ny     % number of unique y angles
+        Nang    % number of angle combinations [Nx x Ny]
+        freqHz
     end
     
     properties (SetAccess = private, Hidden = true)
@@ -102,7 +99,7 @@ classdef FarField
                 Nph_cut = 73;
                 th = linspace(0,pi,Nth_cut);
                 ph = linspace(0,2*pi,Nph_cut);
-                th0 = 45;
+                th0 = deg2rad(50);
                 taper_dB = -10;
                 freq = 1e9;
                 [PH,TH] = meshgrid(ph,th);
@@ -120,8 +117,6 @@ classdef FarField
                 [Nang_E3, Nf_E3] = size(E3);
                 if ~isequal(Nang_x,Nang_y,Nang_E1,Nang_E2,Nang_E3)
                     error('All inputs must have the same number of rows');
-                else
-                    Nang = Nang_x;
                 end
                 if ~isequal(Nf_E1,Nf_E2,Nf_E3)
                     error('E1, E2, and E3 must have the same number of columns');
@@ -214,9 +209,6 @@ classdef FarField
                 obj.polType = polType;
                 obj.gridType = gridType;
                 obj.slant = slant;
-                obj.Nang = Nang;
-                obj.Nx = length(unique(x));
-                obj.Ny = length(unique(y));
                 obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
                 obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setEnames(obj);
@@ -228,14 +220,23 @@ classdef FarField
         end
         
         %% Setters
-        function obj = setFreq(obj,freq,freqUnit)
-            if nargin > 1
-                assert(numel(freq) == size(obj.E1,2),'Error, freq must be the same length as the number of columns in E1')
-                obj.freq = freq;
-            end
-            if nargin > 2
-                obj.freqUnit = freqUnit;
-            end
+        function Nf = get.Nf(obj)
+            Nf = numel(obj.freq);
+        end
+        
+        function Nx = get.Nx(obj)
+            Nx = length(unique(obj.x));
+        end
+        
+        function Ny = get.Ny(obj)
+            Ny = length(unique(obj.y));
+        end
+        
+        function Nang = get.Nang(obj)
+            Nang = size(obj.x,1);
+        end
+        
+        function freqHz = get.freqHz(obj)
             switch obj.freqUnit
                 case 'Hz'
                     freqMult = 1;
@@ -248,8 +249,17 @@ classdef FarField
                 case 'THz'
                     freqMult = 1e12;
             end
-            obj.freqHz = obj.freq*freqMult;
-            obj.Nf = numel(obj.freq);
+            freqHz = obj.freq*freqMult;
+        end
+        
+        function obj = setFreq(obj,freq,freqUnit)
+            if nargin > 1
+                assert(numel(freq) == size(obj.E1,2),'Error, freq must be the same length as the number of columns in E1')
+                obj.freq = freq;
+            end
+            if nargin > 2
+                obj.freqUnit = freqUnit;
+            end
         end
         
         %% Pattern getters
@@ -462,9 +472,6 @@ classdef FarField
             [~,iSort] = sortrows([obj.x,obj.y],[1 2]);
             obj.x = obj.x(iSort);
             obj.y = obj.y(iSort);
-            obj.Nx = numel(unique(obj.x));
-            obj.Ny = numel(unique(obj.y));
-            obj.Nang = length(obj.x);
             obj.E1 = obj.E1(iSort,:);
             obj.E2 = obj.E2(iSort,:);
             obj.E3 = obj.E3(iSort,:);
@@ -804,8 +811,6 @@ classdef FarField
             % Hard reset to the base format
             obj.x = obj.xBase;
             obj.y = obj.yBase;
-            obj.Nx = numel(unique(obj.x));
-            obj.Ny = numel(unique(obj.y));
             obj.gridType = obj.gridTypeBase;
             obj.E1 = obj.E1Base;
             obj.E2 = obj.E2Base;
