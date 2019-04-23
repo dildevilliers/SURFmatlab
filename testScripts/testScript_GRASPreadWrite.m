@@ -22,9 +22,10 @@ pathName = [path,Name];
 Nf = 1;
 Ncuts = 73;
 FFin = FarField.readGRASPcut(pathName,Nf,Ncuts);
-FFin.freq = FF.freq;
-FFin.freqUnit = FF.freqUnit;
-FFin = FFin.setFreq;
+FFin = FFin.setFreq(FF.freq,FF.freqUnit);
 FFin.plot('plotType','cartesian','step',1,'output','E1','cutValue',deg2rad(phValDeg),'lineStyle','--','Color','r')
 FFin.plot('plotType','cartesian','step',1,'output','E2','cutValue',deg2rad(phValDeg),'lineStyle','--','Color','r')
+
+figure
+FFin.plot('plotType','cartesian','step',1,'output','Directivity','cutValue',deg2rad(phValDeg),'lineStyle','--','Color','r')
 % Compare

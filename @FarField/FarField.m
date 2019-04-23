@@ -12,13 +12,11 @@ classdef FarField
         E1(:,:) double %{mustBeFinite}
         E2(:,:) double %{mustBeFinite}
         E3(:,:) double %{mustBeFinite}
-        freq(1,:) double {mustBeReal, mustBeFinite} = 1
         Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
         coorSys(1,:) char {mustBeMember(coorSys,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
         polType(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
         gridType(1,:) char {mustBeMember(gridType,{'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin'})} = 'PhTh'
-        freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
         slant(1,1) double {mustBeReal, mustBeFinite} = pi/4   % slant angle in radians - measured between Exp and E1
     end
     
@@ -29,7 +27,9 @@ classdef FarField
         yname
         ph
         th
+        freq(1,:) double {mustBeReal, mustBeFinite} = 1
         freqHz
+        freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
         Nf      % number of frequencies
         Nx     % number of unique x angles
         Ny     % number of unique y angles
@@ -201,15 +201,13 @@ classdef FarField
                 obj.E1 = E1;
                 obj.E2 = E2;
                 obj.E3 = E3;
-                obj.freq = freq;
-                obj = setFreq(obj);
+                obj = setFreq(obj,freq,freqUnit);
                 obj.Prad = Prad;
                 obj.radEff = radEff;
                 obj.radEff_dB = dB10(radEff);
                 obj.coorSys = coorSys;
                 obj.polType = polType;
                 obj.gridType = gridType;
-                obj.freqUnit = freqUnit;
                 obj.slant = slant;
                 obj.Nf = Nf;
                 obj.Nang = Nang;
@@ -225,6 +223,28 @@ classdef FarField
             end
         end
         
+        %% Setters
+        function obj = setFreq(obj,freq,freqUnit)
+            if nargin > 1
+                obj.freq = freq;
+            end
+            if nargin > 2
+                obj.freqUnit = freqUnit;
+            end
+            switch obj.freqUnit
+                case 'Hz'
+                    freqMult = 1;
+                case 'kHz'
+                    freqMult = 1e3;
+                case 'MHz'
+                    freqMult = 1e6;
+                case 'GHz'
+                    freqMult = 1e9;
+                case 'THz'
+                    freqMult = 1e12;
+            end
+            obj.freqHz = obj.freq*freqMult;
+        end
         
         %% Pattern getters
         function FFpattern = getFarFieldStruct(obj)
@@ -1603,22 +1623,6 @@ classdef FarField
             obj.E3Base = obj.E3;
             obj.coorSysBase = obj.coorSys;
             obj.polTypeBase = obj.polType;
-        end
-        
-        function obj = setFreq(obj)
-            switch obj.freqUnit
-                case 'Hz'
-                    freqMult = 1;
-                case 'kHz'
-                    freqMult = 1e3;
-                case 'MHz'
-                    freqMult = 1e6;
-                case 'GHz'
-                    freqMult = 1e9;
-                case 'THz'
-                    freqMult = 1e12;
-            end
-            obj.freqHz = obj.freq*freqMult;
         end
         
         function obj = setPhTh(obj)

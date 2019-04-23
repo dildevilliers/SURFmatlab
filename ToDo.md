@@ -2,8 +2,8 @@
 
 ## @Farfield
 - [ ] Move all parameters to setAccess private, and make setters as required
-- [ ] setFreq should not be private. Use to set both freq and freqHz, with varargin for backwards compatibility.
 - [ ] readMeasurements
+- [ ] Check readGRASPgrd. Not sure of E1 and E2 order for all cases. Preallocate the matrices for speed like in readGRASPcut
 - [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
@@ -53,12 +53,12 @@
 - [x] Made a FarField.rms function to check RMS field values over angle/freq
 - [x] readGRASPcut (DdV)
 - [x] writeGRASPcut
+- [x] setFreq should not be private. Use to set both freq and freqHz, with varargin for backwards compatibility.
 
 
 # ReflectorGeometry
 ## General (class not assigned yet)
 - [ ] Change all class names to be Capital letter first 
-- [ ] Aperture efficiency calculator
 - [ ] Antenna temperature calculator
 - [ ] include a feed picture for plotting
 - [ ] include a detail level selector in the plotting of single/dualReflector classes. Level 1 only dish, 2 rays, 3 points, etc.
@@ -71,6 +71,7 @@
 - [x] add offsetParaboloid class (William)
 - [x] add symmetrical Gregorian/Cassegrain class
 - [x] add offset Gregorian/Cassegrain class
+- [x] Aperture efficiency calculator
 
 ## coordinateSystem
 - [x] make x_axis and y_axis private SetAccess properties 
