@@ -72,15 +72,8 @@ if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.grid
     end
     % Sort
     obj = obj.sortGrid;
-    obj = obj.setPhTh;
 else
     warning(['Cant shift a polar grid like ', obj.gridType, ' on a cartesian grid']);
-end
-% Update the object descriptive parameters
-if ~obj.symmetryXZ
-    obj = setRangeTypes(obj); % This does not work for half space defined fields
-else
-    obj.xRangeType = type;
 end
 
 end

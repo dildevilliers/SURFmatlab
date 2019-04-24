@@ -6,34 +6,23 @@ classdef FarField
     % all directional polarization types.
     
     properties
+        r(1,1) double {mustBeReal, mustBeFinite} = 1    % Radius very E-field is evaluated in (m)
         Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
-        coorType(1,:) char {mustBeMember(coorType,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
-        polType(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
-        gridType(1,:) char {mustBeMember(gridType,{'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin'})} = 'PhTh'
         slant(1,1) double {mustBeReal, mustBeFinite} = pi/4   % slant angle in radians - measured between Exp and E1
+        freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
     end
     
     properties (SetAccess = private)
         x(:,1) double {mustBeReal, mustBeFinite}
         y(:,1) double {mustBeReal, mustBeFinite}
-        r(1,1) double {mustBeReal, mustBeFinite} = 1
         E1(:,:) double %{mustBeFinite}
         E2(:,:) double %{mustBeFinite}
         E3(:,:) double %{mustBeFinite}
-        E1name  % ['Eth', 'Ex', 'Eaz', 'Eal', 'Eh', 'Elh', 'Exp'] - depends on coorType and polType
-        E2name  % ['Eph', 'Ey', 'Eel', 'Eep', 'Ev', 'Erh', 'Eco'] - depends on coorType and polType
-        xname
-        yname
-        ph
-        th
         freq(1,:) double {mustBeReal, mustBeFinite} = 1
-        freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
-        radEff_dB       % radiation efficiency in dB [1 x Nf]
-        Directivity_dBi % directivity in dBi [1 x Nf]
-        Gain_dB         % Gain in dB [1 x Nf]
-        xRangeType     % 'sym' or 'pos'
-        yRangeType     % '180' or '360'
+        coorType(1,:) char {mustBeMember(coorType,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
+        polType(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
+        gridType(1,:) char {mustBeMember(gridType,{'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin'})} = 'PhTh'
         symmetryXZ = 'none'   % Type of symmetry about the xz-plane (could be electric|none|magnetic)
         symmetryYZ = 'none'   % Type of symmetry about the yz-plane (could be electric|none|magnetic)
         symmetryXY = 'none'   % Type of symmetry about the xy-plane (could be electric|none|magnetic)
@@ -41,11 +30,22 @@ classdef FarField
     end
     
     properties (Dependent = true)
+        ph
+        th
+        xname
+        yname
+        E1name  % ['Eth', 'Ex', 'Eaz', 'Eal', 'Eh', 'Elh', 'Exp'] - depends on coorType and polType
+        E2name  % ['Eph', 'Ey', 'Eel', 'Eep', 'Ev', 'Erh', 'Eco'] - depends on coorType and polType
         Nf      % number of frequencies
         Nx     % number of unique x angles
         Ny     % number of unique y angles
         Nang    % number of angle combinations [Nx x Ny]
         freqHz
+        Directivity_dBi % directivity in dBi [1 x Nf]
+        Gain_dB         % Gain in dB [1 x Nf]
+        radEff_dB
+        xRangeType     % 'sym' or 'pos'
+        yRangeType     % '180' or '360'
     end
     
     properties (SetAccess = private, Hidden = true)
@@ -204,22 +204,23 @@ classdef FarField
                 obj = setFreq(obj,freq,freqUnit);
                 obj.Prad = Prad;
                 obj.radEff = radEff;
-                obj.radEff_dB = dB10(radEff);
                 obj.coorType = coorType;
                 obj.polType = polType;
                 obj.gridType = gridType;
                 obj.slant = slant;
-                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
-                obj.Gain_dB = dB10(max(obj.getGain()));
-                obj = setEnames(obj);
-                obj = setXYnames(obj);
-                obj = setPhTh(obj);
                 obj = setBase(obj);
-                obj = setRangeTypes(obj);
             end
         end
         
         %% Setters
+        function ph = get.ph(obj)
+           [ph,~] = getPhThCurrent(obj);
+        end
+        
+        function th = get.th(obj)
+           [~,th] = getPhThCurrent(obj);
+        end
+        
         function Nf = get.Nf(obj)
             Nf = numel(obj.freq);
         end
@@ -252,6 +253,42 @@ classdef FarField
             freqHz = obj.freq*freqMult;
         end
         
+        function Directivity_dBi = get.Directivity_dBi(obj)
+           Directivity_dBi = dB10(max(obj.getDirectivity())); 
+        end
+        
+        function Gain_dB = get.Gain_dB(obj)
+            Gain_dB = dB10(max(obj.getGain()));
+        end
+        
+        function radEff_dB = get.radEff_dB(obj)
+            radEff_dB = dB10(obj.radEff);
+        end
+        
+        function xname = get.xname(obj)
+           [xname,~] = setXYnames(obj);
+        end
+        
+        function yname = get.yname(obj)
+           [~,yname] = setXYnames(obj);
+        end
+        
+        function E1name = get.E1name(obj)
+           [E1name,~] = setEnames(obj);
+        end
+        
+        function E2name = get.E2name(obj)
+           [~,E2name] = setEnames(obj);
+        end
+        
+        function xRangeType = get.xRangeType(obj)
+            [xRangeType,~] = setRangeTypes(obj);
+        end
+
+        function yRangeType = get.yRangeType(obj)
+            [~,yRangeType] = setRangeTypes(obj);
+        end
+
         function obj = setFreq(obj,freq,freqUnit)
             if nargin > 1
                 assert(numel(freq) == size(obj.E1,2),'Error, freq must be the same length as the number of columns in E1')
@@ -405,9 +442,6 @@ classdef FarField
             if ~strcmp(obj.gridType,'PhTh')
                 [obj.x,obj.y] = getPhTh(obj);
                 obj.gridType = 'PhTh';
-                obj = setXYnames(obj);
-                obj = setRangeTypes(obj);
-                obj = setPhTh(obj);
             end
         end
         
@@ -416,9 +450,6 @@ classdef FarField
             if ~strcmp(obj.gridType,'DirCos')
                 [obj.x,obj.y] = getDirCos(obj);
                 obj.gridType = 'DirCos';
-                obj = setXYnames(obj);
-                obj = setRangeTypes(obj);
-                obj = setPhTh(obj);
             end
         end
         
@@ -427,9 +458,6 @@ classdef FarField
             if ~strcmp(obj.gridType,'AzEl')
                 [obj.x,obj.y] = getAzEl(obj);
                 obj.gridType = 'AzEl';
-                obj = setXYnames(obj);
-                obj = setRangeTypes(obj);
-                obj = setPhTh(obj);
             end
         end
         
@@ -438,9 +466,6 @@ classdef FarField
             if ~strcmp(obj.gridType,'ElAz')
                 [obj.x,obj.y] = getElAz(obj);
                 obj.gridType = 'ElAz';
-                obj = setXYnames(obj);
-                obj = setRangeTypes(obj);
-                obj = setPhTh(obj);
             end
         end
         
@@ -449,9 +474,6 @@ classdef FarField
             if ~strcmp(obj.gridType,'TrueView')
                 [obj.x,obj.y] = getTrueView(obj);
                 obj.gridType = 'TrueView';
-                obj = setXYnames(obj);
-                obj = setRangeTypes(obj);
-                obj = setPhTh(obj);
             end
         end
         
@@ -460,9 +482,6 @@ classdef FarField
             if ~strcmp(obj.gridType,'ArcSin')
                 [obj.x,obj.y] = getArcSin(obj);
                 obj.gridType = 'ArcSin';
-                obj = setXYnames(obj);
-                obj = setRangeTypes(obj);
-                obj = setPhTh(obj);
             end
         end
         
@@ -475,8 +494,6 @@ classdef FarField
             obj.E1 = obj.E1(iSort,:);
             obj.E2 = obj.E2(iSort,:);
             obj.E3 = obj.E3(iSort,:);
-            obj.ph = obj.ph(iSort);
-            obj.th = obj.th(iSort);
         end
         
         function obj = roundGrid(obj,nSigDig)
@@ -489,25 +506,6 @@ classdef FarField
             yRound = round(obj.y*10^nSigDig)/10^nSigDig;
             obj.x = xRound;
             obj.y = yRound;
-        end
-        
-        function obj = setRangeTypes(obj)
-            % Try to figure out what the current rangeType is.
-            % Not much error checking is done - assume somewhat
-            % sensible inputs are provided most of the time.
-            obj.xRangeType = 'sym';
-            if (strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz'))
-                if min(obj.x) >= 0
-                    obj.xRangeType = 'pos';
-                end
-                if max(obj.y) - min(obj.y) <= pi+median(diff(unique(obj.y)))/2
-                    obj.yRangeType = '180';
-                else
-                    obj.yRangeType = '360';
-                end
-            else
-                obj.yRangeType = [];
-            end
         end
         
         function obj = copyAndInsertXcut(obj1,xvalCopy,xvalPaste,tol)
@@ -655,7 +653,6 @@ classdef FarField
                 [obj.E1,obj.E2,obj.E3] = getEspherical(obj);
                 obj.E3 = zeros(size(obj.E1));
                 obj.coorType = 'spherical';
-                obj = setEnames(obj);
             end
             if setStdGrid
                 obj = obj.grid2PhTh;
@@ -667,7 +664,6 @@ classdef FarField
             if ~strcmp(obj.coorType,'Ludwig1')
                 [obj.E1,obj.E2,obj.E3] = getELudwig1(obj);
                 obj.coorType = 'Ludwig1';
-                obj = setEnames(obj);
             end
             if setStdGrid
                 obj = obj.grid2PhTh;
@@ -679,7 +675,6 @@ classdef FarField
             if ~strcmp(obj.coorType,'Ludwig2AE')
                 [obj.E1,obj.E2,obj.E3] = getELudwig2AE(obj);
                 obj.coorType = 'Ludwig2AE';
-                obj = setEnames(obj);
             end
             if setStdGrid
                 obj = obj.grid2AzEl;
@@ -691,7 +686,6 @@ classdef FarField
             if ~strcmp(obj.coorType,'Ludwig2EA')
                 [obj.E1,obj.E2,obj.E3] = getELudwig2EA(obj);
                 obj.coorType = 'Ludwig2EA';
-                obj = setEnames(obj);
             end
             if setStdGrid
                 obj = obj.grid2ElAz;
@@ -703,7 +697,6 @@ classdef FarField
             if ~strcmp(obj.coorType,'Ludwig3')
                 [obj.E1,obj.E2,obj.E3] = getELudwig3(obj);
                 obj.coorType = 'Ludwig3';
-                obj = setEnames(obj);
             end
             if setStdGrid
                 obj = obj.grid2PhTh;
@@ -770,7 +763,6 @@ classdef FarField
             if ~strcmp(obj.polType,'linear')
                 [obj.E1, obj.E2, obj.E3] = getElin(obj);
                 obj.polType = 'linear';
-                obj = setEnames(obj);
             end
         end
         
@@ -778,7 +770,6 @@ classdef FarField
             if ~strcmp(obj.polType,'circular')
                 [obj.E1,obj.E2,obj.E3] = getEcircular(obj);
                 obj.polType = 'circular';
-                obj = setEnames(obj);
             end
         end
         
@@ -786,7 +777,6 @@ classdef FarField
             if ~strcmp(obj.polType,'slant')
                 [obj.E1,obj.E2,obj.E3] = getEslant(obj);
                 obj.polType = 'slant';
-                obj = setEnames(obj);
             end
         end
         
@@ -817,10 +807,7 @@ classdef FarField
             obj.E3 = obj.E3Base;
             obj.coorType = obj.coorTypeBase;
             obj.polType = obj.polTypeBase;
-            obj = setEnames(obj);
-            obj = setXYnames(obj);
-            obj = setRangeTypes(obj);
-            obj = setPhTh(obj);
+%             obj = setRangeTypes(obj);
         end
         
         function obj = grid2Base(obj)
@@ -833,8 +820,7 @@ classdef FarField
             % Keep the current coorType and polType
             obj = coorTypeH(obj,false);
             obj = polTypeH(obj);
-            obj = setEnames(obj);
-            obj = setRangeTypes(obj);
+%             obj = setRangeTypes(obj);
         end
         
         function obj = currentForm2Base(obj1,stepDeg,xylimsDeg,hemisphere)
@@ -926,9 +912,6 @@ classdef FarField
             obj = obj1;
             obj.x = xi(:);
             obj.y = yi(:);
-            obj.Nx = Nxi;
-            obj.Ny = Nyi;
-            obj.Nang = Nxi*Nyi;
             obj.E1 = E1grid;
             obj.E2 = E2grid;
             obj.E3 = E3grid;
@@ -1134,9 +1117,6 @@ classdef FarField
                 obj.Prad = obj1base.Prad + obj2base.Prad;
                 Pt = obj1base.Prad./obj1base.radEff + obj2base.Prad./obj2base.radEff;
                 obj.radEff = obj.Prad./Pt;
-                obj.radEff_dB = dB10(obj.radEff);
-                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
-                obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setBase(obj);
             else
                 error('Can only add FarFields with equal base grids')
@@ -1159,9 +1139,6 @@ classdef FarField
                 obj.Prad = obj1base.Prad + obj2base.Prad;
                 Pt = obj1base.Prad./obj1base.radEff + obj2base.Prad./obj2base.radEff;
                 obj.radEff = obj.Prad./Pt;
-                obj.radEff_dB = dB10(obj.radEff);
-                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
-                obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setBase(obj);
             else
                 error('Can only subtract FarFields with equal base grids')
@@ -1183,9 +1160,6 @@ classdef FarField
                 obj.E3 = obj1.E3.*obj2.E3;
                 obj.Prad = obj.pradInt;
                 obj.radEff = ones(size(obj.Prad));
-                obj.radEff_dB = dB10(obj.radEff);
-                obj.Directivity_dBi = dB10(max(obj.getDirectivity()));
-                obj.Gain_dB = dB10(max(obj.getGain()));
                 obj = setBase(obj);
             else
                 error('Can only multiply FarFields with equal grids')
@@ -1319,13 +1293,8 @@ classdef FarField
             obj.E2 = obj1.E2(:,freqIndex);
             obj.E3 = obj1.E3(:,freqIndex);
             obj.freq = obj1.freq(freqIndex);
-            obj.freqHz = obj1.freqHz(freqIndex);
             obj.Prad = obj1.Prad(freqIndex);
             obj.radEff = obj1.radEff(freqIndex);
-            obj.radEff_dB = obj1.radEff(freqIndex);
-            obj.Directivity_dBi = obj1.Directivity_dBi(freqIndex);
-            obj.Gain_dB = obj1.Gain_dB(freqIndex);
-            obj.Nf = length(freqIndex);
             obj = setBase(obj);
         end
         
@@ -1628,86 +1597,104 @@ classdef FarField
             obj.NyBase = obj.Ny;
             obj.phBase = obj.ph;
             obj.thBase = obj.th;
-            obj.gridTypeBase = obj.gridType;
             obj.E1Base = obj.E1;
             obj.E2Base = obj.E2;
             obj.E3Base = obj.E3;
+            obj.gridTypeBase = obj.gridType;
             obj.coorTypeBase = obj.coorType;
             obj.polTypeBase = obj.polType;
         end
         
-        function obj = setPhTh(obj)
+        function [ph,th] = getPhThCurrent(obj)
             % This does not operate on the base grid, but instead the
             % current grid
             if strcmp(obj.gridType,'PhTh')
-                obj.ph = obj.x;
-                obj.th = obj.y;
+                ph = obj.x;
+                th = obj.y;
             else
                 handle2DirCos = str2func([obj.gridType,'2DirCos']);
                 [u,v,w] = handle2DirCos(obj.x,obj.y);
-                [obj.ph,obj.th] = DirCos2PhTh(u,v,w);
-                [obj.phBase, obj.thBase] = getPhTh(obj);
+                [ph,th] = DirCos2PhTh(u,v,w);
             end
         end
         
         % Set the names of the 2 grid components
-        function obj = setXYnames(obj)
+        function [xname,yname] = setXYnames(obj)
             switch obj.gridType
                 case 'PhTh'
-                    obj.xname = '\phi';
-                    obj.yname = '\theta';
+                    xname = '\phi';
+                    yname = '\theta';
                 case 'DirCos'
-                    obj.xname = 'u';
-                    obj.yname = 'v';
+                    xname = 'u';
+                    yname = 'v';
                 case 'AzEl'
-                    obj.xname = 'az';
-                    obj.yname = 'el';
+                    xname = 'az';
+                    yname = 'el';
                 case 'ElAz'
-                    obj.xname = '\epsilon';
-                    obj.yname = '\alpha';
+                    xname = '\epsilon';
+                    yname = '\alpha';
                 case 'TrueView'
-                    obj.xname = 'Xg=\theta cos(\phi)';
-                    obj.yname = 'Yg=\theta sin(\phi)';
+                    xname = 'Xg=\theta cos(\phi)';
+                    yname = 'Yg=\theta sin(\phi)';
                 case 'ArcSin'
-                    obj.xname = 'Xg=asin(u)';
-                    obj.yname = 'Yg=asin(v)';
+                    xname = 'Xg=asin(u)';
+                    yname = 'Yg=asin(v)';
             end
         end
         
         % Set the names of the 2 farfield components based on the
         % polarization type.  Names used for info and plotting.
-        function obj = setEnames(obj)
+        function [E1name,E2name] = setEnames(obj)
             switch obj.polType
                 case 'circular'
-                    obj.E1name = 'Elh';
-                    obj.E2name = 'Erh';
+                    E1name = 'Elh';
+                    E2name = 'Erh';
                 case 'slant'
-                    obj.E1name = 'Exp';
-                    obj.E2name = 'Eco';
+                    E1name = 'Exp';
+                    E2name = 'Eco';
                 case 'linear'
                     switch obj.coorType
                         case 'spherical'
-                            obj.E1name = 'Eth';
-                            obj.E2name = 'Eph';
+                            E1name = 'Eth';
+                            E2name = 'Eph';
                         case 'Ludwig1'
-                            obj.E1name = 'Ex';
-                            obj.E2name = 'Ey';
+                            E1name = 'Ex';
+                            E2name = 'Ey';
                         case 'Ludwig2AE'
-                            obj.E1name = 'Eaz';
-                            obj.E2name = 'Eel';
+                            E1name = 'Eaz';
+                            E2name = 'Eel';
                         case 'Ludwig2EA'
-                            obj.E1name = 'Eal';
-                            obj.E2name = 'Eep';
+                            E1name = 'Eal';
+                            E2name = 'Eep';
                         case 'Ludwig3'
-                            obj.E1name = 'Eh';
-                            obj.E2name = 'Ev';
+                            E1name = 'Eh';
+                            E2name = 'Ev';
                     end
                     
                 otherwise
                     error(['Unknown polType property: ', obj.polType]);
             end
         end
-       
+        
+        function [xRangeType,yRangeType] = setRangeTypes(obj)
+            % Try to figure out what the current rangeType is.
+            % Not much error checking is done - assume somewhat
+            % sensible inputs are provided most of the time.
+            xRangeType = 'sym';
+            if (strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz'))
+                if min(obj.x) >= 0
+                    xRangeType = 'pos';
+                end
+                if max(obj.y) - min(obj.y) <= pi+median(diff(unique(obj.y)))/2
+                    yRangeType = '180';
+                else
+                    yRangeType = '360';
+                end
+            else
+                yRangeType = [];
+            end
+        end
+        
     end
     
 end

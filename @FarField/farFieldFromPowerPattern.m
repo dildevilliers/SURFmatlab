@@ -58,7 +58,4 @@ Prad = ones(1,Nf); % Dummy for the constructor
 radEff = ones(size(freq));
 
 FF = FarField(ph,th,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
-
 FF.Prad = FF.pradInt;
-FF.Directivity_dBi = dB10(max(FF.getDirectivity()));
-FF.Gain_dB = dB10(max(FF.getGain()));

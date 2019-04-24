@@ -39,7 +39,7 @@ FFplot.plot('plotType','2D','step',1,'showGrid',1,'output',output,'outputType',o
 
 %% Get a version symmetric about y
 phYind = FF.phBase >= -pi/2-eps & FF.phBase <= pi/2+eps;
-FFy = FarField(FF.phBase(phYind),FF.thBase(phYind),FF.E1(phYind,:),FF.E2(phYind,:),FF.E3(phYind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorSys,FF.polType,'PhTh',FF.freqUnit);
+FFy = FarField(FF.phBase(phYind),FF.thBase(phYind),FF.E1(phYind,:),FF.E2(phYind,:),FF.E3(phYind,:),FF.freq,FF.Prad./2,FF.radEff,FF.coorType,FF.polType,'PhTh',FF.freqUnit);
 FFy = FFy.setSymmetryYZ('magnetic');
 FFy = FFy.setXrange('sym');
 FFy = plotGridHandle(FFy);
