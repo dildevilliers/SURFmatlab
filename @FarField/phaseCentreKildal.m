@@ -10,10 +10,10 @@ function [Z, Delta, delta0, eta_pd] = phaseCentreKildal(FF,pol,th_M)
 % eta_pd - the phase efficiency pu as a frequency vector (NaN for large PC displacements)
 % Inputs:
 % FF - FarField class 
-% pol - {'x' | 'y' | 'lh' | 'rh' | double (slant angle in rad)}
+% pol - {'x' | 'y' | 'lh' | 'rh'}
 % th_M - subtended angle of the 'reflector' in rad
 
-assert(pol=='x'||pol=='y'||strcmp(pol,'lh')||strcmp(pol,'rh')||isa('pol','double'),['Error: Unknown parameter for pol: ',pol])
+assert(strcmp(pol,'x')||strcmp(pol,'y')||strcmp(pol,'lh')||strcmp(pol,'rh')||isa('pol','double'),['Error: Unknown parameter for pol: ',pol])
 % Get in BOR1
 if ~FF.symmetryBOR1
     FF = FF.getBOR1pattern;
@@ -32,14 +32,10 @@ for ff = 1:FF.Nf
     switch pol
         case 'x'
             CO = B1f(:,ff) + D1f(:,ff);
-        case 'y'
+        case {'y','lh','rh'}
             CO = A1f(:,ff) + C1f(:,ff);
-        case 'lh'
-            
-        case 'rh'
-            
         otherwise
-            error('Slant pol not implemented yet')
+            error(['Unknown pol: ', pol])
     end
     
     % Move the pattern to the approximate PC (Kildal comments 1984)
