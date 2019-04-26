@@ -1,16 +1,16 @@
 classdef hyperboloid
     % Rotationally symmetric hyperboloid (spheroid).
     % See the 2002 Granet paper and GRASP technical description for details. 
-    properties
-        vertexDistance(1,1) double {mustBeReal, mustBeFinite} = 1 % Vertex seperation distance in (m) = 2a - positive is convex (like cassegrain), negative is concave (compact range)
-        fociDistance(1,1) double {mustBeReal, mustBeFinite} = 2 % Interfocal distance in (m) = 2f
-    end
     
     properties (SetAccess = private)
+        vertexDistance = 1 % Vertex seperation distance in (m) = 2a - positive is convex (like cassegrain), negative is concave (compact range)
+        fociDistance = 2 % Interfocal distance in (m) = 2f
         a % Vertex seperation half distance and sign
         f % Focus half distance - called c in the GRASP technical description and f in the Granet paper
         e % Eccentricity
         b 
+        F1 % First focus position (origin of coor)
+        F0 % Second focus position (where the feed goes)
     end
     
     methods
@@ -20,10 +20,26 @@ classdef hyperboloid
                 obj.vertexDistance = vertexDistance;
                 obj.fociDistance = fociDistance;
             end
+            obj = obj.setParams;
+        end
+        
+        function obj = setVertexDistance(obj,vD)
+            obj.vertexDistance = vD;
+            obj = obj.setParams;
+        end
+        
+        function obj = setFociDistance(obj,fD)
+            obj.vertexDistance = fD;
+            obj = obj.setParams;
+        end
+        
+        function obj = setParams(obj)
             obj.a = obj.vertexDistance/2;
             obj.f = obj.fociDistance/2;
             obj.e = obj.f./obj.a;
             obj.b = sqrt(obj.f.^2 - obj.a.^2);
+            obj.F1 = pnt3D(0,0,0);
+            obj.F0 = pnt3D(0,0,-2*obj.f);
         end
         
         function z = getZ(obj,x,y)
@@ -32,7 +48,7 @@ classdef hyperboloid
             z = obj.a.*sqrt(1 + obj.getRho(x,y).^2./obj.b.^2) - obj.f;
         end
         
-        function rho = getRho(obj,x,y)
+        function rho = getRho(~,x,y)
             rho = hypot(x,y);
         end
         
@@ -92,9 +108,8 @@ classdef hyperboloid
         function [Cz,Ct] = getCurvature(obj,x,y)
             % Cz is the curvature in the plane containing the z-axis, and Ct
             % is in the orthogonal plane
-            v = obj.getV(x,y);
-            Cz = obj.a./obj.b.^2.*cos(obj.getU(v)).^3;
-            Ct = obj.a./obj.b.^2.*cos(obj.getU(v));
+            Cz = obj.a./obj.b.^2.*cos(obj.getU(x,y)).^3;
+            Ct = obj.a./obj.b.^2.*cos(obj.getU(x,y));
         end
         
     end

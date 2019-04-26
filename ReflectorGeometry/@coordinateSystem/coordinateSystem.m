@@ -1,15 +1,19 @@
 classdef coordinateSystem
     properties
       origin(1,1) pnt3D = pnt3D(0,0,0) 
-      x_axis(3,1) double {mustBeReal, mustBeFinite} = [1;0;0] % x-axis direction
-      y_axis(3,1) double {mustBeReal, mustBeFinite} = [0;1;0] % y-axis direction
       base = [] % Can be another coordinate system object, or, if empty, is assumed to be the global coordinate system 
     end
    
     properties (SetAccess = private)
-       z_axis 
+        x_axis = [1;0;0] % x-axis direction
+        y_axis = [0;1;0] % y-axis direction
     end
-   methods
+    
+    properties (Dependent = true)
+        z_axis
+    end
+    
+    methods
        function obj = coordinateSystem(origin,x_axis,y_axis,base)
            if nargin == 0
            elseif nargin == 1
@@ -39,9 +43,13 @@ classdef coordinateSystem
                error('x_axis and y_axis must be orthogonal');
            end
            % Set the z-axis direction
-           obj = obj.setZaxis;
+%            obj = obj.setZaxis;
            % Normalise the unit vectors
            obj = obj.normAxis;
+       end
+       
+       function z_axis = get.z_axis(obj)
+            z_axis = cross(obj.x_axis,obj.y_axis);
        end
        
        function obj = set2Base(obj)
@@ -60,21 +68,18 @@ classdef coordinateSystem
            % Rotate around global x-axis
            obj.x_axis = rotx3D(obj.x_axis,angleRadians);
            obj.y_axis = rotx3D(obj.y_axis,angleRadians);
-           obj = obj.setZaxis;
        end
        
        function obj = rotY(obj,angleRadians)
            % Rotate around global y-axis
            obj.x_axis = roty3D(obj.x_axis,angleRadians);
            obj.y_axis = roty3D(obj.y_axis,angleRadians);
-           obj = obj.setZaxis;
        end
        
        function obj = rotZ(obj,angleRadians)
            % Rotate around global z-axis
            obj.x_axis = rotz3D(obj.x_axis,angleRadians);
            obj.y_axis = rotz3D(obj.y_axis,angleRadians);
-           obj = obj.setZaxis;
        end
        
        function obj = rotGRASP(obj,angGRASP)
@@ -89,7 +94,6 @@ classdef coordinateSystem
            r_hat = obj.x_axis.*sin(th).*cos(ph) + obj.y_axis.*sin(th).*sin(ph) + obj.z_axis.*cos(th);
            obj.x_axis = th_hat.*cos(ph - ps) - ph_hat.*sin(ph - ps);
            obj.y_axis = th_hat.*sin(ph - ps) + ph_hat.*cos(ph - ps);
-           obj.z_axis = r_hat;
        end
        
        function obj = rotEuler(obj,angEuler)
@@ -274,19 +278,10 @@ classdef coordinateSystem
    end
    
    methods (Access = private)
-       function obj = setZaxis(obj)
-           obj.z_axis = getZaxis(obj);
-       end
-       
-       function z = getZaxis(obj)
-           z = cross(obj.x_axis,obj.y_axis);
-       end
-       
        function obj = normAxis(obj)
            % Make sure we have unit vectors
            obj.x_axis = obj.x_axis/norm(obj.x_axis);
            obj.y_axis = obj.y_axis/norm(obj.y_axis);
-           obj.z_axis = obj.z_axis/norm(obj.z_axis);
        end
    end
 end

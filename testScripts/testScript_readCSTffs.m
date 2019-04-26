@@ -12,7 +12,7 @@
 
 
 % Create FarField obj
-pathName = 'Farfield Source [1]';
+pathName = 'CircWG_origin';
 
 FF = FarField.readCSTffs(pathName);
 

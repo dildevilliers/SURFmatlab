@@ -1,11 +1,15 @@
 classdef pnt3D
     properties
-        x double {mustBeReal, mustBeFinite} = 0 % in (m)
-        y double {mustBeReal, mustBeFinite} = 0 % in (m)
-        z double {mustBeReal, mustBeFinite} = 0 % in (m)
+%         x double {mustBeReal, mustBeFinite} = 0 % in (m)
+%         y double {mustBeReal, mustBeFinite} = 0 % in (m)
+%         z double {mustBeReal, mustBeFinite} = 0 % in (m)
     end
     
     properties (SetAccess = private)
+        % Cartesian points
+        x double {mustBeReal, mustBeFinite} = 0 % in (m)
+        y double {mustBeReal, mustBeFinite} = 0 % in (m)
+        z double {mustBeReal, mustBeFinite} = 0 % in (m)
         % Values in other coordinate systems
         th % polar angle in radians
         ph % azimuth angle in radians
@@ -15,6 +19,7 @@ classdef pnt3D
     end
     
     methods
+        % Have to go through the constructor to set the values
         function obj = pnt3D(X,Y,Z)
             if nargin == 3
                 % Get all the same size
@@ -22,6 +27,21 @@ classdef pnt3D
                 obj.y = (X+eps(realmin))./(X+eps(realmin)).*(Z+eps(realmin))./(Z+eps(realmin)).*Y;
                 obj.z = (X+eps(realmin))./(X+eps(realmin)).*(Y+eps(realmin))./(Y+eps(realmin)).*Z;
             end
+            obj = obj.setProps;
+        end
+        
+        function obj = setX(obj,x)
+            obj.x = (obj.z+eps(realmin))./(obj.z+eps(realmin)).*(obj.y+eps(realmin))./(obj.y+eps(realmin)).*x;
+            obj = obj.setProps;
+        end
+        
+        function obj = setY(obj,y)
+            obj.y = (obj.x+eps(realmin))./(obj.x+eps(realmin)).*(obj.z+eps(realmin))./(obj.z+eps(realmin)).*y;
+            obj = obj.setProps;
+        end
+        
+        function obj = setZ(obj,z)
+            obj.z = (obj.x+eps(realmin))./(obj.x+eps(realmin)).*(obj.y+eps(realmin))./(obj.y+eps(realmin)).*z;
             obj = obj.setProps;
         end
         
@@ -59,6 +79,13 @@ classdef pnt3D
             obj.z = obj.z-obj2.z;
             obj = obj.setProps;
         end
+        
+        function obj = scale(obj,scaleVal)
+            obj.x = obj.x.*scaleVal;
+            obj.y = obj.y.*scaleVal;
+            obj.z = obj.z.*scaleVal;
+            obj = obj.setProps;
+        end 
         
         function D = distanceCart(obj,obj2)
             objD = obj - obj2;

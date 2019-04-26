@@ -130,7 +130,7 @@ classdef reflector
             ph_in = ph_in(:).';
             th_in = th_in(:).';
             
-            Npoints = 500^2;   % Use plenty of points to resolve cases where we're pointing very close to the edge...
+            Npoints = 500^2 + 1;   % Use plenty of points to resolve cases where we're pointing very close to the edge...
             % Get the rim points in 3D space
             [~,rimPoints] = obj.getPointCloud(Npoints);
             rimPointsInCoorIn = changeBase(rimPoints,coorIn);
@@ -168,11 +168,11 @@ classdef reflector
             
             if debugPlot
                 figure
-                plot(rad2deg(ph),rad2deg(th)), grid on, hold on
+                plot(rad2deg(ph),rad2deg(th),'.-k'), grid on, hold on
                 plot(rad2deg(ph_in(M)),rad2deg(th_in(M)),'b.')
                 plot(rad2deg(ph_in(~M)),rad2deg(th_in(~M)),'r.')
                 figure
-                plot(Xg,Yg), grid on, hold on
+                plot(Xg,Yg,'.-k'), grid on, hold on
                 plot(XgIn(M),YgIn(M),'b.')
                 plot(XgIn(~M),YgIn(~M),'r.')
                 axis([-pi,pi,-pi,pi])

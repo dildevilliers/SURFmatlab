@@ -105,10 +105,4 @@ freqUnit = 'Hz';
 
 FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
 
-FF = setEnames(FF);
-FF = setXYnames(FF);
-FF = setPhTh(FF);
-FF = setFreq(FF);
-FF = setBase(FF);
-
 end

@@ -1,29 +1,25 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D (Ridalise and William)
+- [ ] readMeasurements
+- [ ] Check readGRASPgrd. Not sure of E1 and E2 order for all cases. Preallocate the matrices for speed like in readGRASPcut
+- [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
-- [ ] Get only the BOR1 components of the field and return as FarField object (DdV)
 - [ ] Gaussian/cosn pattern fitter
+- [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
 - [ ] readFITS (DdV)
-- [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
-- [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
-- [ ] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
 - [ ] CBFP expansion (Fahmi)
 - [ ] SWE of a given field (Fahmi + Brandt)
 - [ ] Multiple frequency concat
-- [ ] Shift field in 3D space - phase change
 - [ ] Typical pattern parameters calculator: SLL, XP, Beamwidth, etc.
 - [ ] writeCSTffs
 - [ ] writeFEKOfft
-- [ ] writeGRASPcut
 - [ ] Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
 - [ ] Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
 - [ ] Array pattern adder
 - [ ] plot on a spherical surface
 - [ ] Fix 3D plot for negative y-(th)axis cases
-- [ ] readMeasurements
 - [ ] Jones getter
 - [ ] Jones plotter (fix up)
 - [ ] Stokes getter
@@ -47,6 +43,17 @@
 - [x] Weighted power integral - for antenna noise (DdV)
 - [x] Fix FarField th rotation direction (DdV)  
 - [x] Field symmetries: XZ and YZ planes.
+- [x] Speed up interpolateGrid - dont add the full grid left and right of the x-axis, only a section is required (DdV)
+- [x] testScript for projections into Coor/Grid/symmetry and plotting (3,2,1)D (Ridalise and William)
+- [x] Get only the BOR1 components of the field and return as FarField object (DdV)
+- [x] Conjugate fields overload
+- [x] Shift field in 3D space - phase change
+- [x] Made a FarField.rms function to check RMS field values over angle/freq
+- [x] readGRASPcut (DdV)
+- [x] writeGRASPcut
+- [x] setFreq should not be private. Use to set both freq and freqHz, with varargin for backwards compatibility.
+- [x] Rename coorSys to coorType to avoid confusion with coordinateSystem class
+- [x] Move all parameters to setAccess private, and make setters as required
 
 # farFieldExpansion
 ## General
@@ -72,9 +79,9 @@
 # ReflectorGeometry
 ## General (class not assigned yet)
 - [ ] Change all class names to be Capital letter first 
-- [ ] Aperture efficiency calculator
 - [ ] Antenna temperature calculator
 - [ ] include a feed picture for plotting
+- [ ] include a detail level selector in the plotting of single/dualReflector classes. Level 1 only dish, 2 rays, 3 points, etc.
 - [ ] add numeric surface class (DdV)
 - [ ] add numeric rim class (DdV)
 - [ ] add offsetGregorianShaped class
@@ -84,10 +91,14 @@
 - [x] add offsetParaboloid class (William)
 - [x] add symmetrical Gregorian/Cassegrain class
 - [x] add offset Gregorian/Cassegrain class
+- [x] Aperture efficiency calculator
+
+## coordinateSystem
+- [x] make x_axis and y_axis private SetAccess properties 
 
 ## @reflector
 - [ ] Calculate actual area (William)
-- [ ] Write GRASP outputs
+- [ ] Write GRASP outputs (William)
 - [x] getMaskFunction
 - [x] add more functionality for point cloud grids (polar, thinned polar)
 - [x] basic ray tracing of a reflector system
@@ -95,24 +106,20 @@
 ## @hyperboloid
 - [ ] Sort out the negative e concave case like in GRASP
 
+## @ellipsoid
+- [x] Make rotation as in GRASP possible
+
 ## @dualReflector
-- [ ] constructor function for different symmetrical design options
-- [ ] constructor function for different offset design options
 - [x] SR extensions
 - [x] masking (both SR and PR masking)
 - [x] ray tracing
 - [x] path length structure
 - [x] ray trace plots
-
-## @symmetricParaboloid
-- [ ] Remove and only keep the singleReflector class
-- [x] Ray tracing plot
-- [x] Masking of a FarField by a reflector system given the feed position and orientation
-- [x] build a FarField object of the mask
-- [x] calculate a path length structure
-- [x] Calculate projected area
-- [x] calculate the rho-th mapping
-- [x] sort out the 2D plotting
+- [x] constructor function for different symmetrical design options
+- [x] constructor function for different offset design options
+- [x] Re-implement the Gregorian case completely. Do as in legacy work with a rotated ellipsoid. Fixed legacy issues with different extended and non-extended OG systems 
+- [x] Fixed Bug: testScript_dualReflector, exNumber = 1|3; th_ext = 20; The DR.SR.surface.F1 point is not plotted correctly for Cassegrains
+- [x] Fixed Bug: testScript_dualReflector, exNumber = 1; th_ext = 20 or 10 deg; symFact_ext = 1. Inner SR edge (Q1) wrong...
 
 ## @pnt3D
 - [x] plot line between 2 points

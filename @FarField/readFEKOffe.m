@@ -116,14 +116,5 @@ radEff = ones(size(freq)); %replace with manual radiation efficiency calculation
 freqUnit = 'Hz'; %It seems that FEKO always outputs frequencies in Hz, so this is hardcoded as such
 
 FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
-% FF.polType = polType;
-% FF.coorSys = coorSys;
-% FF.gridType = gridType;
-% FF.freqUnit = freqUnit;
-FF = setEnames(FF);
-FF = setXYnames(FF);
-FF = setPhTh(FF);
-FF = setFreq(FF);
-FF = setBase(FF);
 
 

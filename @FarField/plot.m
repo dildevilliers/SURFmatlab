@@ -89,7 +89,7 @@ expectedcutConstant = {'x','y'};
 addParameter(parseobj,'cutConstant','x', @(x) any(validatestring(x,expectedcutConstant)));
 
 typeValidationcutValue = @(x) validateattributes(x,{'numeric'},{'real'},'plot','cutValue');
-addParameter(parseobj,'cutValue',[],typeValidationcutValue);
+addParameter(parseobj,'cutValue',0,typeValidationcutValue);
 
 typeValidationstep = @(x) validateattributes(x,{'numeric'},{'real'},'plot','step');
 addParameter(parseobj,'step',[],typeValidationstep);     % In degrees
@@ -149,8 +149,8 @@ else
 end
 
 % Get the original grid and output
-X = reshape(obj.x,obj.Ny,obj.Nx);
-Y = reshape(obj.y,obj.Ny,obj.Nx);
+X = reshape(obj.x,obj.NyBase,obj.NxBase);
+Y = reshape(obj.y,obj.NyBase,obj.NxBase);
 if strcmp(output,'E1')
     [Z,~,~] = getEfield(obj);
 elseif strcmp(output,'E2')
@@ -308,7 +308,7 @@ switch plotType
         if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
             % Handle dynamic range here: ToDo
             if strcmp(outputType,'mag')
-                maxVal = max(Zplot(:));
+                maxVal = max(Zplot(~isinf(Zplot)));
                 switch scaleMag
                     case 'dB'
                         if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
@@ -333,7 +333,7 @@ switch plotType
             end
             iVal = ~isnan(Ziplot);
             patternCustom(Ziplot(iVal),Yi(iVal),Xi(iVal));
-            title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
+            title([obj.coorType, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
         else
             error(['gridType must be PhTh for 3D plots: found gridType = ', obj.gridType])
         end
@@ -358,7 +358,7 @@ switch plotType
         ylim([min(yiplot),max(yiplot)])
         % Handle dynamic range here
         if strcmp(outputType,'mag') || strcmp(outputType,'real') || strcmp(outputType,'imag')
-            maxVal = max(Zplot(:));
+            maxVal = max(Zplot(~isinf(Zplot)));
             switch scaleMag
                 case 'dB'
                     if strcmp(output,'XP_CO') || strcmp(output,'CO_XP')
@@ -388,7 +388,7 @@ switch plotType
                     end
             end
         end
-        title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
+        title([obj.coorType, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
     case {'cartesian','polar'}
         % Initial bookkeeping to seperate the two options
         if strcmp(plotType,'cartesian')
@@ -436,7 +436,7 @@ switch plotType
         if ~strcmp(obj.gridType,'DirCos')
             cutValue = rad2deg(cutValue);
         end
-        titText = [obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',axisUnit];
+        titText = [obj.coorType, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',axisUnit];
 
         % Final bookkeeping to seperate the two options
         hold on
@@ -516,7 +516,7 @@ switch plotType
 %         if ~strcmp(obj.gridType,'DirCos')
 %             cutValue = rad2deg(cutValue);
 %         end
-%         title([obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',axisUnit])
+%         title([obj.coorType, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit,'; ',cutName, ' = ',num2str(cutValue), ' ',axisUnit])
 %     case 'polar'
 %         if ~strcmp(obj.gridType,'DirCos')
 %             switch cutConstant
@@ -705,7 +705,7 @@ end
 %     case '3D'
 %         % Use the MATLAB antennas toolbox plotting function
 %         patternCustom(Zplot,rad2deg(obj.th),rad2deg(obj.ph));
-%         title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
+%         title([obj.coorType, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
 %     case '2D'
 %         surf(X,Y,reshape(Zplot,size(X)),'EdgeColor','Interp','FaceColor','Interp')
 %         xlabel(xname)
@@ -715,7 +715,7 @@ end
 %         xlim([min(x),max(x)])
 %         ylim([min(y), max(y)])
 %         colorbar
-%         title([obj.coorSys, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
+%         title([obj.coorType, ', ',obj.polType, ' polarisation: ',outputType,'(', compName, ') (',unit,'); Freq = ',num2str(freqPlot),' ', freqUnit])
 %     case 'cartesian'
 %         % ToDo
 %         lw = LineWidth;   
@@ -755,7 +755,7 @@ end
 %             ylabel([outputType,'(', compName, ') (',unit,')'])
 %             
 %         end
-%         title([obj.coorSys, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit])
+%         title([obj.coorType, ', ',obj.polType, ' polarisation; Freq = ',num2str(freqPlot),' ', freqUnit])
 %     case 'polar'
 %         % ToDo
 % 
