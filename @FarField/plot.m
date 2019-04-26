@@ -136,6 +136,7 @@ if strcmp(obj.gridType,'DirCos') || strcmp(obj.gridType,'ArcSin')
     % Try to get the direction cosines from the base grid definition - if the
     % base definition is not a direction cosine type it can contain
     % information over the full sphere. 
+
     objBase = obj.grid2Base;
     grid2DirCoshandle = str2func([objBase.gridType,'2DirCos']);
     [~,~,w] = grid2DirCoshandle(objBase.x,objBase.y);
@@ -209,6 +210,12 @@ else
                     yi = ones(size(xi)).*cutValue;
             end
     end
+%     xi = obj.x;
+%     yi = obj.y;
+%     Xi = reshape(obj.x,obj.Nx,obj.Ny);
+%     Yi = reshape(obj.y,obj.Nx,obj.Ny);
+%     NxPlot = obj.Nx;
+%     NyPlot = obj.Ny;
     [Zi] = interpolateGrid(obj,output,xi,yi,freqIndex,hemisphere);
 end
 

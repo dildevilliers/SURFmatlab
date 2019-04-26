@@ -18,7 +18,7 @@ elseif strcmp(type,'sym')
 end
 % tol = 1e-10;
 tol = 10^(-obj.nSigDig);
-if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
+if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz') || strcmp(obj.gridType,'AzAlt')
     if t == 'p'
 %         iout = find(obj.x == -pi);   % Redundant
 %         iin = find(obj.x == 0);      % Will become redundant after inserting

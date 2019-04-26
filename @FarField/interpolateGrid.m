@@ -43,7 +43,7 @@ gridType = obj.gridType;
 obj = obj.grid2Base;
 % Shift to -180:180 range (if applicable) - this is where the DirCos spits
 % everything out after transforming
-if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
+if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz') %|| strcmp(obj.gridType,'AzAlt')
     obj = obj.setXrange('sym');
 end
 % Get xi and yi in the base gridType, and on the [-180,180] x-domain for the
@@ -159,7 +159,7 @@ if numel(removePoints) > 0
 end
 
 % Build the interpolant on the base grid at the valid angles
-if obj.isGridUniform && 0
+if obj.isGridUniform
 try
     NyVal = length(unique(yVal));
     NxVal = length(unique(xVal));
