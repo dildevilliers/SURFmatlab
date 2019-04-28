@@ -1468,11 +1468,6 @@ classdef FarField
                         end
                     end
                 case {'AzAlt','RAdec','GalLongLat'}
-%                     obj1 = obj;
-%                      keyboard
-%                     obj1.y = pi/2 - obj1.y;
-%                    
-%                     obj1 = obj1.sortGrid;
                     PH = reshape(obj.x,obj.Ny,obj.Nx);
                     TH = reshape(obj.y,obj.Ny,obj.Nx);
                     
@@ -1486,7 +1481,7 @@ classdef FarField
                         else
                             Nth = obj.Ny;
                             th_vect = obj.y(1:Nth);
-                            integrand = (U(1:Nth,ff) + U(Nth+1:end,ff)).*sin(th_vect);
+                            integrand = (U(1:Nth,ff) + U(Nth+1:end,ff)).*cos(th_vect);
                             P(ff) = pi*integral1D(th_vect,integrand);
                             symFact = 1;    % Just to be sure...
                         end
