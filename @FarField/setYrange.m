@@ -13,8 +13,8 @@ function obj = setYrange(obj,type)
 
 assert(type == 180 || type == 360,'Unknown type: Should be 180 or 360');
 
-% [iout,iin,xAdd,yAdd,E1Add,E2Add,E3Add] = deal([]);
-% Nredun = 0;
+[iout,iin,xAdd,yAdd,E1Add,E2Add,E3Add] = deal([]);
+Nredun = 0;
 
 % eps = 1e-10;
 eps = 1e-1*min([diff(unique(obj.x));diff(unique(obj.y))]);
@@ -167,8 +167,9 @@ else
     warning(['Cant shift a polar grid like ', obj.gridType, ' on a cartesian grid']);
 end
 % Sort
-obj = roundGrid(obj,6);
 obj = obj.sortGrid;
+% Update the object descriptive parameters
+obj = setRangeTypes(obj);
 end
 
 

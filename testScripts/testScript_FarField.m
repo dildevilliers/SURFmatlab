@@ -4,7 +4,7 @@
 %   and the use cases of its various methods are shown.
 clear all
 close all
-FF = FarField.readFEKOffe([pwd, '\patch']);
+FF = FarField.readFEKOffe([pwd, '\testScripts\patch']);
 
 gridType = {'PhTh' 'DirCos' 'AzEl' 'ElAz' 'TrueView' 'ArcSin'}; 
 coorType = {'spherical' 'Ludwig1' 'Ludwig2AE' 'Ludwig2EA' 'Ludwig3'};
@@ -54,7 +54,7 @@ figure
 FF.plotPrincipleCuts;
 
 %% Maths
-FF = FarField.readFEKOffe([pwd, '\patch']);
+FF = FarField.readFEKOffe([pwd, '\testScripts\patch']);
 
 gridType = 'AzEl';
 coorType = 'Ludwig3';
@@ -71,7 +71,7 @@ FF = FF.setXrange(xRangeType);
 
 %MAKE ANOTHER FARFIELD THATS THE SAME. WE ARE DOING MATHS ON BOTH.
 format compact
-FF2 = FarField.readFEKOffe([pwd, '\patch']);
+FF2 = FarField.readFEKOffe([pwd, '\testScripts\patch']);
 FF2 = handleGridType(FF2);
 FF2 = handleCoorType(FF2,0);
 FF2 = handlePolType(FF2);

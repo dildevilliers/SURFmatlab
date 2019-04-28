@@ -1,16 +1,11 @@
 classdef singleReflector
     % Exactly the same as the GRASP single reflector wizard
-    properties
-        Df(1,1) double {mustBeReal, mustBeFinite} = 0.1     % Feed diameter
-    end
-        
     
     properties (SetAccess = private)
-        Dm = 10 % Reflector diameter in (m)
+        D = 10 % Reflector diameter in (m)
         FoD = 0.5 % Reflector F/D
         hoD = 0 % Reflector Offset/D
         
-        type % String describing the system
         F             % Reflector focal length
         h             % Reflector offset
         Dp            % Clearance between inner edge and the z-axis
@@ -30,41 +25,32 @@ classdef singleReflector
     end
     
     methods
-        function obj = singleReflector(D,FoD,hoD,Df)
-            if nargin > 0
-                obj.Dm = D;
-                obj.Df = D/20;
-            end
+        function obj = singleReflector(D,FoD,hoD)
+            if nargin > 0, obj.D = D; end
             if nargin > 1, obj.FoD = FoD; end
             if nargin > 2, obj.hoD = hoD; end
-            if nargin > 3, obj.Df = Df; end
             
-            if obj.hoD == 0
-                obj.type = 'Symmetric';
-            else
-                obj.type = 'Offset';
-            end
             % Basic geometry
-            obj.F = obj.FoD*obj.Dm;
-            obj.h = obj.hoD.*obj.Dm;
-            obj.Dp = obj.h - obj.Dm/2;
-            obj.th_0 = atan((2.*obj.F.*(obj.Dm + 2.*obj.Dp))./(4.*obj.F.^2 - obj.Dp.*(obj.Dm + obj.Dp)));
-            obj.th_e = atan(2.*obj.F.*obj.Dm./(4.*obj.F.^2 + obj.Dp.*(obj.Dm + obj.Dp)));
-            obj.th_f = 2.*atan((obj.Dp + obj.Dm/2)./(2.*obj.F));
-            obj.th_c = atan(2.*obj.F./(obj.Dp + obj.Dm/2));
-            obj.PR_chordX = obj.Dm./sin(obj.th_c);
-            obj.PR_chordY = obj.Dm;
-            obj.apArea = pi*(obj.Dm/2)^2;
+            obj.F = obj.FoD*obj.D;
+            obj.h = obj.hoD.*obj.D;
+            obj.Dp = obj.h - obj.D/2;
+            obj.th_0 = atan((2.*obj.F.*(obj.D + 2.*obj.Dp))./(4.*obj.F.^2 - obj.Dp.*(obj.D + obj.Dp)));
+            obj.th_e = atan(2.*obj.F.*obj.D./(4.*obj.F.^2 + obj.Dp.*(obj.D + obj.Dp)));
+            obj.th_f = 2.*atan((obj.Dp + obj.D/2)./(2.*obj.F));
+            obj.th_c = atan(2.*obj.F./(obj.Dp + obj.D/2));
+            obj.PR_chordX = obj.D./sin(obj.th_c);
+            obj.PR_chordY = obj.D;
+            obj.apArea = pi*(obj.D/2)^2;
             
             % Make the reflector
             surface = paraboloid(pnt3D(0,0,0),obj.F);
-            rim = ellipticalRim([obj.h;0],[obj.Dm/2;obj.Dm/2]);
+            rim = ellipticalRim([obj.h;0],[obj.D/2;obj.D/2]);
             PRcoor = coordinateSystem(pnt3D(0,0,0));
             obj.PR = reflector(surface,rim,PRcoor);
             
             % Calculate the extreme points of the reflector
             xy_xMin = [obj.Dp;0];
-            xy_xMax = [obj.Dp+obj.Dm;0];
+            xy_xMax = [obj.Dp+obj.D;0];
             xy_0 = [obj.h;0];
             xy = [xy_xMin,xy_xMax,xy_0];
             zEx = obj.PR.surface.getZ(xy(1,:),xy(2,:));

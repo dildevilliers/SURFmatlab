@@ -22,7 +22,7 @@ axis tight
 %% Example 2 - Pin specified as vector
 
 P2cut = abs(sinc(3.*th)).'; 
-P2 = powerPattern(PH(:),TH(:),P2cut,th0,taper_dB,freq);
+P2 = powerPattern(TH(:),PH(:),P2cut,th0,taper_dB,freq);
 
 figure
 surf(rad2deg(TH),rad2deg(PH),reshape(P2,Nth_cut,Nph_cut))

@@ -9,18 +9,18 @@ FF = FarField.farFieldFromPowerPattern(PH(:),TH(:),D(:),1e9,'linearY');
 
 % FF = FarField();
 
-FF = FF.setOrientation([pi/6 pi/4]);
-% FF = FF.setOrientation([0 pi/2]);
+% FF = FF.setOrientation([pi/6 pi/4]);
+FF = FF.setOrientation([0 pi/2]);
 
 FF = FF.grid2AzAlt;
-% figure
-% subplot(3,1,1)
-% FF.plot('plotType','2D','outputType','mag','scaleMag',scaleMag,'step',1,'showGrid',true,'dynamicRange_dB',30)
-% title('Az-Alt Directivity')
-FF = FF.grid2Mollweide;
-% FF = FF.grid2AzAlt;
 figure
+subplot(3,1,1)
 FF.plot('plotType','2D','outputType','mag','scaleMag',scaleMag,'step',1,'showGrid',true,'dynamicRange_dB',30)
+title('Az-Alt Directivity')
+% FF = FF.grid2Mollweide;
+% FF = FF.grid2AzAlt;
+% figure
+% FF.plot('plotType','2D','outputType','mag','scaleMag',scaleMag,'step',1,'showGrid',true,'dynamicRange_dB',30)
 % % FFa = FF - FFa;
 % % FFa.plot('plotType','2D','outputType','mag','scaleMag','dB','step',1,'showGrid',true,'dynamicRange_dB',30)
 % 
@@ -28,16 +28,16 @@ FF.plot('plotType','2D','outputType','mag','scaleMag',scaleMag,'step',1,'showGri
 % % figure
 % % plot(FF)
 % 
-% FF1 = FF.grid2RAdec;
-% % FF1 = FF1.grid2Mollweide;
-% subplot(3,1,2)
-% FF1.plot('plotType','2D','outputType','mag','scaleMag',scaleMag,'step',1,'showGrid',true,'dynamicRange_dB',30)
-% title('RA-dec Directivity')
-% 
-% FF2 = FF1.grid2GalLongLat;
-% subplot(3,1,3)
-% FF2.plot('plotType','2D','outputType','mag','scaleMag',scaleMag,'step',1,'showGrid',true,'dynamicRange_dB',30)
-% title('Gal. Lat-Long Directivity')
+FF1 = FF.grid2RAdec;
+% FF1 = FF1.grid2Mollweide;
+subplot(3,1,2)
+FF1.plot('plotType','2D','outputType','mag','scaleMag',scaleMag,'step',1,'showGrid',true,'dynamicRange_dB',30)
+title('RA-dec Directivity')
+
+FF2 = FF1.grid2GalLongLat;
+subplot(3,1,3)
+FF2.plot('plotType','2D','outputType','mag','scaleMag',scaleMag,'step',1,'showGrid',true,'dynamicRange_dB',30)
+title('Gal. Lat-Long Directivity')
 
 % %% test PhTh-to-AzAlt-to-PhTh grid conversion accuracy
 % FFa = FF.grid2AzAlt;
