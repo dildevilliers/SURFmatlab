@@ -159,7 +159,7 @@ if numel(removePoints) > 0
 end
 
 % Build the interpolant on the base grid at the valid angles
-if obj.isGridUniform && 0
+if obj.isGridUniform
 try
     NyVal = length(unique(yVal));
     NxVal = length(unique(xVal));

@@ -897,7 +897,7 @@ classdef FarField
             for ff = 1:obj1.Nf
                 E1grid(:,ff) = interpolateGrid(obj1,'E1',xi,yi,ff,hem);
                 E2grid(:,ff) = interpolateGrid(obj1,'E2',xi,yi,ff,hem);
-                E3grid(:,ff) = interpolateGrid(obj1,'E3',xi,yi,ff,hem);
+%                 E3grid(:,ff) = interpolateGrid(obj1,'E3',xi,yi,ff,hem);
             end
             % Remove the extra phase introduced by the interpolateGrid
             % function - this just keeps the real/imag and phase field
@@ -963,14 +963,24 @@ classdef FarField
         %% Phase centre/shifts/rotations of the field
         [Z, Delta, delta0, eta_pd] = phaseCentreKildal(FF,pol,th_M)
 
-        function obj = rotate(obj1,rotHandle,rotAng)
+        function obj = rotate(obj1,rotHandle,rotAng,onlyRotPowerPattern)
             % General rotation function for FarField objects
             % rotHandle is the function handle for the type of rotation:
             %   rotx3Dsph, roty3Dsph, rotz3Dsph, rotGRASPsph, rotEulersph
             % rotAng is the associated angle in rad. Scalar for rotations
             % around an axis, and [3x1] for GRASP or Euler rotations
+            % 
+            % onlyRotPowerPattern is an optional argument which speeds up
+            % the method in the case where only the rotated power pattern
+            % is of interest.  The field values will be arbitrary, bu the
+            % power pattern (directivity etc.) will be correct.  Used often
+            % for noise temeperature calculations.
             
-            % THis will probably depent on the pattern type which one is
+            if nargin < 4
+                onlyRotPowerPattern = false;
+            end
+            
+            % This will probably depent on the pattern type which one is
             % best.  Only have spherical and Ludwig 3 implemented for now,
             % so hard-coded.
             baseCoorType = 'Ludwig3';
@@ -1008,8 +1018,10 @@ classdef FarField
 %             end
 
             % Get the grid step sizes from the original
-            stepx = (max(FFsph.x) - min(FFsph.x))./(FFsph.Nx-1);
-            stepy = (max(FFsph.y) - min(FFsph.y))./(FFsph.Ny-1);
+%             stepx = (max(FFsph.x) - min(FFsph.x))./(FFsph.Nx-1);
+%             stepy = (max(FFsph.y) - min(FFsph.y))./(FFsph.Ny-1);
+            stepx = (max(FFsph.ph) - min(FFsph.ph))./(FFsph.Nx-1);
+            stepy = (max(FFsph.th) - min(FFsph.th))./(FFsph.Ny-1);
             stepDeg = rad2deg([stepx,stepy]);
             xmin = min(FFsph.x);
             xmax = max(FFsph.x);
@@ -1070,7 +1082,24 @@ classdef FarField
             % since all transformations operate from the base grid
             FFsph = FFsph.sortGrid;
             FFsph = FFsph.setBase;
-            FFsph = FFsph.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
+            if onlyRotPowerPattern
+                % Build the new grid
+                Nxi = round((xmax - xmin)/stepx) + 1;
+                Nyi = round((ymax - ymin)/stepy) + 1;
+                xivect = linspace(xmin,xmax,Nxi);
+                yivect = linspace(ymin,ymax,Nyi);
+                [Xi,Yi] = meshgrid(xivect,yivect);
+                xi = Xi(:);
+                yi = Yi(:);
+                % Interpolate the fields
+                [Ugrid] = deal(zeros(Nxi*Nyi,obj1.Nf));
+                for ff = 1:obj1.Nf
+                    Ugrid(:,ff) = interpolateGrid(FFsph,'U',xi,yi,ff,'top');
+                end
+                FFsph = FarField.farFieldFromPowerPattern(xi,yi,Ugrid,FFsph.freq,'linearY',FFsph.freqUnit);
+            else
+                FFsph = FFsph.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
+            end
             % Reset the grid and coordinate system, and reset the base back
             % in the original format
             obj = transformTypes(FFsph, obj1);

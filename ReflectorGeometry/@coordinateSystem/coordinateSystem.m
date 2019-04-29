@@ -167,7 +167,6 @@ classdef coordinateSystem
        function [angGRASP] = getGRASPangBetweenCoors(coor1,coor0)
            % Returns the GRASP angles (in rad) required to rotate from
            % coor0 to coor1.  That is coor1 = coor0.rotGRASP([th,ph,ps])
-           % Get the required angles to rotate back to the GC
            % See the GRASP technical description for details on the
            % definitions
            % coor0 corresponds to xyz
@@ -199,7 +198,9 @@ classdef coordinateSystem
            ph = angBetweenVectors(x,x_ph);
            % Sort out the sign of ph - compare to the z-axis direction
            phSign = sign(dot(cross(x,x_ph),z));
-           ph = ph*phSign;
+           if phSign ~= 0
+               ph = ph*phSign;
+           end
            
            % Rotate the system to get to the intermediate coordinate system
            % xyz_prime
@@ -207,9 +208,11 @@ classdef coordinateSystem
            xp = coorPrime.x_axis;
            % Calculate psi
            ps = angBetweenVectors(xp,x1);
-           % Sort out the sign of ph - compare to the z1-axis direction
+           % Sort out the sign of ps - compare to the z1-axis direction
            psSign = sign(dot(cross(xp,x1),z1));
-           ps = ps*psSign;
+           if psSign ~= 0
+               ps = ps*psSign;
+           end
            angGRASP = [th,ph,ps];
        end
        
