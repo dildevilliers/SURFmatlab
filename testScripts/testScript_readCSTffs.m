@@ -10,7 +10,7 @@
 
 
 % Create FarField obj
-pathName = 'UserInput.ffs';
+pathName = 'CircWG_origin';
 
 FF = FarField.readCSTffs(pathName);
 

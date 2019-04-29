@@ -1,26 +1,25 @@
 # ToDo list for new code
 
 ## @Farfield
+- [ ] readMeasurements
+- [ ] Check readGRASPgrd. Not sure of E1 and E2 order for all cases. Preallocate the matrices for speed like in readGRASPcut
+- [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
 - [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
 - [ ] readFITS (DdV)
-- [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
-- [ ] Rename coorSys to coorType to avoid confusion with coordinateSystem class
 - [ ] CBFP expansion (Fahmi)
 - [ ] SWE of a given field (Fahmi + Brandt)
 - [ ] Multiple frequency concat
 - [ ] Typical pattern parameters calculator: SLL, XP, Beamwidth, etc.
 - [ ] writeCSTffs
 - [ ] writeFEKOfft
-- [ ] writeGRASPcut
 - [ ] Test the sym/pos and 180/360 plotting order rules.  Should be X and then Y shifts always - force this in the code somehow.
 - [ ] Fix AzEl and ElAz poles in getELudwig2EA and getELudwig2AE: should not be 0
 - [ ] Array pattern adder
 - [ ] plot on a spherical surface
 - [ ] Fix 3D plot for negative y-(th)axis cases
-- [ ] readMeasurements
 - [ ] Jones getter
 - [ ] Jones plotter (fix up)
 - [ ] Stokes getter
@@ -50,12 +49,16 @@
 - [x] Conjugate fields overload
 - [x] Shift field in 3D space - phase change
 - [x] Made a FarField.rms function to check RMS field values over angle/freq
+- [x] readGRASPcut (DdV)
+- [x] writeGRASPcut
+- [x] setFreq should not be private. Use to set both freq and freqHz, with varargin for backwards compatibility.
+- [x] Rename coorSys to coorType to avoid confusion with coordinateSystem class
+- [x] Move all parameters to setAccess private, and make setters as required
 
 
 # ReflectorGeometry
 ## General (class not assigned yet)
 - [ ] Change all class names to be Capital letter first 
-- [ ] Aperture efficiency calculator
 - [ ] Antenna temperature calculator
 - [ ] include a feed picture for plotting
 - [ ] include a detail level selector in the plotting of single/dualReflector classes. Level 1 only dish, 2 rays, 3 points, etc.
@@ -68,6 +71,10 @@
 - [x] add offsetParaboloid class (William)
 - [x] add symmetrical Gregorian/Cassegrain class
 - [x] add offset Gregorian/Cassegrain class
+- [x] Aperture efficiency calculator
+
+## coordinateSystem
+- [x] make x_axis and y_axis private SetAccess properties 
 
 ## @reflector
 - [ ] Calculate actual area (William)

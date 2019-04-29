@@ -99,17 +99,36 @@ xVal = obj.x(valAng);
 yVal = obj.y(valAng);
 zVal = Z(valAng);
 
+edgeAngExtent_deg = 16;
 % Extend grid past -180 and +180 for interpolation across the axis
 if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz')
     tol = deg2rad(2); % Check for points close to the edges in azimuth
     if abs(min(xVal) + pi) < tol && abs(max(xVal) - pi) < tol 
-        edgeAngDeg = 164;
+        edgeAngDeg = 180 - edgeAngExtent_deg;
         iNeg = find(xVal > deg2rad(edgeAngDeg));
         iPos = find(xVal < deg2rad(-edgeAngDeg));
         xVal = [xVal(iNeg)-2*pi;xVal;xVal(iPos)+2*pi];
         yVal = [yVal(iNeg);yVal;yVal(iPos)];
         zVal = [zVal(iNeg);zVal;zVal(iPos)];
     end
+%     % Also extend the y-axis
+%     if abs(min(yVal) - 0) < tol
+%         edgeAngDeg = edgeAngExtent_deg;
+%         iNeg = find(xVal < 0 & yVal < deg2rad(edgeAngDeg));
+%         iPos = find(xVal > 0 & yVal < deg2rad(edgeAngDeg));
+%         xVal = [xVal;xVal(iNeg)+pi;xVal(iPos)-pi];
+%         yVal = [yVal;-yVal(iNeg);-yVal(iPos)];
+%         zVal = [zVal;zVal(iNeg);zVal(iPos)];
+%     end
+%     if abs(max(yVal) - pi) < tol
+%         edgeAngDeg = 180 - edgeAngExtent_deg;
+%         iNeg = find(xVal < 0 & yVal > deg2rad(edgeAngDeg));
+%         iPos = find(xVal > 0 & yVal > deg2rad(edgeAngDeg));
+%         xVal = [xVal;xVal(iNeg)+pi;xVal(iPos)-pi];
+%         yVal = [yVal;2*pi-yVal(iNeg);2*pi-yVal(iPos)];
+%         zVal = [zVal;zVal(iNeg);zVal(iPos)];
+%     end
+    
 end
 
 % Remove duplicate differing values completely from the set - interpolate
