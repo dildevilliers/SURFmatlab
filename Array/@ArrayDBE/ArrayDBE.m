@@ -71,9 +71,12 @@ classdef ArrayDBE
             xlabel('Frequency [Hz]')
         end
         
-        function plotScanBeam(obj,freqRF,th,ph,x)
+        function plotScanBeam(obj,freqRF,th,ph,x,calVect)
             % Much to do here - this is a skelaton
-            P = scanBeam(obj,freqRF,th,ph,x);
+            if nargin < 6
+                calVect = 1;
+            end
+            P = scanBeam(obj,freqRF,th,ph,x,calVect);
             plot(rad2deg(th),P), grid on
             xlabel('\theta^\circ')
         end
