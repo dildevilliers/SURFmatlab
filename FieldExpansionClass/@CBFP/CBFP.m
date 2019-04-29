@@ -154,7 +154,7 @@ classdef CBFP < FarFieldExpansion
                     freq = 1;
                     Prad = ones(size(freq)).*4*pi;
                     radEff = ones(size(freq));
-                    coorSys = FFobj.coorSys;
+                    coorType = FFobj.coorType;
                     polType = FFobj.polType;
                     gridType = FFobj.gridType;
                     freqUnit = FFobj.freqUnit;
@@ -165,7 +165,7 @@ classdef CBFP < FarFieldExpansion
                         basis_E2 = Umat(Nang+1:end,ii);
                         basis_E3 = ones([Nang,1]);
                         
-                        FFbasis = FarField(x,y,basis_E1,basis_E2,basis_E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
+                        FFbasis = FarField(x,y,basis_E1,basis_E2,basis_E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit);
                         
                         basis{1,ii} = FFbasis;
                     end
@@ -242,7 +242,7 @@ classdef CBFP < FarFieldExpansion
                         freq = 1;
                         Prad = ones(size(freq)).*4*pi;
                         radEff = ones(size(freq));
-                        coorSys = FFobj(1,1).coorSys;
+                        coorType = FFobj(1,1).coorType;
                         polType = FFobj(1,1).polType;
                         gridType = FFobj(1,1).gridType;
                         freqUnit = FFobj(1,1).freqUnit;
@@ -253,7 +253,7 @@ classdef CBFP < FarFieldExpansion
                             basis_E2 = Umat(Nang+1:end,ii);
                             basis_E3 = ones([Nang,1]);
                             
-                            FFbasis = FarField(x,y,basis_E1,basis_E2,basis_E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
+                            FFbasis = FarField(x,y,basis_E1,basis_E2,basis_E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit);
                             
                             basis{1,ii} = FFbasis;
                         end
@@ -327,7 +327,7 @@ classdef CBFP < FarFieldExpansion
                             freq = FFobj(1,1).freqHz(1,ii);
                             Prad = ones(size(freq)).*4*pi;
                             radEff = ones(size(freq));
-                            coorSys = FFobj(1,1).coorSys;
+                            coorType = FFobj(1,1).coorType;
                             polType = FFobj(1,1).polType;
                             gridType = FFobj(1,1).gridType;
                             freqUnit = FFobj(1,1).freqUnit;
@@ -338,7 +338,7 @@ classdef CBFP < FarFieldExpansion
                                 basis_E2 = URs(Nang+1:end,kk);
                                 basis_E3 = ones([Nang,1]);
                                 
-                                FFbasis = FarField(x,y,basis_E1,basis_E2,basis_E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
+                                FFbasis = FarField(x,y,basis_E1,basis_E2,basis_E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit);
                                 
                                 basis{c,kk} = FFbasis;
                             end
@@ -706,12 +706,12 @@ classdef CBFP < FarFieldExpansion
                         
                         Prad = ones([1,nCoeffs]).*4*pi;
                         radEff = ones([1,nCoeffs]);
-                        coorSys = basisFn.coorSys;
+                        coorType = basisFn.coorType;
                         polType = basisFn.polType;
                         gridType = basisFn.gridType;
                         freqUnit = basisFn.freqUnit;
 
-                        FFobj(1,ii) = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
+                        FFobj(1,ii) = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit);
                     end
                 case 2
                     % Frequency treated as a parameter
@@ -739,7 +739,7 @@ classdef CBFP < FarFieldExpansion
                         freq = 1;
                         Prad = 4*pi;
                         radEff = 1;
-                        coorSys = basisFn.coorSys;
+                        coorType = basisFn.coorType;
                         polType = basisFn.polType;
                         gridType = basisFn.gridType;
                         freqUnit = basisFn.freqUnit;
@@ -747,7 +747,7 @@ classdef CBFP < FarFieldExpansion
                         E1 = FF(1:Nang,:);
                         E2 = FF(Nang+1:end,:);
                         E3 = zeros(size(E1));
-                        FFobj(1,ii) = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
+                        FFobj(1,ii) = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit);
                     end
                 case 3
                     % Geometric variation per freq
@@ -786,7 +786,7 @@ classdef CBFP < FarFieldExpansion
                         Prad = 4*pi*ones(1,length(range_f));
                         radEff = 1*ones(1,length(range_f));
                         freq = CBFPobj.freqRange(1,range_f);
-                        coorSys = CBFPobj.basis{1,1}.coorSys;
+                        coorType = CBFPobj.basis{1,1}.coorType;
                         polType = CBFPobj.basis{1,1}.polType;
                         gridType = CBFPobj.basis{1,1}.gridType;
                         freqUnit = CBFPobj.basis{1,1}.freqUnit;
@@ -794,7 +794,7 @@ classdef CBFP < FarFieldExpansion
                         E1(:,:) = FF(1:Nang,:);
                         E2(:,:) = FF(Nang+1:end,:);
                         E3 = zeros(size(E1));
-                        FFobj(1,ii) = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
+                        FFobj(1,ii) = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit);
                     end
             end
         end

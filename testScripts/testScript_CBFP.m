@@ -75,10 +75,13 @@ plotObj = basisFn1;
 plotObj.plot('output','Directivity','outputType','mag','plotType','cartesian','scaleMag','dB','norm',1,...
     'step',1,'dynamicRange_dB',50,'freqIndex',1,'cutValue',0)
 
+% PlotPrincipleCuts
+plotObj.plotPrincipleCuts('dynamicRange_dB',40,'plotType','cartesian','output','Directivity');
+
 % 2D plot
-figure()
+figure
 plotObj.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',40);
 
 % 3D plot
-figure()
+figure
 plotObj.plot;

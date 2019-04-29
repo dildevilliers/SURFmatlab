@@ -97,12 +97,12 @@ E2 = Eph;
 E3 = zeros(size(E1));
 
 radEff = Prad./Pacc;
-coorSys = 'spherical';
+coorType = 'spherical';
 polType = 'linear';
 gridType = 'PhTh';
 freqUnit = 'Hz';
 
 
-FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
+FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit);
 
 end
