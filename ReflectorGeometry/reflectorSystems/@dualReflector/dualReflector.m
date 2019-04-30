@@ -522,6 +522,8 @@ classdef dualReflector
             end
         end
         
+        exportDualReflectorToTOR(obj,fullpathName,freqValGhz,prefixName)
+        
         function plotRayTrace(obj,Nray,Nrefl)
             if nargin == 1
                 Nray = 21;
