@@ -2,6 +2,7 @@
 
 ## @Farfield
 - [ ] readMeasurements
+- [ ] Make several example patterns using simple dipoles
 - [ ] Check readGRASPgrd. Not sure of E1 and E2 order for all cases. Preallocate the matrices for speed like in readGRASPcut
 - [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
@@ -54,6 +55,8 @@
 - [x] setFreq should not be private. Use to set both freq and freqHz, with varargin for backwards compatibility.
 - [x] Rename coorSys to coorType to avoid confusion with coordinateSystem class
 - [x] Move all parameters to setAccess private, and make setters as required
+- [x] Fix default power in pattern Prad to do the integration if nothing is provided and a full sphere pattern is available
+- [x] Make E3 empty for all cases to save memory. It can be used by the SWE in special cases
 
 
 # ReflectorGeometry

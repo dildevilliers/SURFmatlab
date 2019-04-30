@@ -55,8 +55,7 @@ switch fieldPol
 end
         
 %% Build the object
-E3 = zeros(size(E1)); %farfields will never have a radial field component...
-
+E3 = [];
 Prad = ones(1,Nf); % Dummy for the constructor
 radEff = ones(size(freq));
 
