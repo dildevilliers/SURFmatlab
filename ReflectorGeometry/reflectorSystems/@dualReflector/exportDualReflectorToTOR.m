@@ -47,7 +47,7 @@ writeCoorSysGraspAngles2TOR(fileID,feedCoorName, obj.feedCoor.origin.x,obj.feedC
 if obj.sigma == -1 %CASSEGRAIN SYSTEM.
     writeSurfaceHyperboloid2TOR(fileID,SUBreflectorSurfaceName, obj.SR.surface.vertexDistance,obj.SR.surface.fociDistance);
 elseif obj.sigma == 1 %GREGORIAN SYSTEM.
-    writeSurfaceEllipsoid2TOR(fileID,SUBreflectorSurfaceName, obj.SR.surface.vertexDistance,obj.SR.surface.fociDistance,obj.SR.surface.rotAng);
+    writeSurfaceEllipsoid2TOR(fileID,SUBreflectorSurfaceName, obj.SR.surface.vertexDistance,obj.SR.surface.fociDistance,rad2deg(obj.SR.surface.rotAng));
 end
 writeRimElliptical2TOR(fileID,SUBreflectorRimName,obj.SR.rim.centre(1),obj.SR.rim.centre(2),obj.SR.rim.halfAxis(1),obj.SR.rim.halfAxis(2),obj.SR.rim.rotation);
 writeReflector2TOR(fileID,SUBreflectorName, SUBreflectorCoorName, SUBreflectorSurfaceName, SUBreflectorRimName);
