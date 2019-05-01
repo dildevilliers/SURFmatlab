@@ -1,7 +1,7 @@
 close all
 clear all
 
-exNumber = 1;
+exNumber = 0;
 
 th_ext = deg2rad(20);
 symFact_ext = 1;
@@ -123,11 +123,11 @@ DR.plot
 % plot([Pz1(1),Pz2(1)],[Pz1(3),Pz2(3)],'r')
 
 %%
-figure
-DR.plotRayTrace
+% figure
+% DR.plotRayTrace
 pathLengthStruct = DR.getPathLength
 [phPRmask,thPRmask] = meshgrid(linspace(0,2*pi,101),linspace(0,pi,101));
-[FFM,MaskPointing,M] = DR.getMask([phPRmask(:),thPRmask(:)],'SR');
+[FFM,MaskPointing,M] = DR.getMask([phPRmask(:),thPRmask(:)],'PR');
 
 figure
 FFM = FFM.grid2TrueView;

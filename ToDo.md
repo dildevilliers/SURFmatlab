@@ -1,13 +1,16 @@
 # ToDo list for new code
 
 ## @Farfield
+- [ ] Speed up mirrorSymmetricPattern. Might require custom implementations of all grid types. Start with spherical though!
 - [ ] readMeasurements
 - [ ] Make several example patterns using simple dipoles
 - [ ] Check readGRASPgrd. Not sure of E1 and E2 order for all cases. Preallocate the matrices for speed like in readGRASPcut
 - [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
-- [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
+- [ ] Make BOR0 symmetry functionality
+- [ ] Rework FarFieldFromPower pattern workflow:  Can use BOR1 and (new) BOR0 functions here to shorten the code. Merge powerPattern in, or move to reflectorAnalysis.
+- [ ] 2/3D plots should automatically expand BOR0/1 symmetry fields before plotting
 - [ ] readFITS (DdV)
 - [ ] Overlap integral calculator (DdV)
 - [ ] CBFP expansion (Fahmi)

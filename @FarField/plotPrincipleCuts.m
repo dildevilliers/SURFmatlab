@@ -100,7 +100,11 @@ figure
 switch FF.gridType
     case{'PhTh','AzEl','ElAz'}
         % Shift the pattern onto a symmetrical grid
-        FF = currentForm2Base(FF,step);
+        if ~FF.isGridUniform
+            FF = currentForm2Base(FF,step);
+        else
+            FF = FF.reset2Base;
+        end
         FF = FF.setXrange('sym');
         FF = FF.setYrange(360);
         xVal1 = 0;

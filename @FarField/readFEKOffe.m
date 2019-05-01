@@ -106,7 +106,7 @@ y = th(:,1);
 
 E1 = Eth;
 E2 = Eph;
-E3 = zeros(size(E1)); %.ffe files will never have a radial field component...
+E3 = []; %.ffe files will never have a radial field component...
 
 coorSys = lower(coorSys); %coordinate system string fetched from header text of .ffe file
 polType = 'linear'; %It seems that FEKO always outputs linear polarised fields (corresponding to th-ph coordinates)

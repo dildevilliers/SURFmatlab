@@ -375,7 +375,7 @@ classdef dualReflector
         end
         
         function [FFM_F,MaskPointing,Mint] = getMask(obj,A,refl)
-            % Returns the reflector mask (for the PR) as a FarField
+            % Returns the reflector mask (for the surface specified by refl) as a FarField
             % object. Also returns a matrix of pointing directions, as 
             % coordinate system objects, of the final rays after reflection 
             % through the whole system. These can be used to assign

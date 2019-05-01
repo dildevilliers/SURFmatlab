@@ -46,6 +46,9 @@ classdef FarField
         radEff_dB
         xRangeType     % 'sym' or 'pos'
         yRangeType     % '180' or '360'
+        symXZ
+        symYZ
+        symXY
     end
     
     properties (SetAccess = private, Hidden = true)
@@ -63,9 +66,6 @@ classdef FarField
         E3Base
         coorTypeBase
         polTypeBase
-        symXZ = 0
-        symYZ = 0
-        symXY = 0
     end
     
     properties (Constant = true, Hidden = true)
@@ -294,6 +294,39 @@ classdef FarField
             [~,yRangeType] = setRangeTypes(obj);
         end
 
+        function symXZ = get.symXZ(obj)
+            switch obj.symmetryXZ
+                case 'none'
+                    symXZ = 0;
+                case 'electric'
+                    symXZ = -1;
+                case 'magnetic'
+                    symXZ = 1;
+            end
+        end
+        
+        function symYZ = get.symYZ(obj)
+            switch obj.symmetryYZ
+                case 'none'
+                    symYZ = 0;
+                case 'electric'
+                    symYZ = -1;
+                case 'magnetic'
+                    symYZ = 1;
+            end
+        end
+        
+        function symXY = get.symXY(obj)
+            switch obj.symmetryXY
+                case 'none'
+                    symXY = 0;
+                case 'electric'
+                    symXY = -1;
+                case 'magnetic'
+                    symXY = 1;
+            end
+        end
+        
         function obj = setFreq(obj,freq,freqUnit)
             if nargin > 1
                 assert(numel(freq) == size(obj.E1,2),'Error, freq must be the same length as the number of columns in E1')
@@ -328,7 +361,11 @@ classdef FarField
             FFfact = exp(-1i.*k.*obj.r)./obj.r;
             E1field = bsxfun(@times,obj.E1,FFfact);
             E2field = bsxfun(@times,obj.E2,FFfact);
-            E3field = bsxfun(@times,obj.E3,FFfact);
+            if ~isempty(obj.E3)
+                E3field = bsxfun(@times,obj.E3,FFfact);
+            else
+                E3field = [];
+            end
         end
         
         function [W] = getW(obj)
@@ -500,6 +537,7 @@ classdef FarField
             obj.E2 = obj.E2(iSort,:);
             if ~isempty(obj.E3), obj.E3 = obj.E3(iSort,:); end
         end
+        
         
         function obj = roundGrid(obj,nSigDig)
             % Round to some significant digits for sorting (some issues can
@@ -1106,6 +1144,15 @@ classdef FarField
             % Reset the grid and coordinate system, and reset the base back
             % in the original format
             obj = transformTypes(FFsph, obj1);
+            % Recall symmetries - only set the symmetries if they are still
+            % valid after rotation
+            tol = 10^(-obj.nSigDig);
+            YZsym = abs((abs(dot(C0.x_axis,Crot.x_axis)) - 1)) < tol;
+            XZsym = abs((abs(dot(C0.y_axis,Crot.y_axis)) - 1)) < tol;
+            XYsym = abs((abs(dot(C0.z_axis,Crot.z_axis)) - 1)) < tol;
+            if YZsym, obj = obj.setSymmetryYZ(obj1.symmetryYZ); end
+            if XZsym, obj = obj.setSymmetryXZ(obj1.symmetryXZ); end
+            if XYsym, obj = obj.setSymmetryXY(obj1.symmetryXY); end
             obj = obj.setXrange(obj1.xRangeType);
             obj = obj.currentForm2Base();
         end
@@ -1324,45 +1371,32 @@ classdef FarField
         
         %% Symmetry handlers
         function obj = setSymmetryXZ(obj,symmetryType)
-            % Test if the input range is valid
-            tol = 10^(-obj.nSigDig);
-            % Easy to check in TrueView
-            obj1 = obj.grid2TrueView;
-            assert(all(sign(obj1.y+tol) > 0) || all(sign(obj1.y-tol) < 0),'Invalid range for XZ symmetry')
-            obj.symmetryXZ = symmetryType;
-            switch symmetryType
-                case 'none'
-                    obj.symXZ = 0;
-                case 'electric'
-                    obj.symXZ = -1;
-                case 'magnetic'
-                    obj.symXZ = 1;
-                otherwise
-                    error(['Unknown symmetry setting: ',symmetryType])
+            mustBeMember(symmetryType,{'none','electric','magnetic'})
+            if ~strcmp(symmetryType,'none')
+                % Test if the input range is valid
+                tol = 10^(-obj.nSigDig);
+                % Easy to check in TrueView
+                obj1 = obj.grid2TrueView;
+                assert(all(sign(obj1.y+tol) > 0) || all(sign(obj1.y-tol) < 0),'Invalid range for XZ symmetry')
             end
+            obj.symmetryXZ = symmetryType;
         end
         
         function obj = setSymmetryYZ(obj,symmetryType)
-            % Test if the input range is valid
-            tol = 10^(-obj.nSigDig);
-            % Easy to check in TrueView
-            obj1 = obj.grid2TrueView;
-            assert(all(sign(obj1.x+tol) > 0) || all(sign(obj1.x-tol) < 0),'Invalid range for YZ symmetry')
-            obj.symmetryYZ = symmetryType;
-            switch symmetryType
-                case 'none'
-                    obj.symYZ = 0;
-                case 'electric'
-                    obj.symYZ = -1;
-                case 'magnetic'
-                    obj.symYZ = 1;
-                otherwise
-                    error(['Unknown symmetry setting: ',symmetryType])
+            mustBeMember(symmetryType,{'none','electric','magnetic'})
+            if ~strcmp(symmetryType,'none')
+                % Test if the input range is valid
+                tol = 10^(-obj.nSigDig);
+                % Easy to check in TrueView
+                obj1 = obj.grid2TrueView;
+                assert(all(sign(obj1.x+tol) > 0) || all(sign(obj1.x-tol) < 0),'Invalid range for YZ symmetry')
             end
+            obj.symmetryYZ = symmetryType;
         end
         
         function obj = setSymmetryXY(obj,symmetryType)
-           warning('function: setSymmetryXY not implemented yet - unchanged object returned'); 
+            mustBeMember(symmetryType,{'none','electric','magnetic'})
+%             warning('function: setSymmetryXY not implemented yet - unchanged object returned');
         end
         
         function obj = mirrorSymmetricPattern(obj1)
@@ -1543,7 +1577,7 @@ classdef FarField
                 xEqual = abs(obj1.x - obj2.x) < tol;
                 yEqual = abs(obj1.y - obj2.y) < tol;
                 gridEqual = strcmp(obj1.gridType,obj2.gridType);
-                fEqual = isequal(obj1.freq,obj2.freq);
+                fEqual = isequal(obj1.freqHz,obj2.freqHz);
                 y = all(xEqual) && all(yEqual) && gridEqual && fEqual;
             else
                 y = 0;
@@ -1703,7 +1737,7 @@ classdef FarField
             % sensible inputs are provided most of the time.
             xRangeType = 'sym';
             if (strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz'))
-                if min(obj.x) >= 0
+                if min(obj.x) >= 0 && obj.symXZ == 0
                     xRangeType = 'pos';
                 end
                 if max(obj.y) - min(obj.y) <= pi+median(diff(unique(obj.y)))/2
