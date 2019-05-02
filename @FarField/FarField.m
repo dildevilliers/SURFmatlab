@@ -6,7 +6,7 @@ classdef FarField
     % all directional polarization types.
     
     properties
-        r(1,1) double {mustBeReal, mustBeFinite} = 1    % Radius very E-field is evaluated in (m)
+        r(1,1) double {mustBeReal, mustBeFinite} = 1    % Radius where E-field is evaluated in (m)
         Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
         slant(1,1) double {mustBeReal, mustBeFinite} = pi/4   % slant angle in radians - measured between Exp and E1
@@ -18,7 +18,6 @@ classdef FarField
         y(:,1) double {mustBeReal, mustBeFinite}
         E1(:,:) double %{mustBeFinite}
         E2(:,:) double %{mustBeFinite}
-        E3(:,:) double %{mustBeFinite}
         freq(1,:) double {mustBeReal, mustBeFinite} = 1
         coorType(1,:) char {mustBeMember(coorType,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
         polType(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
@@ -46,14 +45,18 @@ classdef FarField
         radEff_dB
         xRangeType     % 'sym' or 'pos'
         yRangeType     % '180' or '360'
+    end
+    
+    properties (Dependent = true, Hidden = true)
         symXZ
         symYZ
         symXY
     end
     
     properties (SetAccess = private, Hidden = true)
+        E3(:,:) double %{mustBeFinite}
         % Keep the input data here to not lose some info when going through
-        % a DirCos projection and back...
+        % transformations and back...
         xBase
         yBase
         phBase
