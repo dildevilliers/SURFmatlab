@@ -43,7 +43,6 @@ classdef coordinateSystem
                error('x_axis and y_axis must be orthogonal');
            end
            % Set the z-axis direction
-%            obj = obj.setZaxis;
            % Normalise the unit vectors
            obj = obj.normAxis;
        end
@@ -53,7 +52,7 @@ classdef coordinateSystem
        end
        
        function obj = set2Base(obj)
-           if class(obj.base) == 'coordinateSystem'
+           if isa(obj.base,'coordinateSystem')
                obj = obj.base;
            end
        end
@@ -66,20 +65,20 @@ classdef coordinateSystem
        %% Rotation
        function obj = rotX(obj,angleRadians)
            % Rotate around global x-axis
-           obj.x_axis = rotx3D(obj.x_axis,angleRadians);
-           obj.y_axis = rotx3D(obj.y_axis,angleRadians);
+           obj.x_axis = rotx(obj.x_axis,angleRadians);
+           obj.y_axis = rotx(obj.y_axis,angleRadians);
        end
        
        function obj = rotY(obj,angleRadians)
            % Rotate around global y-axis
-           obj.x_axis = roty3D(obj.x_axis,angleRadians);
-           obj.y_axis = roty3D(obj.y_axis,angleRadians);
+           obj.x_axis = roty(obj.x_axis,angleRadians);
+           obj.y_axis = roty(obj.y_axis,angleRadians);
        end
        
        function obj = rotZ(obj,angleRadians)
            % Rotate around global z-axis
-           obj.x_axis = rotz3D(obj.x_axis,angleRadians);
-           obj.y_axis = rotz3D(obj.y_axis,angleRadians);
+           obj.x_axis = rotz(obj.x_axis,angleRadians);
+           obj.y_axis = rotz(obj.y_axis,angleRadians);
        end
        
        function obj = rotGRASP(obj,angGRASP)

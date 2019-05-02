@@ -1,6 +1,7 @@
 # ToDo list for new code
 
 ## @Farfield
+- [ ] Make symmetry settings part of the constructor, and remove the set options (maybe?). Also in FarFieldFromPowerPattern. 
 - [ ] Speed up mirrorSymmetricPattern. Might require custom implementations of all grid types. Start with spherical though!
 - [ ] readMeasurements
 - [ ] Make several example patterns using simple dipoles
