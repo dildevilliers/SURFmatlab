@@ -127,7 +127,7 @@ classdef ArraySystem
              xi = obj.adc.ADC(real(sn));
              if Qtype == 0
                  xq = obj.adc.ADC(imag(sn));
-             elseif isfloat(Qtype)
+             elseif isinteger(Qtype)
                  xq = circshift(xi,Qtype,2);
              elseif isinf(Qtype)
                  xq = hilbert(xi);

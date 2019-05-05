@@ -183,13 +183,16 @@ if Nredun > 0
     objNew.y(iout(1:Nredun)) = [];
     objNew.E1(iout(1:Nredun),:) = [];
     objNew.E2(iout(1:Nredun),:) = [];
+    objNew.E3(iout(1:Nredun),:) = [];
 end
 
 % Add in new redundant points
 E1Add = obj.E1(iin,:);
 E2Add = obj.E2(iin,:);
+E3Add = obj.E3(iin,:);
 objNew.x = [objNew.x;xAdd(1:Nredun)];
 objNew.y = [objNew.y;yAdd(1:Nredun)];
 objNew.E1 = [objNew.E1;E1Add(1:Nredun,:)];
 objNew.E2 = [objNew.E2;E2Add(1:Nredun,:)];
+objNew.E3 = [objNew.E3;E3Add(1:Nredun,:)];
 end

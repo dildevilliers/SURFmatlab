@@ -31,7 +31,7 @@ form= '%*s %*s %*s %*s';
 dummy = textscan(fid, form, 1);
 
 % Read info line
-form= '%f %f %f %f %f %f %f';
+form= '%f %f %d %f %d %d %d';
 cut_info = textscan(fid, form, 1);
 V_INI = cut_info{1};
 V_INC = cut_info{2};
@@ -98,9 +98,9 @@ gridType = 'PhTh';
 %% Build the FF obj
 x = deg2rad(ph_deg);
 y = deg2rad(th_deg);
-E3ff = [];
+E3ff = zeros(size(E1ff));
 freqUnit = 'Hz';
-Prad = ones(1,nr_freq).*4*pi/(2*376.7303);
+Prad = ones(1,nr_freq).*4*pi;
 [radEff,freq] = deal(ones(1,nr_freq));
 
 FF = FarField(x,y,E1ff,E2ff,E3ff,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);

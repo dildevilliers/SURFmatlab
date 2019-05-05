@@ -39,7 +39,6 @@ classdef reflector
                 end
             end
             N = round(sqrt(Npoints));
-            N = N + mod(N,2) + 1;   % Uneven helps in symmetrical systems
             
             % Global coordinate system needed for base changes
             GC = coordinateSystem;
@@ -124,8 +123,9 @@ classdef reflector
             else
                 FF = A;
             end
-            ph_in = FF.ph;
-            th_in = FF.th;
+            FF = FF.grid2PhTh;
+            ph_in = FF.x;
+            th_in = FF.y;
             
             ph_in = ph_in(:).';
             th_in = th_in(:).';
@@ -136,35 +136,6 @@ classdef reflector
             rimPointsInCoorIn = changeBase(rimPoints,coorIn);
             ph = rimPointsInCoorIn.ph;
             th = rimPointsInCoorIn.th;
-            
-            % Interpolate around poles if they are found...
-            %             phD = diff(ph);
-            %             iJump = find(abs(phD) > 0.99*pi);
-            %             for jj = 1:length(iJump)
-            %                 if abs(th(iJump) - pi) < deg2rad(0.05) || abs(th(iJump) - 0) < deg2rad(0.05)
-            %                     phIn = interp1([iJump:iJump+1],ph(iJump:iJump+1),linspace(iJump,iJump+1));
-            %                     phNew = [ph(1:iJump),phIn,ph(iJump+1:end)];
-            %                     thIn = interp1([iJump:iJump+1],th(iJump:iJump+1),linspace(iJump,iJump+1));
-            %                     thNew = [th(1:iJump),thIn,th(iJump+1:end)];
-            %                     ph = phNew;
-            %                     th = thNew;
-            %                     phD = diff(ph);
-            %                     iJump = find(abs(phD) > 0.99*pi);
-            %                 end
-            %             end
-            
-            
-            iJump = find(abs(th - pi) < deg2rad(0.01));
-            if numel(iJump) > 0
-                phIn = interp1([iJump-1,iJump+1],[ph(iJump-1),ph(iJump+1)],linspace(iJump-1,iJump+1));
-                phNew = [ph(1:iJump-1),phIn,ph(iJump+1:end)];
-                thIn = interp1([iJump-1,iJump+1],[th(iJump-1),th(iJump+1)],linspace(iJump-1,iJump+1));
-                thNew = [th(1:iJump-1),thIn,th(iJump+1:end)];
-                ph = phNew;
-                th = thNew;
-            end
-            
-            
             % Test in the TrueView plane - should always make a closed
             % polygon unless at really specific pointings (orthogonal to rim)
             [u,v,w] = PhTh2DirCos(ph,th);
@@ -216,7 +187,7 @@ classdef reflector
             % M is the associated input ray mask
             % NpointsTest is an optional parameter which determines the
             % resolution on the reflector to test with - keep under 1000 to
-            % use to more accurate 3D scettered interpolation scheme
+            % use to more accurate 3D scettered interpolation scheme 
             
             % Just work with internal points, not the rim.  We also only
             % caulculate the nearest internal points for actual valid rays
@@ -272,7 +243,7 @@ classdef reflector
                     yInt(:,ii) = intPoints.y(IintSort);
                     zInt(:,ii) = intPoints.z(IintSort);
                 end
-                %                 pIntClosest = pnt3D(xInt(1,:),yInt(1,:),zInt(1,:));
+%                 pIntClosest = pnt3D(xInt(1,:),yInt(1,:),zInt(1,:));
                 nMean = 5; % Number of closest points to consider
                 Pintercept = pnt3D(mean(xInt(1:nMean,:)),mean(yInt(1:nMean,:)),mean(zInt(1:nMean,:)));
             end
@@ -286,13 +257,13 @@ classdef reflector
                 obj.plotMask(coorIn,[ph_out,th_out],7)
                 intPoints.plot('marker','.','markerEdgeColor','b','markerSize',5)
                 hold on
-                %                 pIntClosest.plot('marker','*','markerEdgeColor','g','markerSize',5)
+%                 pIntClosest.plot('marker','*','markerEdgeColor','g','markerSize',5)
                 Pintercept.plot('marker','*','markerEdgeColor','r','markerSize',5)
             end
         end
         
         function [interceptPnt,reflectDir,M] = reflectRays(obj,coorIn,ph_in,th_in,NpointsTest,debugPlot)
-            % Returns the point on the reflector, as well as direction of
+            % Returns the point on the reflector, as well as direction of 
             % the reflected ray, for the ray pointing in the direction
             % [ph_in,th_in].
             % ph_in and th_in can be vectors of equal length
@@ -302,7 +273,7 @@ classdef reflector
             % M is the associated input ray mask
             % NpointsTest is an optional parameter which determines the
             % resolution on the reflector to test with - keep under 1000 to
-            % use to more accurate 3D scettered interpolation scheme
+            % use to more accurate 3D scettered interpolation scheme 
             
             assert(all(size(ph_in)==size(th_in)),'ph_in and th_in should be the same size');
             if nargin < 5

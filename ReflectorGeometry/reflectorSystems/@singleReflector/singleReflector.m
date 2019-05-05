@@ -104,8 +104,6 @@ classdef singleReflector
             pathLengthStruct.FA = pathLengthStruct.FP + pathLengthStruct.PA;
         end
         
-        exportSingleReflectorToTOR(obj,fullpathName,freqValGhz,prefixName)
-        
         function [FFM_F,MaskPointing,M] = getMask(obj,A)
             % Returns the reflector mask, from feed to PR, as a FarField
             % object. Also returns a matrix of pointing directions, as 

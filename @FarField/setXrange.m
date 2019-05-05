@@ -10,13 +10,11 @@ function obj = setXrange(obj,type)
 % The resulting object has the same number
 % of field points as the input object.
 
-mustBeMember(type,{'pos','sym'})
+assert((strcmp(type,'pos') || strcmp(type,'sym')),'Unknown type: Should be pos or sym');
 if strcmp(type,'pos')
     t = 'p';
-    if strcmp(obj.xRangeType,'pos'), return; end
 elseif strcmp(type,'sym')
     t = 's';
-    if strcmp(obj.xRangeType,'sym'), return; end
 end
 % tol = 1e-10;
 tol = 10^(-obj.nSigDig);
@@ -41,6 +39,7 @@ if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.grid
     yAdd = obj.y(iin);
     E1Add = obj.E1(iin,:);
     E2Add = obj.E2(iin,:);
+    E3Add = obj.E3(iin,:);
     redunFound = Nredun > 0;
     % First remove the ph=-180 from the matrix...
     if redunFound
@@ -48,6 +47,7 @@ if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.grid
         obj.y(iout) = [];
         obj.E1(iout,:) = [];
         obj.E2(iout,:) = [];
+        obj.E3(iout,:) = [];
     end
     % Now shift the x values
     if t == 'p'
@@ -68,6 +68,7 @@ if strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.grid
         obj.y = [obj.y;yAdd(1:Nredun)];
         obj.E1 = [obj.E1;E1Add(1:Nredun,:)];
         obj.E2 = [obj.E2;E2Add(1:Nredun,:)];
+        obj.E3 = [obj.E3;E3Add(1:Nredun,:)];
     end
     % Sort
     obj = obj.sortGrid;

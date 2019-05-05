@@ -131,7 +131,7 @@ switch IGRID
         error(['IGRID ',num2str(IGRID),' case not implemented yet'])
 end
 if isempty(E3)
-    E3 = [];
+    E3 = zeros(size(E1));
 end
 % keyboard;
 Prad = ones(size(freq)).*4*pi;

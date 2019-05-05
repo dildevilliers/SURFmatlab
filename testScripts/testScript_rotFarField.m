@@ -5,8 +5,7 @@ close all
 plotDim = 2;    % Select 1, 2 or 3 for 2D or 3D plots
 grid2Dplot = 'PhTh'; % Can be DirCos, TrueView, PhTh, etc
 coorPlot = 'spherical';
-output = 'Directivity';
-onlyPower = true;
+output = 'E2';
 
 % CST like axis rotations
 rotX = deg2rad(45);
@@ -41,7 +40,7 @@ elseif plotDim == 1
 end
 
 % Rotate the field
-FFr = FF.rotate(rotHandle,rotAng,onlyPower);
+FFr = FF.rotate(rotHandle,rotAng);
 if plotDim == 3
     figure
     FFr.plot('plotType','3D','output',output)
