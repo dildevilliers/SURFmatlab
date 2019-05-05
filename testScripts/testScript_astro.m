@@ -3,7 +3,8 @@ scaleMag = 'lin';
 th = linspace(0,pi,37);
 ph = linspace(-pi,pi,73);
 [PH, TH] = meshgrid(ph,th);
-D = dipoleD(TH(:),PH(:),1e9,(3e8/1e9)/8);
+D = dipoleD(TH,PH,1e9,(3e8/1e9)/8);
+D(19:end,:) = zeros(19,73);
 FF = FarField.farFieldFromPowerPattern(PH(:),TH(:),D(:),1e9,'linearY');
 
 % FF = FarField();

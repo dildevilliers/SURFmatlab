@@ -5,13 +5,13 @@ classdef FarField
     % Currently assumes direction of propagation is the global z-axis for
     % all directional polarization types.
     
-%     properties
-%         r(1,1) double {mustBeReal, mustBeFinite} = 1    % Radius where E-field is evaluated in (m)
-%         Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
-%         radEff(1,:) double {mustBeReal, mustBeFinite} = 1
-%         slant(1,1) double {mustBeReal, mustBeFinite} = pi/4   % slant angle in radians - measured between Exp and E1
-%         freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
-%     end
+    properties
+        r(1,1) double {mustBeReal, mustBeFinite} = 1    % Radius where E-field is evaluated in (m)
+        Prad(1,:) double {mustBeReal, mustBeFinite} = 4*pi
+        radEff(1,:) double {mustBeReal, mustBeFinite} = 1
+        slant(1,1) double {mustBeReal, mustBeFinite} = pi/4   % slant angle in radians - measured between Exp and E1
+        freqUnit(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
+    end
     
     properties (SetAccess = private)
         x(:,1) double {mustBeReal, mustBeFinite}
@@ -125,13 +125,19 @@ classdef FarField
                 [Nang_y, Nf_y] = size(y);
                 [Nang_E1, Nf_E1] = size(E1);
                 [Nang_E2, Nf_E2] = size(E2);
+                if nargin < 5 || isempty(E3)
+                    E3 = [];
+                    [Nang_E3,Nf_E3] = deal(Nang_E1,Nf_E1);
+                else
+                    [Nang_E3, Nf_E3] = size(E3);
+                end
                 
-                if ~isequal(Nang_x,Nang_y,Nang_E1,Nang_E2)
+                if ~isequal(Nang_x,Nang_y,Nang_E1,Nang_E2,Nang_E3)
                     error('All inputs must have the same number of rows');
                 else
                     Nang = Nang_x;
                 end
-                if ~isequal(Nf_E1,Nf_E2)
+                if ~isequal(Nf_E1,Nf_E2,Nf_E3)
                     error('E1, E2, and E3 must have the same number of columns');
                 end
                 if Nf_x > 1 || Nf_y > 1
@@ -381,6 +387,16 @@ classdef FarField
                     symXY = -1;
                 case 'magnetic'
                     symXY = 1;
+            end
+        end
+        
+        function obj = setFreq(obj,freq,freqUnit)
+            if nargin > 1
+                assert(numel(freq) == size(obj.E1,2),'Error, freq must be the same length as the number of columns in E1')
+                obj.freq = freq;
+            end
+            if nargin > 2
+                obj.freqUnit = freqUnit;
             end
         end
         
@@ -812,6 +828,25 @@ classdef FarField
             yRound = round(obj.y*10^nSigDig)/10^nSigDig;
             obj.x = xRound;
             obj.y = yRound;
+        end
+        
+        function obj = setRangeTypes(obj)
+            % Try to figure out what the current rangeType is.
+            % Not much error checking is done - assume somewhat
+            % sensible inputs are provided most of the time.
+            obj.xRangeType = 'sym';
+            if (strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz') || strcmp(obj.gridType,'AzAlt') || strcmp(obj.gridType,'RAdec') || strcmp(obj.gridType,'GalLongLat') )
+                if min(obj.x) >= 0
+                    obj.xRangeType = 'pos';
+                end
+                if max(obj.y) - min(obj.y) <= pi+median(diff(unique(obj.y)))/2
+                    obj.yRangeType = '180';
+                else
+                    obj.yRangeType = '360';
+                end
+            else
+                obj.yRangeType = [];
+            end
         end
         
         function obj = copyAndInsertXcut(obj1,xvalCopy,xvalPaste,tol)
@@ -2079,22 +2114,22 @@ classdef FarField
             end
         end
         
-        function obj = setRangeTypes(obj)
+        function [xRangeType,yRangeType] = setRangeTypes(obj)
             % Try to figure out what the current rangeType is.
             % Not much error checking is done - assume somewhat
             % sensible inputs are provided most of the time.
-            obj.xRangeType = 'sym';
-            if (strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz') || strcmp(obj.gridType,'AzAlt') || strcmp(obj.gridType,'RAdec') || strcmp(obj.gridType,'GalLongLat') )
-                if min(obj.x) >= 0
-                    obj.xRangeType = 'pos';
+            xRangeType = 'sym';
+            if (strcmp(obj.gridType,'PhTh') || strcmp(obj.gridType,'AzEl') || strcmp(obj.gridType,'ElAz'))
+                if min(obj.x) >= 0 && obj.symXZ == 0
+                    xRangeType = 'pos';
                 end
                 if max(obj.y) - min(obj.y) <= pi+median(diff(unique(obj.y)))/2
-                    obj.yRangeType = '180';
+                    yRangeType = '180';
                 else
-                    obj.yRangeType = '360';
+                    yRangeType = '360';
                 end
             else
-                obj.yRangeType = [];
+                yRangeType = [];
             end
         end
         
