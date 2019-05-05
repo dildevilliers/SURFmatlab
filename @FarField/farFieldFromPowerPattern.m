@@ -7,7 +7,7 @@ function FF = farFieldFromPowerPattern(x,y,P,freq,fieldPol,coorSys,gridType,freq
 %Inputs:
 % --x: column vector [Nang x 1] of x-axis angular coordinates in rad
 % --y: column vector [Nang x 1] of y-axis in rad
-% --P: column vector [Nang x 1] of power pattern values (see Pout output for powerPattern.m for an example of the format) 
+% --P: column vector [Nang x Nf] of power pattern values (see Pout output for powerPattern.m for an example of the format) 
 % --freq: scalar frequency in Hz
 % --fieldPol: (optional) string denoting how far field should be polarized- options are 'linearX', 'linearY', 'circularLH', 'circularRH' 
 %Outputs:
@@ -22,7 +22,7 @@ Nf = length(freq);
 optionNames = {'fieldPol','coorSys','gridType','polType','freqUnit','slant'};
 defaultOptions = {'''linearY''','''spherical''','''PhTh''','''linear''','''Hz''','''0'''};
 for ii = 1:length(optionNames) %run through the optional inputs, check if they have been provided, and if not set them to their defaults
-    if (nargin < ii + 4)
+    if (nargin < ii + 4) || isempty(eval(optionNames{ii}))
         eval([optionNames{ii},' = ',defaultOptions{ii},';']);
     end
 end

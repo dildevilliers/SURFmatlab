@@ -22,7 +22,7 @@ function [] = plot(obj,varargin)
 % range (40)
 %
 % scaleMag can be:
-%   ('dB') | 'lin' - only used for magnitude plots
+%   ('dB') | 'lin' | 'log' - only used for magnitude plots
 %
 % scalePhase can be:
 %   ('deg') | 'rad' - only used for phase plots
@@ -76,7 +76,7 @@ addParameter(parseobj,'output','Directivity', @(x) any(validatestring(x,expected
 expectedoutputType = {'mag','phase','real','imag'};
 addParameter(parseobj,'outputType','mag', @(x) any(validatestring(x,expectedoutputType)));
 
-expectedscaleMag = {'dB','lin'};
+expectedscaleMag = {'dB','lin','log'};
 addParameter(parseobj,'scaleMag','dB', @(x) any(validatestring(x,expectedscaleMag)));
 
 expectedscalePhase = {'deg','rad'};
@@ -288,6 +288,11 @@ else    % Magnitude/Component results
         Zplot = dBHandle(Zplot);
         Ziplot = dBHandle(Ziplot);
         unit = [unit, 'dB'];
+    end
+    if strcmp(scaleMag,'log')
+        Zplot = log(Zplot);
+        Ziplot = log(Ziplot);
+        unit = [unit, ''];
     end
 end
 

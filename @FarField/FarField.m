@@ -43,9 +43,9 @@ classdef FarField
         symmetryYZ = 'none'   % Type of symmetry about the yz-plane (could be electric|none|magnetic)
         symmetryXY = 'none'   % Type of symmetry about the xy-plane (could be electric|none|magnetic)
         symmetryBOR1 = false % Is the pattern a BOR1 type pattern
-        orientation = [0 0] %antenna orientation - altitude/azimuth in radians relative to zenith/North
+        orientation = [0 pi/2] %antenna orientation - altitude/azimuth in radians relative to zenith/North
         earthLocation = [deg2rad(21.45) deg2rad(-30.71) 0]; %[deg2rad(18.866541) deg2rad(-33.928395) 0] % antenna location on the Earth longitude and latitude in radians, and height above sea level in meters - defaults to the roof of the Stellenbosch University E&E Engineering Dept. :)
-        time = datetime(year(now),3,20,12,0,0) %21, 58, 0) % time as a datetime object (used, for instance, in astronomical observation)
+        time = datetime(year(now),3,20,0,0,0) %21, 58, 0) % time as a datetime object (used, for instance, in astronomical observation)
     end
     
     properties (SetAccess = private, Hidden = true)
@@ -75,7 +75,7 @@ classdef FarField
         eta0 = 3.767303134749689e+02;
         nSigDig = 8;
         projectionGrids = {'TrueView','Arcsin','Mollweide'};
-        astroGrids = {'AzAlt','RAdec','galLongLat'};
+        astroGrids = {'AzAlt','RAdec','GalLongLat'};
     end
     
     methods
@@ -1435,7 +1435,11 @@ classdef FarField
             
             if isGridEqual(obj1,obj2)
                 P = obj1.getU.*obj2.getU;
-                FF_T = FarField.farFieldFromPowerPattern(obj1.phBase,obj1.thBase,P,obj1.freq);
+                if any(strcmp(obj1.gridType,obj1.astroGrids)) %If on an astronomical grid, perform integration in that coordinate system (az-alt type coordinates that work with slightly modified spherical integral)
+                    FF_T = FarField.farFieldFromPowerPattern(obj1.x,obj1.y,P,obj1.freq,[],[],obj.gridType);
+                else
+                    FF_T = FarField.farFieldFromPowerPattern(obj1.phBase,obj1.thBase,P,obj1.freq);
+                end
                 T = FF_T.pradInt;
             else
                 error('Can only convolve FarFields with equal base grids')
@@ -1448,6 +1452,7 @@ classdef FarField
             % full available grid
             obj = reset2Base(obj);
             symFact = 2^(sum(abs([obj.symXY,obj.symXZ,obj.symYZ])));
+%             keyboard
             assert(obj.isGridUniform,'Must have a plaid, monotonic, uniform grid for power calculation through integration');
             switch obj.gridType
                 case 'PhTh'
