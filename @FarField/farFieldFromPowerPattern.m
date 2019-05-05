@@ -1,3 +1,4 @@
+
 function FF = farFieldFromPowerPattern(x,y,P,freq,fieldPol,coorSys,gridType,freqUnit,slant)
 
 %Name: farFieldFromPowerPattern.m
@@ -10,6 +11,7 @@ function FF = farFieldFromPowerPattern(x,y,P,freq,fieldPol,coorSys,gridType,freq
 % --P: column vector [Nang x Nf] of power pattern values (see Pout output for powerPattern.m for an example of the format) 
 % --freq: scalar frequency in Hz
 % --fieldPol: (optional) string denoting how far field should be polarized- options are 'linearX', 'linearY', 'circularLH', 'circularRH' 
+% --freqUnit: (optional) string denoting the frequency unit {('Hz'),'kHz','MHz','GHz','THz'}
 %Outputs:
 % --FF: Farfield object containing parameters as determined from inputs
 
@@ -30,13 +32,15 @@ if isscalar(P)
     P = P./(4.*pi).*ones(size(x));
 end
 %From power pattern and polarization parameters, generate E1 and E2 accordingly
+coorType = 'Ludwig3';
+gridType = 'PhTh';
 switch fieldPol
     case 'linearX' % linearly polarised along X-axis 
-        coorSys = 'Ludwig3';
+        polType = 'linear';
         E1  = sqrt(P.*2*eta0);
         E2  = zeros(size(P));
     case 'linearY' % linearly polarised along Y-axis 
-        coorSys = 'Ludwig3';
+        polType = 'linear';
         E1  = zeros(size(P));
         E2  = sqrt(P.*2*eta0);
     case 'circularLH'  % Lefthand Circular polarization
@@ -52,13 +56,11 @@ switch fieldPol
 end
         
 %% Build the object
-E3 = zeros(size(E1)); %farfields will never have a radial field component...
-
+E3 = [];
 Prad = ones(1,Nf); % Dummy for the constructor
 radEff = ones(size(freq));
 
-FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
-
+FF = FarField(x,y,E1,E2,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
 FF.Prad = FF.pradInt;
 FF.Directivity_dBi = dB10(max(FF.getDirectivity()));
 FF.Gain_dB = dB10(max(FF.getGain()));

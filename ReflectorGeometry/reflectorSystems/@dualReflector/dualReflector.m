@@ -375,22 +375,27 @@ classdef dualReflector
         end
         
         function [FFM_F,MaskPointing,Mint] = getMask(obj,A,refl)
-            % Returns the reflector mask (for the PR) as a FarField
-            % object. Also returns a matrix of pointing directions, as 
+            % Returns the reflector mask (for the surface specified by refl) as a FarField
+            % object.  The 'PR' case is in the global coordinate system, and the 'SR' case in the feedCoor system.
+            % Also returns a matrix of pointing directions, as 
             % coordinate system objects, of the final rays after reflection 
             % through the whole system. These can be used to assign
             % background temperature whan calculating antenna temperature.
             % refl can be 'PR' or 'SR'
-            % Finally, the logical Mask is returned - true if being masked.
+            % Finally, the Mask is returned: 0 for not masked,
+            % 1 if masked by extension (or the main reflector) and 2 if 
+            % masked by sub-reflector not in extension.
+            %
             % A can be a matrix of [ph,th] pairs, or a FarField object.  If
             % it is a FarField object it will be converted to a PhTh grid,
             % and those angles will be used
+            
             if nargin == 1
                 A = FarField;
                 refl = 'PR';
             end
             if isa(A,'FarField')
-                freq = A.freq;
+                freq = A.freqHz;
             else
                 freq = 1;
             end
@@ -399,7 +404,7 @@ classdef dualReflector
                 case 'PR'
                     [Mint,ph_in,th_in] = obj.PR.getMask(coordinateSystem,A,0);
                     P = repmat(double(Mint(:)),1,numel(freq));
-                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq);
+                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq,'linearY','Hz');
                     % Build the pointing matrix - already at globalCoor base
                     MaskPointing(size(ph_in)) = coordinateSystem;
                     % Fix the non-masked position pointing angles - in the global
@@ -421,7 +426,8 @@ classdef dualReflector
                     % The FarField object is based on the intersected
                     % extension - all the information is here
                     P = repmat(double(Mint(:)),1,numel(freq));
-                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq);
+                    P(P>0) = 1;
+                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq,'linearY','Hz'); % Don't return the extension information here - only in the third output
                     
                     % Build the pointing matrix
                     MaskPointing(size(ph_in)) = coordinateSystem;
@@ -436,18 +442,20 @@ classdef dualReflector
                     for m0 = mask0
                         MaskPointing(m0) = MaskPointing(m0).rotGRASP([th_in(m0),ph_in(m0),0]);
                         MaskPointing(m0) = MaskPointing(m0).getInGlobal;    % Rotate to global Coor
-                        MaskPointing(m0).origin = pnt3D;    % Force to centre of global Coor
+                        MaskPointing(m0).origin = pnt3D(0,0,0);    % Force to centre of global Coor
                     end
                     % And reflect the rays pointing at the extension
                     mask1 = find(Mint == 1);
-                    % Reflection directions already in Global Coordinates
-                    [~,reflectDir] = obj.SR.reflectRays(obj.feedCoor,ph_in(mask1),th_in(mask1));
-                    ii = 0;
-                    for m1 = mask1
-                        ii = ii+1;
-                        directionPoint = pnt3D(reflectDir(1,ii),reflectDir(2,ii),reflectDir(3,ii));
-                        MaskPointing(m1) = MaskPointing(m1).rotGRASP([directionPoint.th,directionPoint.ph,0]);
-                        MaskPointing(m1).origin = pnt3D;    % Force to centre of global Coor
+                    if ~isempty(mask1)
+                        % Reflection directions already in Global Coordinates
+                        [~,reflectDir] = obj.SR.reflectRays(obj.feedCoor,ph_in(mask1),th_in(mask1));
+                        ii = 0;
+                        for m1 = mask1
+                            ii = ii+1;
+                            directionPoint = pnt3D(reflectDir(1,ii),reflectDir(2,ii),reflectDir(3,ii));
+                            MaskPointing(m1) = MaskPointing(m1).rotGRASP([directionPoint.th,directionPoint.ph,0]);
+                            MaskPointing(m1).origin = pnt3D;    % Force to centre of global Coor
+                        end
                     end
                 otherwise
                     error(['Undefined input: ', refl]);
@@ -521,6 +529,8 @@ classdef dualReflector
                 objNoExt.SR.plot(10000,[],[1,1,1].*0.2)
             end
         end
+        
+        exportDualReflectorToTOR(obj,fullpathName,freqValGhz,prefixName)
         
         function plotRayTrace(obj,Nray,Nrefl)
             if nargin == 1

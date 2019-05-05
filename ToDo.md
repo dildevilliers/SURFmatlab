@@ -1,10 +1,17 @@
 # ToDo list for new code
 
 ## @Farfield
+- [ ] Make symmetry settings part of the constructor, and remove the set options (maybe?). Also in FarFieldFromPowerPattern. 
+- [ ] Speed up mirrorSymmetricPattern. Might require custom implementations of all grid types. Start with spherical though!
+- [ ] readMeasurements
+- [ ] Make several example patterns using simple dipoles
+- [ ] Check readGRASPgrd. Not sure of E1 and E2 order for all cases. Preallocate the matrices for speed like in readGRASPcut
 - [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
-- [ ] Rework FarFieldFromPower pattern workflow.  Can use BOR1 functions here to shorten the code. Merge powerPattern in...
+- [ ] Make BOR0 symmetry functionality
+- [ ] Rework FarFieldFromPower pattern workflow:  Can use BOR1 and (new) BOR0 functions here to shorten the code. Merge powerPattern in, or move to reflectorAnalysis.
+- [ ] 2/3D plots should automatically expand BOR0/1 symmetry fields before plotting
 - [ ] readFITS (DdV)
 - [ ] readGRASPcut (DdV)
 - [ ] Overlap integral calculator (DdV)
@@ -51,6 +58,13 @@
 - [x] Conjugate fields overload
 - [x] Shift field in 3D space - phase change
 - [x] Made a FarField.rms function to check RMS field values over angle/freq
+- [x] readGRASPcut (DdV)
+- [x] writeGRASPcut
+- [x] setFreq should not be private. Use to set both freq and freqHz, with varargin for backwards compatibility.
+- [x] Rename coorSys to coorType to avoid confusion with coordinateSystem class
+- [x] Move all parameters to setAccess private, and make setters as required
+- [x] Fix default power in pattern Prad to do the integration if nothing is provided and a full sphere pattern is available
+- [x] Make E3 empty for all cases to save memory. It can be used by the SWE in special cases
 
 
 # ReflectorGeometry
