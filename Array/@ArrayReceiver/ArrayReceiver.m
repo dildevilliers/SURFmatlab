@@ -7,6 +7,7 @@ classdef ArrayReceiver
         LNAGain(1,1) double {mustBeReal, mustBeFinite} = 20    % LNA gain in dB
         IFGain(1,1) double {mustBeReal, mustBeFinite} = 19    % IF gain in dB
         freqLO(1,1) double {mustBeReal, mustBeFinite} = 1        % LO frequency in Hz
+        couplingMatrix(:,:) double {mustBeFinite} = 1 % Mutual coupling matrix between channels
     end
     
     properties (SetAccess = private)
@@ -14,7 +15,7 @@ classdef ArrayReceiver
     end
     
     methods
-        function obj = ArrayReceiver(noisePower,LNAGain,IFGain,freqLO)
+        function obj = ArrayReceiver(noisePower,LNAGain,IFGain,freqLO,couplingMatrix)
             if nargin >= 1
                 obj.noisePower = noisePower;
             end
@@ -24,8 +25,11 @@ classdef ArrayReceiver
             if nargin >= 3
                 obj.IFGain = IFGain;
             end
-            if nargin >= 3
+            if nargin >= 4
                 obj.freqLO = freqLO;
+            end
+            if nargin >= 5
+                obj.couplingMatrix = couplingMatrix;
             end
             obj.P = lin10(obj.noisePower-30);      % Noise power in W
         end
@@ -69,7 +73,8 @@ classdef ArrayReceiver
         function [sn,si,sq] = sigRec(obj,portSigMat,t)
             % Full effect of receiver on signal - outputs the IF signal
             % plus noise from the port signal matrix
-            snLNA = obj.sigLNA(portSigMat);
+            snCoupled = obj.couplingMatrix*portSigMat;
+            snLNA = obj.sigLNA(snCoupled);
             sn = obj.sigIF(snLNA,t);
             si = real(sn);
             sq = imag(sn);
