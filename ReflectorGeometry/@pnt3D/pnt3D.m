@@ -18,6 +18,10 @@ classdef Pnt3D
         rho % distance from z-axis
     end
     
+    properties (Dependent = true)
+        
+    end
+    
     methods
         % Have to go through the constructor to set the values
         function obj = Pnt3D(X,Y,Z)
@@ -285,7 +289,7 @@ classdef Pnt3D
         function obj = sph(PH,TH,R)
             % Define in spherical coordinates
             [X,Y,Z] = sph2cart(PH,pi/2 - TH,R);
-            obj = pnt3D(X,Y,Z);
+            obj = Pnt3D(X,Y,Z);
         end
         
         function obj = pol(PH,RHO,Z)
@@ -294,7 +298,7 @@ classdef Pnt3D
                 Z = 0;
             end
             [X,Y] = pol2cart(PH,RHO,Z);
-            obj = pnt3D(X,Y,Z);
+            obj = Pnt3D(X,Y,Z);
         end
     end
     
