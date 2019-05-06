@@ -1,0 +1,26 @@
+function writeStaticBasicGraphicsViewInfo2TOR(fileID)
+fprintf(fileID, '//DO NOT MODIFY OBJECTS BELOW THIS LINE.\n');
+fprintf(fileID, '//THESE OBJECTS ARE CREATED AND MANAGED BY THE\n');
+fprintf(fileID, '//GRAPHICAL USER INTERFACE AND SHOULD NOT BE\n');
+fprintf(fileID, '//MODIFIED MANUALLY!\n');
+fprintf(fileID, 'view_1  view  \n');
+fprintf(fileID, '(\n');
+fprintf(fileID, '  objects          : sequence(ref(view_1_coor_sys_plot),ref(view_1_reflector_plot),ref(view_1_feed_plot),\n');
+fprintf(fileID, 'ref(view_1_output_points_plot))\n');
+fprintf(fileID, ')\n');
+fprintf(fileID, '\n');
+fprintf(fileID, 'view_1_coor_sys_plot  coor_sys_plot  \n');
+fprintf(fileID, '(\n');
+fprintf(fileID, ')\n');
+fprintf(fileID, '\n');
+fprintf(fileID, 'view_1_reflector_plot  reflector_plot  \n');
+fprintf(fileID, '(\n');
+fprintf(fileID, ')\n');
+fprintf(fileID, '\n');
+fprintf(fileID, 'view_1_feed_plot  feed_plot  \n');
+fprintf(fileID, '(\n');
+fprintf(fileID, ')\n');
+fprintf(fileID, '\n');
+fprintf(fileID, 'view_1_output_points_plot  output_points_plot  \n');
+fprintf(fileID, '(\n');
+fprintf(fileID, ')\n');

@@ -1,6 +1,6 @@
-classdef coordinateSystem
+classdef CoordinateSystem
     properties
-      origin(1,1) pnt3D = pnt3D(0,0,0) 
+      origin(1,1) Pnt3D = Pnt3D(0,0,0) 
       base = [] % Can be another coordinate system object, or, if empty, is assumed to be the global coordinate system 
     end
    
@@ -14,7 +14,7 @@ classdef coordinateSystem
     end
     
     methods
-       function obj = coordinateSystem(origin,x_axis,y_axis,base)
+       function obj = CoordinateSystem(origin,x_axis,y_axis,base)
            if nargin == 0
            elseif nargin == 1
                obj.origin = origin;
@@ -43,7 +43,6 @@ classdef coordinateSystem
                error('x_axis and y_axis must be orthogonal');
            end
            % Set the z-axis direction
-%            obj = obj.setZaxis;
            % Normalise the unit vectors
            obj = obj.normAxis;
        end
@@ -53,7 +52,7 @@ classdef coordinateSystem
        end
        
        function obj = set2Base(obj)
-           if class(obj.base) == 'coordinateSystem'
+           if isa(obj.base,'coordinateSystem')
                obj = obj.base;
            end
        end
@@ -66,20 +65,20 @@ classdef coordinateSystem
        %% Rotation
        function obj = rotX(obj,angleRadians)
            % Rotate around global x-axis
-           obj.x_axis = rotx3D(obj.x_axis,angleRadians);
-           obj.y_axis = rotx3D(obj.y_axis,angleRadians);
+           obj.x_axis = rotx(obj.x_axis,angleRadians);
+           obj.y_axis = rotx(obj.y_axis,angleRadians);
        end
        
        function obj = rotY(obj,angleRadians)
            % Rotate around global y-axis
-           obj.x_axis = roty3D(obj.x_axis,angleRadians);
-           obj.y_axis = roty3D(obj.y_axis,angleRadians);
+           obj.x_axis = roty(obj.x_axis,angleRadians);
+           obj.y_axis = roty(obj.y_axis,angleRadians);
        end
        
        function obj = rotZ(obj,angleRadians)
            % Rotate around global z-axis
-           obj.x_axis = rotz3D(obj.x_axis,angleRadians);
-           obj.y_axis = rotz3D(obj.y_axis,angleRadians);
+           obj.x_axis = rotz(obj.x_axis,angleRadians);
+           obj.y_axis = rotz(obj.y_axis,angleRadians);
        end
        
        function obj = rotGRASP(obj,angGRASP)
@@ -159,7 +158,7 @@ classdef coordinateSystem
            % Calculate the rotation
            graspAng = getGRASPangBetweenCoors(coorIn,baseIn);
            % Build the coordinate system
-           coorOut = coordinateSystem(pnt3D(Ox,Oy,Oz));
+           coorOut = coordinateSystem(Pnt3D(Ox,Oy,Oz));
            coorOut = coorOut.rotGRASP(graspAng);
            coorOut.base = newBase;
        end
@@ -167,7 +166,6 @@ classdef coordinateSystem
        function [angGRASP] = getGRASPangBetweenCoors(coor1,coor0)
            % Returns the GRASP angles (in rad) required to rotate from
            % coor0 to coor1.  That is coor1 = coor0.rotGRASP([th,ph,ps])
-           % Get the required angles to rotate back to the GC
            % See the GRASP technical description for details on the
            % definitions
            % coor0 corresponds to xyz
@@ -199,7 +197,9 @@ classdef coordinateSystem
            ph = angBetweenVectors(x,x_ph);
            % Sort out the sign of ph - compare to the z-axis direction
            phSign = sign(dot(cross(x,x_ph),z));
-           ph = ph*phSign;
+           if phSign ~= 0
+               ph = ph*phSign;
+           end
            
            % Rotate the system to get to the intermediate coordinate system
            % xyz_prime
@@ -207,9 +207,11 @@ classdef coordinateSystem
            xp = coorPrime.x_axis;
            % Calculate psi
            ps = angBetweenVectors(xp,x1);
-           % Sort out the sign of ph - compare to the z1-axis direction
+           % Sort out the sign of ps - compare to the z1-axis direction
            psSign = sign(dot(cross(xp,x1),z1));
-           ps = ps*psSign;
+           if psSign ~= 0
+               ps = ps*psSign;
+           end
            angGRASP = [th,ph,ps];
        end
        

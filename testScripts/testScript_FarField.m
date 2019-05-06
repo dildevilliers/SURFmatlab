@@ -251,8 +251,8 @@ FF = pol2slant(FF);
 [Exp,Eco,E3slant] = getEslant(FF);
 FF = pol2circular(FF);
 FF = pol2slant(FF);
-[Exp2,Eco2,E3slant2] = getEslant(FF);
-if  (Exp(1,1) ~= Exp2(1,1)) || (Eco(1,1) ~= Eco2(1,1)) || (E3slant(1,1) ~= E3slant2(1,1)) %DOESNT WORK IF YOU DONT SPECIFY ELEMENT.
+[Exp2,Eco2] = getEslant(FF);
+if  (Exp(1,1) ~= Exp2(1,1)) || (Eco(1,1) ~= Eco2(1,1)) %DOESNT WORK IF YOU DONT SPECIFY ELEMENT.
     warning('Pol transformation failure. Slant or Circular')
 end
 
@@ -260,8 +260,8 @@ FF = pol2circular(FF);
 [Elh,Erh,E3circ] = getEcircular(FF);
 FF = pol2slant(FF);
 FF = pol2circular(FF);
-[Elh2,Erh2,E3circ2] = getEcircular(FF);
-if  (Elh(1,1) ~= Elh2(1,1)) || (Erh(1,1) ~= Erh2(1,1)) || (E3circ(1,1) ~= E3circ2(1,1)) %DOESNT WORK IF YOU DONT SPECIFY ELEMENT.
+[Elh2,Erh2] = getEcircular(FF);
+if  (Elh(1,1) ~= Elh2(1,1)) || (Erh(1,1) ~= Erh2(1,1)) %DOESNT WORK IF YOU DONT SPECIFY ELEMENT.
     warning('Pol transformation failure. Circular or Slant')
 end
 %===================================================================================================================================
