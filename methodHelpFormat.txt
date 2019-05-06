@@ -14,6 +14,10 @@
 % - []: If no outputs are returned
 % - B:  Describe the variable and the size = [1 x 3] with unit 'x'         
 %
+% Dependencies
+% - Github repositories: example inputs include MEMACS repo, MAAT repository etc...
+% - Matlab Toolbox: example inputs include SUMO toolbox, Optimisation toolbox etc...
+%
 % Created: 2019-05-06, Dirk de Villiers
 % Updated: 2019-05-06, Dirk de Villiers
 %
