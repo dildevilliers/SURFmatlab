@@ -1,6 +1,6 @@
-classdef coordinateSystem
+classdef CoordinateSystem
     properties
-      origin(1,1) pnt3D = pnt3D(0,0,0) 
+      origin(1,1) Pnt3D = Pnt3D(0,0,0) 
       base = [] % Can be another coordinate system object, or, if empty, is assumed to be the global coordinate system 
     end
    
@@ -14,7 +14,7 @@ classdef coordinateSystem
     end
     
     methods
-       function obj = coordinateSystem(origin,x_axis,y_axis,base)
+       function obj = CoordinateSystem(origin,x_axis,y_axis,base)
            if nargin == 0
            elseif nargin == 1
                obj.origin = origin;
@@ -158,7 +158,7 @@ classdef coordinateSystem
            % Calculate the rotation
            graspAng = getGRASPangBetweenCoors(coorIn,baseIn);
            % Build the coordinate system
-           coorOut = coordinateSystem(pnt3D(Ox,Oy,Oz));
+           coorOut = coordinateSystem(Pnt3D(Ox,Oy,Oz));
            coorOut = coorOut.rotGRASP(graspAng);
            coorOut.base = newBase;
        end

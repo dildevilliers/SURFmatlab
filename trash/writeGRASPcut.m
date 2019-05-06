@@ -85,3 +85,4 @@ for ff = 1:obj.Nf
 end
 
 fclose(fid);
+end

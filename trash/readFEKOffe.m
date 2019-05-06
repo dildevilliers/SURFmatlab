@@ -117,4 +117,5 @@ freqUnit = 'Hz'; %It seems that FEKO always outputs frequencies in Hz, so this i
 
 FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
 
+end
 

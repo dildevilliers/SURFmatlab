@@ -137,5 +137,5 @@ end
 Prad = ones(size(freq)).*4*pi;
 radEff = ones(size(freq));
 FF = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorSys,polType,gridType,freqUnit);
-
+end
 
