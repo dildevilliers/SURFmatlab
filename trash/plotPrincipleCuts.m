@@ -172,24 +172,5 @@ titTextFull = h.Title.String;
 titTextCell = strsplit(titTextFull,'Hz');
 title([titTextCell{1},'Hz'])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+end
 

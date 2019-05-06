@@ -1,0 +1,27 @@
+%METHODNAME   One line description.                         
+% [B] = methodName(obj,A,varargin) longer description of the method
+% that can run over multiple lines
+%
+% Inputs
+% - obj:  ClassName object
+% - A:    Describe the variable and the size = [1 x 3] with unit 'x' (default)         
+% * Arbitrary number of pairs of arguments: ...,keyword,value,... where
+%   keywords and values are from the sets
+%   -- keyword1:    Describe the variable and size = [1 x 3] with unit 'x' (default)         
+%   -- keyword2:    {('Option1') | 'Option2'}
+%
+% Outputs
+% - []: If no outputs are returned
+% - B:  Describe the variable and the size = [1 x 3] with unit 'x'         
+%
+% Created: 2019-05-06, Dirk de Villiers
+% Updated: 2019-05-06, Dirk de Villiers
+%
+% Tested : Matlab R2018b, Dirk de Villiers
+%  Level : 0 (0 for none, 1 for hand test, 2 for testScript)
+%   File : \testScripts\testScript_FarField.m 
+%
+% Example 
+%   Give a usage example that can be copied and run in the workspace
+%   FF = FarField;
+%   FF.plot('plotType','2D','step',1)

@@ -1,4 +1,4 @@
-classdef pnt3D
+classdef Pnt3D
     properties
 %         x double {mustBeReal, mustBeFinite} = 0 % in (m)
 %         y double {mustBeReal, mustBeFinite} = 0 % in (m)
@@ -20,7 +20,7 @@ classdef pnt3D
     
     methods
         % Have to go through the constructor to set the values
-        function obj = pnt3D(X,Y,Z)
+        function obj = Pnt3D(X,Y,Z)
             if nargin == 3
                 % Get all the same size
                 obj.x = (Y+eps(realmin))./(Y+eps(realmin)).*(Z+eps(realmin))./(Z+eps(realmin)).*X;
@@ -121,7 +121,7 @@ classdef pnt3D
             % to the new coordinate system coor_new through translation and rotation.
             
             if nargin == 2
-                coor_base = coordinateSystem();
+                coor_base = CoordinateSystem();
             end
             % Move points to new coordinate origin reference 
             U = pointMatrix(obj) - coor_new.origin.pointMatrix;

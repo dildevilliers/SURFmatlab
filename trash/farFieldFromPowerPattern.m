@@ -61,3 +61,5 @@ radEff = ones(size(freq));
 
 FF = FarField(ph,th,E1,E2,E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit);
 FF.Prad = FF.pradInt;
+
+end
