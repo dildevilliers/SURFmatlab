@@ -12,10 +12,12 @@ switch ngt
     case 'RAdec'
         error('PhTh to RAdec not yet implemented')
     case 'GalLongLat'
-        [long,lat] = obj.getGalLongLat;
-        U = obj.getU;
+        obj1 = obj.grid2AzAlt;
+        obj1 = obj1.grid2RAdec;
+        obj1 = obj1.grid2GalLongLat;
+        U = obj1.getU;
         for ff = 1:obj.Nf
-            scatint = scatteredInterpolant([long lat],U(:,ff));
+            scatint = scatteredInterpolant([obj1.x obj1.y],U(:,ff));
             Un(:,ff) = scatint(xn,yn);
         end
         obj1 = FarField.farFieldFromPowerPattern(xn,yn,Un,obj.freq,[],[],'GalLongLat');

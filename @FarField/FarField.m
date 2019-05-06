@@ -45,7 +45,7 @@ classdef FarField
         symmetryBOR1 = false % Is the pattern a BOR1 type pattern
         orientation = [0 pi/2] %antenna orientation - altitude/azimuth in radians relative to zenith/North
         earthLocation = [deg2rad(21.45) deg2rad(-30.71) 0]; %[deg2rad(18.866541) deg2rad(-33.928395) 0] % antenna location on the Earth longitude and latitude in radians, and height above sea level in meters - defaults to the roof of the Stellenbosch University E&E Engineering Dept. :)
-        time = datetime(year(now),3,20,0,0,0) %21, 58, 0) % time as a datetime object (used, for instance, in astronomical observation)
+        time = datetime(2018,7,22,0,0,0);%datetime(year(now),3,20,0,0,0) %21, 58, 0) % time as a datetime object (used, for instance, in astronomical observation)
     end
     
     properties (SetAccess = private, Hidden = true)
@@ -428,9 +428,9 @@ classdef FarField
                     RA = obj.xBase;
                     dec = obj.yBase;
                 case 'GalLongLat'
-                    [equCoords,~] = wrapToPi(celestial.coo.coco([obj.x obj.y],'g','j2000.0','r','r'));
-                    RA = equCoords(:,1); %right ascension
-                    dec = equCoords(:,2); %declination
+                    [equCoords,~] = celestial.coo.coco([obj.x obj.y],'g','j2000.0','r','r');
+                    RA = wrapToPi(equCoords(:,1)); %right ascension
+                    dec = wrapToPi(equCoords(:,2)); %declination
                 case obj.projectionGrids
                     [u,v,w] = getDirCos(obj);
                     [RA,dec] = DirCos2AzAlt(u,v,w);
@@ -442,9 +442,15 @@ classdef FarField
         
         function [long, lat] = getGalLongLat(obj)
             switch obj.gridTypeBase
+                case 'PhTh'
+                    obj1 = obj.grid2AzAlt;
+                    obj1 = obj1.grid2RAdec;
+                    [galCoords,~] = celestial.coo.coco([obj1.x obj1.y],'j2000.0','g','r','r');
+                    long = wrapToPi(galCoords(:,1)); %galactic longitude
+                    lat = galCoords(:,2); %galactic latitude
                 case 'AzAlt'
                     obj1 = obj.grid2RAdec;
-                    [galCoords,~] = celestial.coo.coco([obj.x obj.y],'j2000.0','g','r','r');
+                    [galCoords,~] = celestial.coo.coco([obj1.x obj1.y],'j2000.0','g','r','r');
                     long = wrapToPi(galCoords(:,1)); %galactic longitude
                     lat = galCoords(:,2); %galactic latitude
                 case 'RAdec'
@@ -466,7 +472,9 @@ classdef FarField
         %% Grid transformation setters
         function obj = grid2PhTh(obj)
             formerGridType = obj.gridType;
-            assert(~any(strcmp(setxor(obj.astroGrids,'AzAlt'),obj.gridTypeBase)),'Grid is in astronomical reference frame- must first be converted to Az-Alt')
+            if any(strcmp(obj.gridType,obj.astroGrids))
+                obj = obj.grid2AzAlt;
+            end
             obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'PhTh')
                 [obj.x,obj.y] = getPhTh(obj);
@@ -564,7 +572,7 @@ classdef FarField
         end
         
         function obj = grid2AzAlt(obj)
-            if ~any(strcmp({obj.projectionGrids,obj.astroGrids},obj.gridType))
+            if ~any(strcmp([obj.projectionGrids,obj.astroGrids],obj.gridType))
                 currGridType = obj.gridType;
                 if ~strcmp(currGridType,'PhTh')
                     obj = obj.grid2PhTh;
@@ -1436,7 +1444,7 @@ classdef FarField
             if isGridEqual(obj1,obj2)
                 P = obj1.getU.*obj2.getU;
                 if any(strcmp(obj1.gridType,obj1.astroGrids)) %If on an astronomical grid, perform integration in that coordinate system (az-alt type coordinates that work with slightly modified spherical integral)
-                    FF_T = FarField.farFieldFromPowerPattern(obj1.x,obj1.y,P,obj1.freq,[],[],obj.gridType);
+                    FF_T = FarField.farFieldFromPowerPattern(obj1.x,obj1.y,P,obj1.freq,[],[],obj1.gridType);
                 else
                     FF_T = FarField.farFieldFromPowerPattern(obj1.phBase,obj1.thBase,P,obj1.freq);
                 end
@@ -1815,15 +1823,27 @@ classdef FarField
         
         %% Astronomical methods
         
-        function obj = setOrientation(obj,AzAlt)
-%             currGridType = obj.gridType;
-%             if ~strcmp(currGridType,'PhTh')
-%                 obj = obj.grid2PhTh;
-%             end
-%             obj = obj.rotate(@rotGRASPsph,[wrapToPi(-obj.orientation(2)),wrapToPi(-obj.orientation(1)),0]);
-%             eval(['obj = grid2',currGridType,'(obj);']);
-            obj.orientation = AzAlt;
-        end      
+        function obj = setOrientation(obj,newAzAlt)
+            currGridType = obj.gridType;
+            obj = obj.grid2PhTh;
+            obj.orientation = newAzAlt;
+            obj = obj.grid2AzAlt;
+            eval(['obj = grid2',currGridType,'(obj);']);
+        end
+        
+        function obj = setTime(obj,newTime)
+            currGridType = obj.gridType;
+            obj = obj.grid2AzAlt;
+            obj.time = newTime;
+            eval(['obj = grid2',currGridType,'(obj);']);
+        end
+        
+        function obj = setEarthLocation(obj,newEarthLocation)
+            currGridType = obj.gridType;
+            obj = obj.grid2AzAlt;
+            obj.earthLocation = newEarthLocation;
+            eval(['obj = grid2',currGridType,'(obj);']);
+        end
         
     end
     
