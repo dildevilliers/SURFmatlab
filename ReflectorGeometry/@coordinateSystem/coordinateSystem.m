@@ -52,7 +52,7 @@ classdef CoordinateSystem
        end
        
        function obj = set2Base(obj)
-           if isa(obj.base,'coordinateSystem')
+           if isa(obj.base,'CoordinateSystem')
                obj = obj.base;
            end
        end
@@ -112,7 +112,7 @@ classdef CoordinateSystem
            % base system, is calculated as A_rotate = inv(Q)*A_base
            % See the note: http://homepages.engineering.auckland.ac.nz/~pkel015/SolidMechanicsBooks/Part_III/Chapter_1_Vectors_Tensors/Vectors_Tensors_05_Coordinate_Transformation_Vectors.pdf
            if nargin == 1
-               coor_base = coordinateSystem();
+               coor_base = CoordinateSystem();
            end
            Q = [dot(coor_base.x_axis,coor_new.x_axis), dot(coor_base.x_axis,coor_new.y_axis), dot(coor_base.x_axis,coor_new.z_axis);...
                 dot(coor_base.y_axis,coor_new.x_axis), dot(coor_base.y_axis,coor_new.y_axis), dot(coor_base.y_axis,coor_new.z_axis);...
@@ -126,7 +126,7 @@ classdef CoordinateSystem
            
            if ~isempty(obj.base)
                oldBase = obj.base;
-               newBase = coordinateSystem();
+               newBase = CoordinateSystem();
                % Since the coordinate system is always defined in the global
                % coordinate system, with a given base (which corresponds to the
                % local global coordinate system), get the angle between the
@@ -136,7 +136,7 @@ classdef CoordinateSystem
                baseRotated = oldBase.rotGRASP(graspAng);
                % And shift the origin
                Ups = changeBase(obj.origin,newBase,oldBase);
-               coorInGlobal = coordinateSystem(Ups,baseRotated.x_axis,baseRotated.y_axis);
+               coorInGlobal = CoordinateSystem(Ups,baseRotated.x_axis,baseRotated.y_axis);
                coorInGlobal.base = [];
            else
                coorInGlobal = obj;
@@ -158,7 +158,7 @@ classdef CoordinateSystem
            % Calculate the rotation
            graspAng = getGRASPangBetweenCoors(coorIn,baseIn);
            % Build the coordinate system
-           coorOut = coordinateSystem(Pnt3D(Ox,Oy,Oz));
+           coorOut = CoordinateSystem(Pnt3D(Ox,Oy,Oz));
            coorOut = coorOut.rotGRASP(graspAng);
            coorOut.base = newBase;
        end
@@ -173,7 +173,7 @@ classdef CoordinateSystem
            % For only one argument, the global system is assumed for coor0
            
            if nargin == 1
-               coor0 = coordinateSystem();
+               coor0 = CoordinateSystem();
            end
            
            x = coor0.x_axis;
