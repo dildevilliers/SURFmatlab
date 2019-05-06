@@ -5,6 +5,7 @@ classdef ArrayElements
     properties
         antPos(1,:) pnt3D = pnt3D([0,1],0,0)   % Antenna positions in 3D points - internal vector
         channelPhasors(1,:) double {mustBeFinite} = 1 % Vector of complex channel errors for calibration testing
+        couplingMatrix(:,:) double {mustBeFinite} = 1 % Mutual coupling matrix between channels
     end
     
     properties (SetAccess = private)
@@ -12,18 +13,24 @@ classdef ArrayElements
     end
     
     methods
-        function obj = ArrayElements(antPos,channelPhasos)
+        function obj = ArrayElements(antPos,channelPhasors,couplingMatrix)
             if nargin >= 1
                 obj.antPos = antPos;
             end
             if nargin >= 2
-                obj.channelPhasors = channelPhasos;
+                obj.channelPhasors = channelPhasors;
+            end
+            if nargin >= 3
+                obj.couplingMatrix = couplingMatrix;
             end
             obj.N_elements = length(obj.antPos.x);
             if length(obj.channelPhasors) == 1
                 obj.channelPhasors = repmat(obj.channelPhasors,1,obj.N_elements);
             else 
                 assert(length(obj.channelPhasors) == obj.N_elements,'Length of channelErrors should match the number of elements');
+            end
+            if length(obj.couplingMatrix) > 1
+                assert(length(obj.couplingMatrix) == obj.N_elements,'Length of couplingMatrix should match the number of elements');
             end
         end
         
@@ -53,7 +60,10 @@ classdef ArrayElements
             AC = bsxfun(@times,A,obj.channelPhasors(:));
             
             % Multiply the signals through the channels
-            portSigMat = AC*si.';
+            portSigMatUncoupled = AC*si.';
+            
+            % Multiply the coupling matrix with the port signals
+            portSigMat = obj.couplingMatrix*portSigMatUncoupled;
         end
     end
 end
