@@ -2,6 +2,8 @@
 
 ## @Farfield
 - [ ] Make symmetry settings part of the constructor, and remove the set options (maybe?). Also in FarFieldFromPowerPattern. 
+- [ ] expandBOR1pattern must also be able to handle phi=45deg cut with Ludwig3 Co-Xp fields
+- [ ] Make BOR0 symmetry functionality
 - [ ] Speed up mirrorSymmetricPattern. Might require custom implementations of all grid types. Start with spherical though!
 - [ ] readMeasurements
 - [ ] Make several example patterns using simple dipoles
@@ -9,7 +11,6 @@
 - [ ] Fix FarField.rotate field components poles (DdV)
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
-- [ ] Make BOR0 symmetry functionality
 - [ ] Rework FarFieldFromPower pattern workflow:  Can use BOR1 and (new) BOR0 functions here to shorten the code. Merge powerPattern in, or move to reflectorAnalysis.
 - [ ] 2/3D plots should automatically expand BOR0/1 symmetry fields before plotting
 - [ ] readFITS (DdV)

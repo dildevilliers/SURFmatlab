@@ -59,7 +59,8 @@ classdef CoordinateSystem
        
        %% Translation
        function obj = translate(obj,delta)
-           obj.origin = translate(obj.origin,delta);
+           obj.origin = addVect(obj.origin,delta);
+%            obj.origin = translate(obj.origin,delta);
        end
        
        %% Rotation

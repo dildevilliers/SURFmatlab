@@ -2555,7 +2555,7 @@ classdef FarField
             
             assert(obj1.symmetryBOR1,'Input object not BOR1 symmetric')
             assert(strcmp(obj1.gridType,'PhTh'),'BOR1 patterns must be specified on a PhTh grid')
-            assert(strcmp(obj1.coorType,'spherical'),'BOR1 patterns must be specified in a Ludwig3 coordinate system')
+            assert(strcmp(obj1.coorType,'spherical'),'BOR1 patterns must be specified in a spherical coordinate system')
             assert(isequal(unique(obj1.x),[0;pi/2]),'Expect ph cuts only at 0 and pi/2')
             assert(obj1.isGridUniform,'A plaid, monotonic, uniform grid is expected for BOR1 field expansion');
             
@@ -2579,7 +2579,7 @@ classdef FarField
         function [A1,B1,C1,D1] = getBOR1comps(obj1)
             assert(obj1.symmetryBOR1,'Input object not BOR1 symmetric')
             assert(strcmp(obj1.gridType,'PhTh'),'BOR1 patterns must be specified on a PhTh grid')
-            assert(strcmp(obj1.coorType,'spherical'),'BOR1 patterns must be specified in a Ludwig3 coordinate system')
+            assert(strcmp(obj1.coorType,'spherical'),'BOR1 patterns must be specified in a spherical coordinate system')
             assert(isequal(unique(obj1.x),[0;pi/2]),'Expect ph cuts only at 0 and pi/2')
             assert(obj1.isGridUniform,'A plaid, monotonic, uniform grid is expected for BOR1 field expansion');
             Nth = obj1.Ny;
