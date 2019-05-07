@@ -86,7 +86,7 @@ classdef FarField
     
     methods
         % Make a basic constructor method
-        function obj = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit,slant)
+        function obj = FarField(x,y,E1,E2,E3,freq,Prad,radEff,coorType,polType,gridType,freqUnit,slant,earthLocation,time,orientation)
             
             % function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
             % Constructor method for the FarField object
@@ -3485,8 +3485,8 @@ classdef FarField
             Nf = length(freq);
             
             %Handle optional input arguments
-            optionNames = {'fieldPol','freqUnit'};
-            defaultOptions = {'''linearY''','''Hz'''};
+            optionNames = {'fieldPol','freqUnit','gridType'};
+            defaultOptions = {'''linearY''','''Hz''','''PhTh'''};
             for ii = 1:length(optionNames) %run through the optional inputs, check if they have been provided, and if not set them to their defaults
                 if (nargin < ii + 4)
                     eval([optionNames{ii},' = ',defaultOptions{ii},';']);
@@ -3497,7 +3497,6 @@ classdef FarField
             end
             %From power pattern and polarization parameters, generate E1 and E2 accordingly
             coorType = 'Ludwig3';
-            gridType = 'PhTh';
             switch fieldPol
                 case 'linearX' % linearly polarised along X-axis
                     polType = 'linear';
