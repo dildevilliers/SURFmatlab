@@ -10,8 +10,8 @@ ph_in = deg2rad(0);
 Ps = -60; % in dBm
 phaseSig = deg2rad(0);
 
-Nant = 4;      % Number of elements
-d_lam = 2;     % Element spacing in wavelengths 
+Nant = 12;      % Number of elements
+d_lam = 0.5;     % Element spacing in wavelengths 
 d = d_lam*(physconst('lightspeed')/fRF);    % Element spacing in m
 x = (-(Nant-1)/2:(Nant-1)/2).*d;       % Uniform linear array along x-axis
 r = pnt3D(x,0,0);
@@ -19,10 +19,11 @@ r = pnt3D(x,0,0);
 % phaseErrors_deg = [0,0,0,0];
 ampErrors = ones(1,Nant);
 phaseErrors_deg = zeros(1,Nant);
-phaseErrors_deg([1,2,3,4]) = [0,0,0,30]*2;
+phaseErrors_deg([1,2,3,4,7,9]) = [0,15,90,45,15,50];
+ampErrors([1,4,5,6,7]) = [2,0.1,0.7,0.9,1];
 channelPhasors = ampErrors.*exp(1i.*deg2rad(phaseErrors_deg));
 
-Pn = -70; % in dBm
+Pn = -80; % in dBm
 LNAGain = 20;
 IFGain = 60;
 fIF = 4.096e6;
@@ -80,10 +81,78 @@ for ii = 1:Nant-1
     y(ii,:) = x(ii+1,:)./x(ii,:);
 end
 ym = mean(rad2deg(angle(y)),2);
-err = sum(abs(ym))
+err = sum(abs(ym));
 figure
 plot(ym,'o'), grid on
 
+
+arrayDBE = ArrayDBE(arraySys);
+% figure
+% arrayDBE.plotPortPSD(x,1,4)
+% 
+% Test the scanning
+Nscan = 501;
+th_scan_deg = linspace(-60,60,Nscan);
+% ph_scan_deg = ones(size(th_scan_deg))*0;    % Use ph = 0 for array along x-axis
+ph_scan_deg = 0;    % Use ph = 0 for array along x-axis
+% y = arrayDBE.scanBeam(fRF,deg2rad(th_scan_deg),deg2rad(ph_scan_deg),x);
+figure
+arrayDBE.plotScanBeam(fRF,deg2rad(th_scan_deg),deg2rad(ph_scan_deg),x);
+
+
+% angle_deg = -180:2:180;
+% 
+% z = zeros(1,181);
+% for ii = 1:Nant-1
+%     for jj = 1:181
+%         y(ii,:) = mean(rad2deg(angle(x(ii+1,:)./x(ii,:)) + angle_deg(1,jj))) ;
+%         z(1,jj) = abs(mean(y(ii,:)));
+%     end
+%     [min_z, index] = min(z(1,:))
+% %     figure
+% %     a = mean(rad2deg(angle(x(ii+1,:))))
+% %     plot(mean(rad2deg(angle(x(ii+1,:)))))
+% %     hold on
+%     x(ii+1,:) = x(ii+1,:).*exp(-1i*deg2rad(min_z));
+% %     b = mean(rad2deg(angle(x(ii+1,:))))
+% %     plot(mean(rad2deg(angle(x(ii+1,:)))))
+% end
+
+
+
+xMod = x;
+delP = zeros(1,Nant);
+for aa = 2:Nant
+    delP(aa) = mean((angle(xMod(aa,:)./xMod(aa-1,:))));
+    xMod(aa,:) = xMod(aa,:).*exp(-1i.*delP(aa));
+end
+
+calVect = zeros(1,Nant);
+for aa = 2:Nant
+    calVect(aa) = mean((angle(x(aa,:)./x(1,:))));
+end
+
+
+calVector = ones(1,Nant);
+for aa = 2:Nant
+    calVector(aa) = mean((x(aa,:)./x(1,:)));
+end
+
+y = zeros(Nant-1,length(t));
+for ii = 1:Nant-1
+    y(ii,:) = x(ii+1,:)./x(ii,:);
+end
+
+ym = mean(rad2deg(angle(y)),2);
+err = sum(abs(ym));
+figure
+plot(ym,'o'), grid on
+
+fileName = 'Channel signals';
+fidDPA = fopen(fileName,'wt');
+fprintf([repmat('%f\t', 1, size(x, 2)) '\n'], x')
+fclose(fidDPA);
+            
 %%
 % 
 arrayDBE = ArrayDBE(arraySys);
@@ -97,4 +166,13 @@ th_scan_deg = linspace(-60,60,Nscan);
 ph_scan_deg = 0;    % Use ph = 0 for array along x-axis
 % y = arrayDBE.scanBeam(fRF,deg2rad(th_scan_deg),deg2rad(ph_scan_deg),x);
 figure
-arrayDBE.plotScanBeam(fRF,deg2rad(th_scan_deg),deg2rad(ph_scan_deg),x);
+arrayDBE.plotScanBeam(fRF,deg2rad(th_scan_deg),deg2rad(ph_scan_deg),xMod);
+
+figure
+arrayDBE.plotScanBeam(fRF,deg2rad(th_scan_deg),deg2rad(ph_scan_deg),x,delP);
+
+figure
+arrayDBE.plotScanBeam(fRF,deg2rad(th_scan_deg),deg2rad(ph_scan_deg),x,calVect);
+
+figure
+arrayDBE.plotScanBeam(fRF,deg2rad(th_scan_deg),deg2rad(ph_scan_deg),x,calVector);

@@ -1,4 +1,4 @@
-classdef polarGrid
+classdef PolarGrid
     % Makes a (thinned) polar grid as described in the 1990 shaping paper
     % by Kildal in TAP
     
@@ -21,7 +21,7 @@ classdef polarGrid
     end
     
     methods
-        function obj = polarGrid(rM,I,thinGrid)
+        function obj = PolarGrid(rM,I,thinGrid)
             if nargin >= 1
                 if numel(rM) == 1
                     obj.rhoMax = ones(1,2).*rM;
@@ -91,7 +91,7 @@ classdef polarGrid
             end
             obj.x = obj.rho.*cos(obj.phi);
             obj.y = obj.rho.*sin(obj.phi);
-            obj.P = pnt3D(obj.x,obj.y,0);
+            obj.P = Pnt3D(obj.x,obj.y,0);
         end
         
         function polar(obj)

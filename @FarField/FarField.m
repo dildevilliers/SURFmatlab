@@ -451,8 +451,9 @@ classdef FarField
         
         %% Grid transformation setters
         function obj = changeGrid(obj,gridTypeString)
-            
-            
+            mustBeMember(gridTypeString, {'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin','AzAlt','RAdec','GalLongLat'});
+            handleGridType = str2func(['grid2',gridTypeString]);
+            obj = handleGridType(obj);  
         end
         
         function [az,alt] = getAzAlt(obj)
@@ -523,159 +524,6 @@ classdef FarField
                     error('Grid type must either be AzAlt, GalLongLat or a projection grid')
                     
             end
-        end
-        
-        %% Grid transformation setters
-        function obj = grid2PhTh(obj)
-            formerGridType = obj.gridType;
-            formerNx = obj.Nx;
-            formerNy = obj.Ny;
-            if any(strcmp(obj.gridType,obj.astroGrids))
-                obj = obj.grid2AzAlt;
-            end
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'PhTh')
-                [obj.x,obj.y] = getPhTh(obj);
-                obj.gridType = 'PhTh';
-                if strcmp(formerGridType,'AzAlt')
-                    % Get the grid step sizes from the original
-                    obj = obj.rotate(@rotEulersph,[0,0,obj.orientation(1)]);
-                    obj = obj.rotate(@rotEulersph,[0,-pi/2+obj.orientation(2),0]);
-                    xmin = min(obj.x);
-                    xmax = max(obj.x);
-                    ymin = min(obj.y);
-                    ymax = max(obj.y);
-                    stepx = (max(obj.x) - min(obj.x))./(formerNx-1);
-                    stepy = (max(obj.y) - min(obj.y))./(formerNy-1);
-                    stepDeg = rad2deg([stepx,stepy]);
-                    % Set the baseGrid of the rotated object.  This is required
-                    % since all transformations operate from the base grid
-                    obj = obj.sortGrid;
-                    obj = obj.setBase;
-                    obj = obj.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
-                end
-            end
-        end
-        
-        function obj = grid2DirCos(obj)
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'DirCos')
-                [obj.x,obj.y] = getDirCos(obj);
-                obj.gridType = 'DirCos';
-            end
-        end
-        
-        function obj = grid2AzEl(obj)
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'AzEl')
-                [obj.x,obj.y] = getAzEl(obj);
-                obj.gridType = 'AzEl';
-            end
-        end
-        
-        function obj = grid2ElAz(obj)
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'ElAz')
-                [obj.x,obj.y] = getElAz(obj);
-                obj.gridType = 'ElAz';
-            end
-        end
-        
-        function obj = grid2TrueView(obj)
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'TrueView')
-                [obj.x,obj.y] = getTrueView(obj);
-                obj.gridType = 'TrueView';
-            end
-        end
-        
-        function obj = grid2ArcSin(obj)
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'ArcSin')
-                [obj.x,obj.y] = getArcSin(obj);
-                obj.gridType = 'ArcSin';
-            end
-        end
-        
-        function obj = grid2AzAlt(obj)
-            formerNx = obj.Nx;
-            formerNy = obj.Ny;
-            if ~any(strcmp([obj.projectionGrids,obj.astroGrids],obj.gridType))
-                currGridType = obj.gridType;
-                if ~strcmp(currGridType,'PhTh')
-                    obj = obj.grid2PhTh;
-                end
-                obj = obj.rotate(@rotGRASPsph,[wrapToPi(pi/2-obj.orientation(2)),-obj.orientation(1),0]);
-                eval(['obj = grid2',currGridType,'(obj);']);
-            end
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'AzAlt')
-                [obj.x,obj.y] = getAzAlt(obj);
-                obj.gridType = 'AzAlt';
-            end
-            % Get the grid step sizes from the original
-            xmin = min(obj.x);
-            xmax = max(obj.x);
-            ymin = min(obj.y);
-            ymax = max(obj.y);
-            stepx = (max(obj.x) - min(obj.x))./(formerNx-1);
-            stepy = (max(obj.y) - min(obj.y))./(formerNy-1);
-            stepDeg = rad2deg([stepx,stepy]);
-            % Set the baseGrid of the rotated object.  This is required
-            % since all transformations operate from the base grid
-            obj = obj.sortGrid;
-            obj = obj.setBase;
-            obj = obj.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
-        end
-        
-        function obj = grid2RAdec(obj)
-            formerNx = obj.Nx;
-            formerNy = obj.Ny;
-            assert(any(strcmp(obj.gridTypeBase,[obj.projectionGrids,obj.astroGrids])),'Current grid must be a projection or be in an astronomical reference frame')
-            %must also check RA/dec lengths here...
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'RAdec')
-                [obj.x,obj.y] = getRAdec(obj);
-                obj.gridType = 'RAdec';
-            end
-            % Get the grid step sizes from the original
-            xmin = min(obj.x);
-            xmax = max(obj.x);
-            ymin = min(obj.y);
-            ymax = max(obj.y);
-            stepx = (max(obj.x) - min(obj.x))./(formerNx-1);
-            stepy = (max(obj.y) - min(obj.y))./(formerNy-1);
-            stepDeg = rad2deg([stepx,stepy]);
-            % Set the baseGrid of the rotated object.  This is required
-            % since all transformations operate from the base grid
-            obj = obj.sortGrid;
-            obj = obj.setBase;
-            obj = obj.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
-        end
-        
-        function obj = grid2GalLongLat(obj)
-            formerNx = obj.Nx;
-            formerNy = obj.Ny;
-            assert(any(strcmp(obj.gridTypeBase,[obj.projectionGrids,obj.astroGrids])),'Current grid must be a projection or be in an astronomical reference frame');
-            %must also check RA/dec lengths here...
-            obj = obj.grid2Base;
-            if ~strcmp(obj.gridType,'GalLongLat')
-                [obj.x,obj.y] = getGalLongLat(obj);
-                obj.gridType = 'GalLongLat';
-            end
-            % Get the grid step sizes from the original
-            xmin = min(obj.x);
-            xmax = max(obj.x);
-            ymin = min(obj.y);
-            ymax = max(obj.y);
-            stepx = (max(obj.x) - min(obj.x))./(formerNx-1);
-            stepy = (max(obj.y) - min(obj.y))./(formerNy-1);
-            stepDeg = rad2deg([stepx,stepy]);
-            % Set the baseGrid of the rotated object.  This is required
-            % since all transformations operate from the base grid
-            obj = obj.sortGrid;
-            obj = obj.setBase;
-            obj = obj.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
         end
         
         %% Grid range shifters
@@ -983,93 +831,18 @@ classdef FarField
         
         
         %% Coordinate system transformation methods
-        function obj = changeCoor(obj,coorTypeString)
-            
-            
+        function obj = changeCoor(obj,coorTypeString,setStdGrid)
+            if nargin < 3, setStdGrid = true; end
+            mustBeMember(coorTypeString, {'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'});
+            handleCoorType = str2func(['coor2',coorTypeString]);
+            obj = handleCoorType(obj,setStdGrid); 
         end
-        
-        function obj = coor2spherical(obj,setStdGrid)
-            if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.coorType,'spherical')
-                [obj.E1,obj.E2] = getEspherical(obj);
-                obj.coorType = 'spherical';
-            end
-            if setStdGrid
-                obj = obj.grid2PhTh;
-            end
-        end
-        
-        function obj = coor2Ludwig1(obj,setStdGrid)
-            if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.coorType,'Ludwig1')
-                [obj.E1,obj.E2] = getELudwig1(obj);
-                obj.coorType = 'Ludwig1';
-            end
-            if setStdGrid
-                obj = obj.grid2PhTh;
-            end
-        end
-        
-        function obj = coor2Ludwig2AE(obj,setStdGrid)
-            if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.coorType,'Ludwig2AE')
-                [obj.E1,obj.E2] = getELudwig2AE(obj);
-                obj.coorType = 'Ludwig2AE';
-            end
-            if setStdGrid
-                obj = obj.grid2AzEl;
-            end
-        end
-        
-        function obj = coor2Ludwig2EA(obj,setStdGrid)
-            if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.coorType,'Ludwig2EA')
-                [obj.E1,obj.E2] = getELudwig2EA(obj);
-                obj.coorType = 'Ludwig2EA';
-            end
-            if setStdGrid
-                obj = obj.grid2ElAz;
-            end
-        end
-        
-        function obj = coor2Ludwig3(obj,setStdGrid)
-            if nargin < 2, setStdGrid = true; end
-            if ~strcmp(obj.coorType,'Ludwig3')
-                [obj.E1,obj.E2] = getELudwig3(obj);
-                obj.coorType = 'Ludwig3';
-            end
-            if setStdGrid
-                obj = obj.grid2PhTh;
-            end
-        end
-        
-        
         
         %% Polarisation type transformation methods
         function obj = changePol(obj,polTypeString)
-            
-            
-        end
-        
-        function obj = pol2linear(obj)
-            if ~strcmp(obj.polType,'linear')
-                [obj.E1, obj.E2] = getElin(obj);
-                obj.polType = 'linear';
-            end
-        end
-        
-        function obj = pol2circular(obj)
-            if ~strcmp(obj.polType,'circular')
-                [obj.E1,obj.E2] = getEcircular(obj);
-                obj.polType = 'circular';
-            end
-        end
-        
-        function obj = pol2slant(obj)
-            if ~strcmp(obj.polType,'slant')
-                [obj.E1,obj.E2] = getEslant(obj);
-                obj.polType = 'slant';
-            end
+            mustBeMember(polTypeString, {'linear','circular','slant'});
+            handlePolType = str2func(['pol2',polTypeString]);
+            obj = handlePolType(obj);   
         end
         
         %% Format transformation
@@ -3895,6 +3668,236 @@ classdef FarField
             objNew.E2 = [objNew.E2;E2Add(1:Nredun,:)];
         end
         
+        %% Grid transformation setters
+        function obj = grid2PhTh(obj)
+            formerGridType = obj.gridType;
+            formerNx = obj.Nx;
+            formerNy = obj.Ny;
+            if any(strcmp(obj.gridType,obj.astroGrids))
+                obj = obj.grid2AzAlt;
+            end
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'PhTh')
+                [obj.x,obj.y] = getPhTh(obj);
+                obj.gridType = 'PhTh';
+                if strcmp(formerGridType,'AzAlt')
+                    % Get the grid step sizes from the original
+                    obj = obj.rotate(@rotEulersph,[0,0,obj.orientation(1)]);
+                    obj = obj.rotate(@rotEulersph,[0,-pi/2+obj.orientation(2),0]);
+                    xmin = min(obj.x);
+                    xmax = max(obj.x);
+                    ymin = min(obj.y);
+                    ymax = max(obj.y);
+                    stepx = (max(obj.x) - min(obj.x))./(formerNx-1);
+                    stepy = (max(obj.y) - min(obj.y))./(formerNy-1);
+                    stepDeg = rad2deg([stepx,stepy]);
+                    % Set the baseGrid of the rotated object.  This is required
+                    % since all transformations operate from the base grid
+                    obj = obj.sortGrid;
+                    obj = obj.setBase;
+                    obj = obj.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
+                end
+            end
+        end
+        
+        function obj = grid2DirCos(obj)
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'DirCos')
+                [obj.x,obj.y] = getDirCos(obj);
+                obj.gridType = 'DirCos';
+            end
+        end
+        
+        function obj = grid2AzEl(obj)
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'AzEl')
+                [obj.x,obj.y] = getAzEl(obj);
+                obj.gridType = 'AzEl';
+            end
+        end
+        
+        function obj = grid2ElAz(obj)
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'ElAz')
+                [obj.x,obj.y] = getElAz(obj);
+                obj.gridType = 'ElAz';
+            end
+        end
+        
+        function obj = grid2TrueView(obj)
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'TrueView')
+                [obj.x,obj.y] = getTrueView(obj);
+                obj.gridType = 'TrueView';
+            end
+        end
+        
+        function obj = grid2ArcSin(obj)
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'ArcSin')
+                [obj.x,obj.y] = getArcSin(obj);
+                obj.gridType = 'ArcSin';
+            end
+        end
+        
+        function obj = grid2AzAlt(obj)
+            formerNx = obj.Nx;
+            formerNy = obj.Ny;
+            if ~any(strcmp([obj.projectionGrids,obj.astroGrids],obj.gridType))
+                currGridType = obj.gridType;
+                if ~strcmp(currGridType,'PhTh')
+                    obj = obj.grid2PhTh;
+                end
+                obj = obj.rotate(@rotGRASPsph,[wrapToPi(pi/2-obj.orientation(2)),-obj.orientation(1),0]);
+                eval(['obj = grid2',currGridType,'(obj);']);
+            end
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'AzAlt')
+                [obj.x,obj.y] = getAzAlt(obj);
+                obj.gridType = 'AzAlt';
+            end
+            % Get the grid step sizes from the original
+            xmin = min(obj.x);
+            xmax = max(obj.x);
+            ymin = min(obj.y);
+            ymax = max(obj.y);
+            stepx = (max(obj.x) - min(obj.x))./(formerNx-1);
+            stepy = (max(obj.y) - min(obj.y))./(formerNy-1);
+            stepDeg = rad2deg([stepx,stepy]);
+            % Set the baseGrid of the rotated object.  This is required
+            % since all transformations operate from the base grid
+            obj = obj.sortGrid;
+            obj = obj.setBase;
+            obj = obj.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
+        end
+        
+        function obj = grid2RAdec(obj)
+            formerNx = obj.Nx;
+            formerNy = obj.Ny;
+            assert(any(strcmp(obj.gridTypeBase,[obj.projectionGrids,obj.astroGrids])),'Current grid must be a projection or be in an astronomical reference frame')
+            %must also check RA/dec lengths here...
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'RAdec')
+                [obj.x,obj.y] = getRAdec(obj);
+                obj.gridType = 'RAdec';
+            end
+            % Get the grid step sizes from the original
+            xmin = min(obj.x);
+            xmax = max(obj.x);
+            ymin = min(obj.y);
+            ymax = max(obj.y);
+            stepx = (max(obj.x) - min(obj.x))./(formerNx-1);
+            stepy = (max(obj.y) - min(obj.y))./(formerNy-1);
+            stepDeg = rad2deg([stepx,stepy]);
+            % Set the baseGrid of the rotated object.  This is required
+            % since all transformations operate from the base grid
+            obj = obj.sortGrid;
+            obj = obj.setBase;
+            obj = obj.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
+        end
+        
+        function obj = grid2GalLongLat(obj)
+            formerNx = obj.Nx;
+            formerNy = obj.Ny;
+            assert(any(strcmp(obj.gridTypeBase,[obj.projectionGrids,obj.astroGrids])),'Current grid must be a projection or be in an astronomical reference frame');
+            %must also check RA/dec lengths here...
+            obj = obj.grid2Base;
+            if ~strcmp(obj.gridType,'GalLongLat')
+                [obj.x,obj.y] = getGalLongLat(obj);
+                obj.gridType = 'GalLongLat';
+            end
+            % Get the grid step sizes from the original
+            xmin = min(obj.x);
+            xmax = max(obj.x);
+            ymin = min(obj.y);
+            ymax = max(obj.y);
+            stepx = (max(obj.x) - min(obj.x))./(formerNx-1);
+            stepy = (max(obj.y) - min(obj.y))./(formerNy-1);
+            stepDeg = rad2deg([stepx,stepy]);
+            % Set the baseGrid of the rotated object.  This is required
+            % since all transformations operate from the base grid
+            obj = obj.sortGrid;
+            obj = obj.setBase;
+            obj = obj.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
+        end
+        
+        %% Polarisation type transformation methods        
+        function obj = pol2linear(obj)
+            if ~strcmp(obj.polType,'linear')
+                [obj.E1, obj.E2] = getElin(obj);
+                obj.polType = 'linear';
+            end
+        end
+        
+        function obj = pol2circular(obj)
+            if ~strcmp(obj.polType,'circular')
+                [obj.E1,obj.E2] = getEcircular(obj);
+                obj.polType = 'circular';
+            end
+        end
+        
+        function obj = pol2slant(obj)
+            if ~strcmp(obj.polType,'slant')
+                [obj.E1,obj.E2] = getEslant(obj);
+                obj.polType = 'slant';
+            end
+        end
+        
+        %% Coordinate system transformation methods
+        function obj = coor2spherical(obj,setStdGrid)
+            if nargin < 2, setStdGrid = true; end
+            if ~strcmp(obj.coorType,'spherical')
+                [obj.E1,obj.E2] = getEspherical(obj);
+                obj.coorType = 'spherical';
+            end
+            if setStdGrid
+                obj = obj.grid2PhTh;
+            end
+        end
+        
+        function obj = coor2Ludwig1(obj,setStdGrid)
+            if nargin < 2, setStdGrid = true; end
+            if ~strcmp(obj.coorType,'Ludwig1')
+                [obj.E1,obj.E2] = getELudwig1(obj);
+                obj.coorType = 'Ludwig1';
+            end
+            if setStdGrid
+                obj = obj.grid2PhTh;
+            end
+        end
+        
+        function obj = coor2Ludwig2AE(obj,setStdGrid)
+            if nargin < 2, setStdGrid = true; end
+            if ~strcmp(obj.coorType,'Ludwig2AE')
+                [obj.E1,obj.E2] = getELudwig2AE(obj);
+                obj.coorType = 'Ludwig2AE';
+            end
+            if setStdGrid
+                obj = obj.grid2AzEl;
+            end
+        end
+        
+        function obj = coor2Ludwig2EA(obj,setStdGrid)
+            if nargin < 2, setStdGrid = true; end
+            if ~strcmp(obj.coorType,'Ludwig2EA')
+                [obj.E1,obj.E2] = getELudwig2EA(obj);
+                obj.coorType = 'Ludwig2EA';
+            end
+            if setStdGrid
+                obj = obj.grid2ElAz;
+            end
+        end
+        
+        function obj = coor2Ludwig3(obj,setStdGrid)
+            if nargin < 2, setStdGrid = true; end
+            if ~strcmp(obj.coorType,'Ludwig3')
+                [obj.E1,obj.E2] = getELudwig3(obj);
+                obj.coorType = 'Ludwig3';
+            end
+            if setStdGrid
+                obj = obj.grid2PhTh;
+            end
+        end
     end
     
 end
