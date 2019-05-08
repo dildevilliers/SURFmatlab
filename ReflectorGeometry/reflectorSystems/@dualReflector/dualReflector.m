@@ -133,14 +133,14 @@ classdef dualReflector
             obj.Feq = obj.FoD.*obj.Dm;
             
             % Feed coordinate system needed later and in global coordinates
-            feedCoor = coordinateSystem();
-            feedCoor.origin = pnt3D(-2*obj.f*sin(obj.beta),0,-2*obj.f*cos(obj.beta)); 
+            feedCoor = CoordinateSystem();
+            feedCoor.origin = Pnt3D(-2*obj.f*sin(obj.beta),0,-2*obj.f*cos(obj.beta)); 
             obj.feedCoor = feedCoor.rotGRASP([obj.beta+obj.alpha,0,0]);
 
             % The important points
-            obj.Q0 = pnt3D(obj.h,0,obj.h^2/(4*obj.F) - obj.F);
-            obj.Q1 = pnt3D(obj.h-obj.Dm/2,0,(2*obj.h - obj.Dm)^2/(16*obj.F) - obj.F);
-            obj.Q2 = pnt3D(obj.h+obj.Dm/2,0,(2*obj.h + obj.Dm)^2/(16*obj.F) - obj.F);
+            obj.Q0 = Pnt3D(obj.h,0,obj.h^2/(4*obj.F) - obj.F);
+            obj.Q1 = Pnt3D(obj.h-obj.Dm/2,0,(2*obj.h - obj.Dm)^2/(16*obj.F) - obj.F);
+            obj.Q2 = Pnt3D(obj.h+obj.Dm/2,0,(2*obj.h + obj.Dm)^2/(16*obj.F) - obj.F);
             
             Rz = obj.Dm/2;
             obj.R0 = obj.Q0;
@@ -154,9 +154,9 @@ classdef dualReflector
             OP1 = ODReq33(obj.a,obj.sigma,obj.e,obj.beta,obj.th_L);
             OP2 = ODReq34(obj.a,obj.sigma,obj.e,obj.beta,obj.th_U);
 
-            obj.P0 = pnt3D(obj.sigma*OP0*sin(obj.th_0),0,obj.sigma*OP0*cos(obj.th_0));
-            obj.P1 = pnt3D(obj.sigma*OP1*sin(obj.th_L),0,obj.sigma*OP1*cos(obj.th_L));
-            obj.P2 = pnt3D(obj.sigma*OP2*sin(obj.th_U),0,obj.sigma*OP2*cos(obj.th_U));
+            obj.P0 = Pnt3D(obj.sigma*OP0*sin(obj.th_0),0,obj.sigma*OP0*cos(obj.th_0));
+            obj.P1 = Pnt3D(obj.sigma*OP1*sin(obj.th_L),0,obj.sigma*OP1*cos(obj.th_L));
+            obj.P2 = Pnt3D(obj.sigma*OP2*sin(obj.th_U),0,obj.sigma*OP2*cos(obj.th_U));
             
             % Handle the extension of the SR
             % Distribute the amount of extension angle according to the
@@ -187,14 +187,14 @@ classdef dualReflector
                 Primz = (-sin(al_cone).*sin(th_cone).*cos(ph) + cos(al_cone).*cos(th_cone)).*rho_sr - 2.*obj.f;
                 
                 % Extension points P1e and P2e in the Granet SR coordinate system
-                PeSR = pnt3D(Primx,Primy,Primz);
+                PeSR = Pnt3D(Primx,Primy,Primz);
                 Dsxe = abs(diff(PeSR.x));
                 % Get in Global coor
-                gC = coordinateSystem;
+                gC = CoordinateSystem;
                 sC = gC.rotGRASP([obj.beta,0,0]);
                 Pe = PeSR.changeBase(gC,sC);
-                obj.P1e = pnt3D(Pe.x(1),Pe.y(1),Pe.z(1));
-                obj.P2e = pnt3D(Pe.x(2),Pe.y(2),Pe.z(2));
+                obj.P1e = Pnt3D(Pe.x(1),Pe.y(1),Pe.z(1));
+                obj.P2e = Pnt3D(Pe.x(2),Pe.y(2),Pe.z(2));
             else
                 obj.P1e = obj.P1;
                 obj.P2e = obj.P2;
@@ -220,7 +220,7 @@ classdef dualReflector
                 % Use the standard stuff in Granet for a Cassegrain
                 obj.SR.surface = SRhandle(2*obj.a,2*obj.f);
                 obj.SR.rim = ellipticalRim([obj.C_SR.x,obj.C_SR.y],[Dsxe,Dsye]./2);
-                SRcoor = coordinateSystem;
+                SRcoor = CoordinateSystem;
                 obj.SR.coor = SRcoor.rotGRASP([obj.beta,0,0]);
             elseif obj.sigma == 1
                 % Use a different SR coordinate system for Gregorians to
@@ -232,7 +232,7 @@ classdef dualReflector
 
 %                 SRxPlane = obj.P1e - obj.P2e; % In global coordinates (extended edge plane)
                 SRxPlane = obj.P1 - obj.P2; % In global coordinates (non-extended edge plane)
-                obj.SR.coor = coordinateSystem(pnt3D(0,0,0),SRxPlane.pointMatrix./SRxPlane.r,[0;-1;0]);
+                obj.SR.coor = CoordinateSystem(Pnt3D(0,0,0),SRxPlane.pointMatrix./SRxPlane.r,[0;-1;0]);
                 
                 % Project the extension edge points onto the SRcoor
                 P1sr = obj.P1e.changeBase(obj.SR.coor);
@@ -246,11 +246,11 @@ classdef dualReflector
             end
             
             obj.PR = reflector;
-            obj.PR.surface = paraboloid(pnt3D(0,0,-obj.F),obj.F);
+            obj.PR.surface = paraboloid(Pnt3D(0,0,-obj.F),obj.F);
             obj.PR.rim = ellipticalRim([obj.Q0.x,obj.Q0.y],[obj.Dm,obj.Dm]./2);
-            obj.PR.coor = coordinateSystem();
+            obj.PR.coor = CoordinateSystem();
             
-            obj.apCoor = coordinateSystem(obj.R0);
+            obj.apCoor = CoordinateSystem(obj.R0);
         end
         
         function Dish = getLegacyStruct(obj)
@@ -336,14 +336,14 @@ classdef dualReflector
             n = repmat([0;0;1],1,size(reflectDirSR,2));    % Normal vector on aperture plane
             % Loop through the directions of interest
             for rr = 1:length(pReflSR.x)
-                directionPoint = pnt3D(reflectDirSR(1,rr),reflectDirSR(2,rr),reflectDirSR(3,rr));
-                reflCoor = coordinateSystem;
+                directionPoint = Pnt3D(reflectDirSR(1,rr),reflectDirSR(2,rr),reflectDirSR(3,rr));
+                reflCoor = CoordinateSystem;
                 reflCoor = reflCoor.rotGRASP([directionPoint.th,directionPoint.ph,0]);
-                reflCoor.origin = pnt3D(pReflSR.x(rr),pReflSR.y(rr),pReflSR.z(rr));
+                reflCoor.origin = Pnt3D(pReflSR.x(rr),pReflSR.y(rr),pReflSR.z(rr));
                 [pPR,reflectDirPR(:,rr)] = obj.PR.reflectRays(reflCoor,0,0,5000); % Just pointing along the axis for this one-by-one calculation
                 [xPR(rr),yPR(rr),zPR(rr)] = deal(pPR.x,pPR.y,pPR.z);
             end
-            pReflPR = pnt3D(xPR,yPR,zPR);
+            pReflPR = Pnt3D(xPR,yPR,zPR);
             % Distance from intersection points to plane
             d = dot((obj.apCoor.origin.pointMatrix - pReflPR.pointMatrix),n)./(dot(reflectDirPR,n));
             reflectDirScale = bsxfun(@times,reflectDirPR,d);
@@ -402,11 +402,11 @@ classdef dualReflector
             
             switch refl
                 case 'PR'
-                    [Mint,ph_in,th_in] = obj.PR.getMask(coordinateSystem,A,0);
+                    [Mint,ph_in,th_in] = obj.PR.getMask(CoordinateSystem,A,0);
                     P = repmat(double(Mint(:)),1,numel(freq));
                     FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq,'linearY','Hz');
                     % Build the pointing matrix - already at globalCoor base
-                    MaskPointing(size(ph_in)) = coordinateSystem;
+                    MaskPointing(size(ph_in)) = CoordinateSystem;
                     % Fix the non-masked position pointing angles - in the global
                     % coordinate system
                     maskI = find(~Mint);
@@ -430,7 +430,7 @@ classdef dualReflector
                     FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq,'linearY','Hz'); % Don't return the extension information here - only in the third output
                     
                     % Build the pointing matrix
-                    MaskPointing(size(ph_in)) = coordinateSystem;
+                    MaskPointing(size(ph_in)) = CoordinateSystem;
                     % First those outside the SR mask - centered at feed currently
                     [MaskPointing(Mint<=1).base] = deal(obj.feedCoor);
                     % Those in mask - origin at global base and pointing up so do
@@ -442,7 +442,7 @@ classdef dualReflector
                     for m0 = mask0
                         MaskPointing(m0) = MaskPointing(m0).rotGRASP([th_in(m0),ph_in(m0),0]);
                         MaskPointing(m0) = MaskPointing(m0).getInGlobal;    % Rotate to global Coor
-                        MaskPointing(m0).origin = pnt3D(0,0,0);    % Force to centre of global Coor
+                        MaskPointing(m0).origin = Pnt3D(0,0,0);    % Force to centre of global Coor
                     end
                     % And reflect the rays pointing at the extension
                     mask1 = find(Mint == 1);
@@ -452,9 +452,9 @@ classdef dualReflector
                         ii = 0;
                         for m1 = mask1
                             ii = ii+1;
-                            directionPoint = pnt3D(reflectDir(1,ii),reflectDir(2,ii),reflectDir(3,ii));
+                            directionPoint = Pnt3D(reflectDir(1,ii),reflectDir(2,ii),reflectDir(3,ii));
                             MaskPointing(m1) = MaskPointing(m1).rotGRASP([directionPoint.th,directionPoint.ph,0]);
-                            MaskPointing(m1).origin = pnt3D;    % Force to centre of global Coor
+                            MaskPointing(m1).origin = Pnt3D;    % Force to centre of global Coor
                         end
                     end
                 otherwise
@@ -475,7 +475,7 @@ classdef dualReflector
             plot(surfPointsPR.x,surfPointsPR.z,'k','linewidth',lineWidthRefl), hold on, grid on
             plot(surfPointsSR.x,surfPointsSR.z,'r','linewidth',lineWidthRefl)
             % Plot the foci
-            globalCoor = coordinateSystem;
+            globalCoor = CoordinateSystem;
             F0 = obj.SR.surface.F0.changeBase(globalCoor,obj.SR.coor);
             F1 = obj.SR.surface.F1.changeBase(globalCoor,obj.SR.coor);
             plot(F0.x,F0.z,'ko')

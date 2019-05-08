@@ -10,7 +10,7 @@ classdef reflector
             if nargin == 0
                 obj.surface = paraboloid();
                 obj.rim = ellipticalRim();
-                obj.coor = coordinateSystem();
+                obj.coor = CoordinateSystem();
             else
                 obj.surface = surface;
                 obj.rim = rim;
@@ -42,7 +42,7 @@ classdef reflector
             N = N + mod(N,2) + 1;   % Uneven helps in symmetrical systems
             
             % Global coordinate system needed for base changes
-            GC = coordinateSystem;
+            GC = CoordinateSystem;
             
             if nargout == 3
                 % Get the surface points on a mesh
@@ -50,7 +50,7 @@ classdef reflector
                 [X,Y] = obj.generateSurfaceGrid(2*N);
                 M = obj.rim.isInRim(X,Y);
                 Z = obj.surface.getZ(X,Y);
-                Pnt = pnt3D(X,Y,Z);
+                Pnt = Pnt3D(X,Y,Z);
                 Pnt = Pnt.changeBase(GC,obj.coor);
                 surfPointsMesh(:,:,1) = Pnt.x;
                 surfPointsMesh(:,:,2) = Pnt.y;
@@ -90,13 +90,13 @@ classdef reflector
             x(M == 0) = [];
             y(M == 0) = [];
             z(M == 0) = [];
-            surfPoints = pnt3D(x,y,z);
+            surfPoints = Pnt3D(x,y,z);
             surfPoints = surfPoints.changeBase(GC,obj.coor);
             
             % Get the actual rim
             Rxy = obj.rim.cartRim(N);
             Rz = obj.surface.getZ(Rxy.x,Rxy.y);
-            rimPoints = pnt3D(Rxy.x,Rxy.y,Rz);
+            rimPoints = Pnt3D(Rxy.x,Rxy.y,Rz);
             rimPoints = rimPoints.changeBase(GC,obj.coor);
         end
         
@@ -181,9 +181,9 @@ classdef reflector
                 % Estimate the midpoint of the reflector
                 RimC = obj.rim.centre;
                 P0z = obj.surface.getZ(RimC(1),RimC(2));
-                P0 = pnt3D(RimC(1),RimC(2),P0z);
+                P0 = Pnt3D(RimC(1),RimC(2),P0z);
                 % In the global coordinate system
-                P0 = P0.changeBase(coordinateSystem,obj.coor);
+                P0 = P0.changeBase(CoordinateSystem,obj.coor);
                 % Get the angle between the input coor z_axis and this
                 % point
                 V0 = P0-coorIn.origin;
@@ -212,7 +212,7 @@ classdef reflector
             % Return the point on the reflector where the ray pointing in the direction
             % [ph_in,th_in] from the coorIn coordinate system will intercept.
             % ph_in and th_in can be vectors of equal length
-            % Pintercept is a pnt3D object in the global coordinate system.
+            % Pintercept is a Pnt3D object in the global coordinate system.
             % M is the associated input ray mask
             % NpointsTest is an optional parameter which determines the
             % resolution on the reflector to test with - keep under 1000 to
@@ -244,10 +244,10 @@ classdef reflector
             % Get points (currently in Global coordinate base) in the coordinate System base
             intPointsInCoorIn = intPoints.changeBase(coorIn);
             % Project onto unit sphere
-            int1Sph = pnt3D.sph(intPointsInCoorIn.ph,intPointsInCoorIn.th,1);
+            int1Sph = Pnt3D.sph(intPointsInCoorIn.ph,intPointsInCoorIn.th,1);
             % Also get the pointsof interest on the unit sphere
             [xInSph,yInSph,zInSph] = sph2cart(ph_in,pi/2-th_in,1);
-            in1Sph = pnt3D(xInSph,yInSph,zInSph);
+            in1Sph = Pnt3D(xInSph,yInSph,zInSph);
             
             if NpointsTest <= 1001
                 % Use a 3D interpolant on the unit sphere to get the radius
@@ -255,8 +255,8 @@ classdef reflector
                 % densely sampled reflector
                 R = scatteredInterpolant([int1Sph.x;int1Sph.y;int1Sph.z].',intPointsInCoorIn.r.','natural');
                 rInterpolate = R([in1Sph.x(M);in1Sph.y(M);in1Sph.z(M)].').';
-                Pintercept = pnt3D.sph(ph_out,th_out,rInterpolate);
-                Pintercept = Pintercept.changeBase(coordinateSystem(),coorIn);
+                Pintercept = Pnt3D.sph(ph_out,th_out,rInterpolate);
+                Pintercept = Pintercept.changeBase(CoordinateSystem(),coorIn);
             else
                 % Just get the closest 5 points on the unit sphere and
                 % average the correspong results on the reflector
@@ -272,9 +272,9 @@ classdef reflector
                     yInt(:,ii) = intPoints.y(IintSort);
                     zInt(:,ii) = intPoints.z(IintSort);
                 end
-                %                 pIntClosest = pnt3D(xInt(1,:),yInt(1,:),zInt(1,:));
+                %                 pIntClosest = Pnt3D(xInt(1,:),yInt(1,:),zInt(1,:));
                 nMean = 5; % Number of closest points to consider
-                Pintercept = pnt3D(mean(xInt(1:nMean,:)),mean(yInt(1:nMean,:)),mean(zInt(1:nMean,:)));
+                Pintercept = Pnt3D(mean(xInt(1:nMean,:)),mean(yInt(1:nMean,:)),mean(zInt(1:nMean,:)));
             end
             
             if debugPlot
@@ -296,7 +296,7 @@ classdef reflector
             % the reflected ray, for the ray pointing in the direction
             % [ph_in,th_in].
             % ph_in and th_in can be vectors of equal length
-            % reflectPoint is a pnt3D object in the global coordinate
+            % reflectPoint is a Pnt3D object in the global coordinate
             % system, and reflectDir is a [3xNrefl] matrix of unit vectors,
             % in the global coordinate system, of the Nrefl reflected rays.
             % M is the associated input ray mask
@@ -331,9 +331,9 @@ classdef reflector
             % Get the points at the tips of the reflected ray for the base
             % change
             reflPointMat_base = interceptPnt_base.pointMatrix + VoutN;
-            reflPoint_base = pnt3D(reflPointMat_base(1,:),reflPointMat_base(2,:),reflPointMat_base(3,:));
+            reflPoint_base = Pnt3D(reflPointMat_base(1,:),reflPointMat_base(2,:),reflPointMat_base(3,:));
             % Get back in global coordinates
-            reflPoint = reflPoint_base.changeBase(coordinateSystem,obj.coor);
+            reflPoint = reflPoint_base.changeBase(CoordinateSystem,obj.coor);
             reflectDirTmp = reflPoint - interceptPnt;
             reflectDir = reflectDirTmp.pointMatrix;
             
@@ -450,10 +450,10 @@ classdef reflector
             if ~isnan(M)
                 hitLen = sum(M);
                 misLen = length(ph_in)-sum(M);
-                Phit = pnt3D.sph(ph_in(M),th_in(M),scaleRays);
-                Pmis = pnt3D.sph(ph_in(~M),th_in(~M),scaleRays);
+                Phit = Pnt3D.sph(ph_in(M),th_in(M),scaleRays);
+                Pmis = Pnt3D.sph(ph_in(~M),th_in(~M),scaleRays);
                 % Get in the global coordinate system
-                GC = coordinateSystem;
+                GC = CoordinateSystem;
                 Phit = Phit.changeBase(GC,coorIn);
                 Pmis = Pmis.changeBase(GC,coorIn);
                 % Move to origin since we only want relative points for

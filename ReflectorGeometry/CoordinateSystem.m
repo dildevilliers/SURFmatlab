@@ -47,6 +47,7 @@ classdef CoordinateSystem
            obj = obj.normAxis;
        end
        
+       %% Setters
        function z_axis = get.z_axis(obj)
             z_axis = cross(obj.x_axis,obj.y_axis);
        end

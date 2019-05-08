@@ -4,8 +4,8 @@ clear all
 
 pathName = 'Farfield Source [1]';
 FF = FarField.readCSTffs(pathName);
-FFBOR1 = FF.getBOR1pattern;
-FFexpand = FFBOR1.expandBOR1pattern;
+FFBOR1 = FF.getBORpattern(1);
+FFexpand = FFBOR1.expandBORpattern;
 FFstruct = FF.getFarFieldStruct;
 BOR1struct = BOR1(FFstruct);
 

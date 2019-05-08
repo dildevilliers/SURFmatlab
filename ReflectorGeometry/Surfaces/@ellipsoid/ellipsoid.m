@@ -52,10 +52,10 @@ classdef ellipsoid
             obj.e = obj.f./obj.a;
             obj.b = sqrt(obj.a.^2 - obj.f.^2);
             % Focus positions
-            coorBase = coordinateSystem();
+            coorBase = CoordinateSystem();
             obj.coorRot = coorBase.rotY(-obj.rotAng);
-            obj.F1 = pnt3D(0,0,0);
-            obj.F0 = pnt3D(0,0,2*obj.f);
+            obj.F1 = Pnt3D(0,0,0);
+            obj.F0 = Pnt3D(0,0,2*obj.f);
             obj.F0 = obj.F0.changeBase(coorBase,obj.coorRot);
             % Plenty of algebra to get these...
             th = obj.rotAng;
@@ -95,8 +95,8 @@ classdef ellipsoid
             x0vect = [x0,x0].';
             y0vect = [y0,y0].';
             z0vect = [zn0,zp0].';
-            p0 = pnt3D(x0vect,y0vect,z0vect);
-            xz = p0.changeBase(coordinateSystem,obj.coorRot);
+            p0 = Pnt3D(x0vect,y0vect,z0vect);
+            xz = p0.changeBase(CoordinateSystem,obj.coorRot);
         end
         
         function alpha = getAlp(obj)
@@ -113,22 +113,22 @@ classdef ellipsoid
         
         function rho = getRho(obj,x,y)
             % Points on surface in global coor
-            surfPnt = pnt3D(x,y,obj.getZ(x,y)); 
+            surfPnt = Pnt3D(x,y,obj.getZ(x,y)); 
             % Get in the local rotated coordinate system
-            surfPntLoc = surfPnt.changeBase(obj.coorRot,coordinateSystem);
+            surfPntLoc = surfPnt.changeBase(obj.coorRot,CoordinateSystem);
             rho = surfPntLoc.rho;
         end
         
         function r = getR(obj,x,y)
             % See the GRASP technical description CH6 for details
-            surfPnt = pnt3D(x,y,obj.getZ(x,y)); 
+            surfPnt = Pnt3D(x,y,obj.getZ(x,y)); 
             rVect = surfPnt - obj.F0;
             r = rVect.r;
         end
         
         function rp = getRp(obj,x,y)
             % See the GRASP technical description CH6 for details
-            surfPnt = pnt3D(x,y,obj.getZ(x,y)); 
+            surfPnt = Pnt3D(x,y,obj.getZ(x,y)); 
             rpVect = surfPnt - obj.F1;
             rp = rpVect.r;
         end

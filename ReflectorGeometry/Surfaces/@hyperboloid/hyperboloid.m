@@ -38,8 +38,8 @@ classdef hyperboloid
             obj.f = obj.fociDistance/2;
             obj.e = obj.f./obj.a;
             obj.b = sqrt(obj.f.^2 - obj.a.^2);
-            obj.F1 = pnt3D(0,0,0);
-            obj.F0 = pnt3D(0,0,-2*obj.f);
+            obj.F1 = Pnt3D(0,0,0);
+            obj.F0 = Pnt3D(0,0,-2*obj.f);
         end
         
         function z = getZ(obj,x,y)

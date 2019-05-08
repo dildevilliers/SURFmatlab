@@ -1,4 +1,6 @@
 % Test script for the Pnt3D class
+% Created: 2019-05-07, Dirk de Villiers
+% Updated: 2019-05-07, Dirk de Villiers
 
 close all
 clearvars

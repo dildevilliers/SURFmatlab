@@ -57,9 +57,9 @@ classdef singleReflector
             obj.apArea = pi*(obj.Dm/2)^2;
             
             % Make the reflector
-            surface = paraboloid(pnt3D(0,0,0),obj.F);
+            surface = paraboloid(Pnt3D(0,0,0),obj.F);
             rim = ellipticalRim([obj.h;0],[obj.Dm/2;obj.Dm/2]);
-            PRcoor = coordinateSystem(pnt3D(0,0,0));
+            PRcoor = CoordinateSystem(Pnt3D(0,0,0));
             obj.PR = reflector(surface,rim,PRcoor);
             
             % Calculate the extreme points of the reflector
@@ -68,14 +68,14 @@ classdef singleReflector
             xy_0 = [obj.h;0];
             xy = [xy_xMin,xy_xMax,xy_0];
             zEx = obj.PR.surface.getZ(xy(1,:),xy(2,:));
-            obj.P1 = pnt3D(xy_xMin(1),xy_xMin(2),zEx(1));
-            obj.P2 = pnt3D(xy_xMax(1),xy_xMax(2),zEx(2));
-            obj.P0 = pnt3D(xy_0(1),xy_0(1),zEx(3));
+            obj.P1 = Pnt3D(xy_xMin(1),xy_xMin(2),zEx(1));
+            obj.P2 = Pnt3D(xy_xMax(1),xy_xMax(2),zEx(2));
+            obj.P0 = Pnt3D(xy_0(1),xy_0(1),zEx(3));
             
             % Define the feed and aperture coordinates
-            obj.feedCoor = coordinateSystem(pnt3D(0,0,obj.F));
+            obj.feedCoor = CoordinateSystem(Pnt3D(0,0,obj.F));
             obj.feedCoor = obj.feedCoor.rotGRASP([pi-obj.th_f,0,pi]);
-            obj.apCoor = coordinateSystem(pnt3D(obj.h,0,obj.P2.z + obj.F./2));
+            obj.apCoor = CoordinateSystem(Pnt3D(obj.h,0,obj.P2.z + obj.F./2));
         end
         
         function [rho,drho_dth] = getThRhoMapping(obj,th)
@@ -143,7 +143,7 @@ classdef singleReflector
             P = repmat(double(M(:)),1,numel(freq));
             FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq);
             % Build the pointing matrix
-            MaskPointing(size(ph_in)) = coordinateSystem;
+            MaskPointing(size(ph_in)) = CoordinateSystem;
             % First those outside mask - centered at feed currently
             [MaskPointing(~M).base] = deal(obj.feedCoor);
             % Those in mask - origin at global base and pointing up so do
@@ -154,7 +154,7 @@ classdef singleReflector
             for mm = maskI
                 MaskPointing(mm) = MaskPointing(mm).rotGRASP([th_in(mm),ph_in(mm),0]);
                 MaskPointing(mm) = MaskPointing(mm).getInGlobal;    % Rotate to global Coor
-                MaskPointing(mm).origin = pnt3D;    % Force to centre of global Coor
+                MaskPointing(mm).origin = Pnt3D;    % Force to centre of global Coor
             end
         end
         

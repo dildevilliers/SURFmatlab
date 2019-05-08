@@ -20,7 +20,7 @@ P1 = powerPattern(PH(:),TH(:),'gauss',th0,taper_dB,freq);
 [plotlinX plotlinY plotcircLH plotcircRH] = deal([1 1 1 1]);
 
 if plotlinX
-    FF1 = FarField.farFieldFromPowerPattern(PH(:),TH(:),P1,freq,'linearX');
+    FF1 = FarField.farFieldFromPowerPattern(PH(:),TH(:),P1,freq,'fieldPol','linearX');
     figure
     %E1 is -inf dB (perfectly X-linear field in Ludwig3 coords) and will break plot
     subplot(3,1,1)
@@ -34,7 +34,7 @@ if plotlinX
 end
 
 if plotlinY
-    FF2 = FarField.farFieldFromPowerPattern(PH(:),TH(:),P1,freq,'linearY');
+    FF2 = FarField.farFieldFromPowerPattern(PH(:),TH(:),P1,freq,'fieldPol','linearY');
     figure
     %E1 is -inf dB (perfectly Y-linear field in Ludwig3 coords) and will break plot
     % FF2.plot('plotType','2D','output','E1','outputType','mag','step',1,'showGrid',true,'dynamicRange_dB',30);
@@ -48,7 +48,7 @@ if plotlinY
 end
 
 if plotcircLH
-    FF3 = FarField.farFieldFromPowerPattern(PH(:),TH(:),P1,freq,'circularLH');
+    FF3 = FarField.farFieldFromPowerPattern(PH(:),TH(:),P1,freq,'fieldPol','circularLH');
     figure
     %E2 is -inf dB (perfectly LH circular field in spherical pol basis) and will break plot
     subplot(3,1,1)
@@ -61,7 +61,7 @@ if plotcircLH
 end
 
 if plotcircRH
-    FF4 = FarField.farFieldFromPowerPattern(PH(:),TH(:),P1,freq,'circularRH');
+    FF4 = FarField.farFieldFromPowerPattern(PH(:),TH(:),P1,freq,'fieldPol','circularRH');
     figure
     %E1 is -inf dB (perfectly RH circular field in spherical pol basis) and will break plot
     subplot(3,1,1)

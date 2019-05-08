@@ -1,23 +1,22 @@
 # ToDo list for new code
 
 ## @Farfield
-- [ ] Make symmetry settings part of the constructor, and remove the set options (maybe?). Also in FarFieldFromPowerPattern. 
-- [ ] expandBOR1pattern must also be able to handle phi=45deg cut with Ludwig3 Co-Xp fields
-- [ ] Make BOR0 symmetry functionality
+- [ ] Multiple frequency concat
+- [ ] Fix default behaviour of the 2-D plotType to have a finite step. It should run out the box with no step provided.
+- [ ] expandBORpattern must also be able to handle phi=45deg cut with Ludwig3 Co-Xp fields.
+- [ ] Sort out all the CP BOR1 pattern stuff (farFieldFromPowerPattern, expandBORpattern, getBORpattern)
 - [ ] Speed up mirrorSymmetricPattern. Might require custom implementations of all grid types. Start with spherical though!
 - [ ] readMeasurements
-- [ ] Make several example patterns using simple dipoles
-- [ ] Check readGRASPgrd. Not sure of E1 and E2 order for all cases. Preallocate the matrices for speed like in readGRASPcut
-- [ ] Fix FarField.rotate field components poles (DdV)
+- [ ] Make several example patterns using simple dipoles and powerPattern functions
+- [ ] Check readGRASPgrd, not sure of E1 and E2 order for all cases. Pre-allocate the matrices for speed.
+- [ ] Fix FarField.rotate field components pole at th = 180 (DdV)
 - [ ] Field symmetries: XY plane (DdV)
 - [ ] Gaussian/cosn pattern fitter
-- [ ] Rework FarFieldFromPower pattern workflow:  Can use BOR1 and (new) BOR0 functions here to shorten the code. Merge powerPattern in, or move to reflectorAnalysis.
 - [ ] 2/3D plots should automatically expand BOR0/1 symmetry fields before plotting
 - [ ] readFITS (DdV)
 - [ ] Overlap integral calculator (DdV)
 - [ ] CBFP expansion (Fahmi)
 - [ ] SWE of a given field (Fahmi + Brandt)
-- [ ] Multiple frequency concat
 - [ ] Typical pattern parameters calculator: SLL, XP, Beamwidth, etc.
 - [ ] writeCSTffs
 - [ ] writeFEKOfft
@@ -62,6 +61,9 @@
 - [x] Move all parameters to setAccess private, and make setters as required
 - [x] Fix default power in pattern Prad to do the integration if nothing is provided and a full sphere pattern is available
 - [x] Make E3 empty for all cases to save memory. It can be used by the SWE in special cases
+- [x] Make BOR0 symmetry functionality
+- [x] Make symmetry settings part of the constructor, all the file readers and farFieldFromPowerPattern. 
+- [x] Rework FarFieldFromPower pattern workflow:  Can use BOR1 functions here to shorten the code. 
 
 
 # ReflectorGeometry
