@@ -1,9 +1,20 @@
 classdef FarField
-    % Based largely on information in CST help file: Farfield Calculation
+    %FARFIELD   Class of antenna FarField patterns.
+    % Class of radiated FarField patterns.
+    % Class of radiated electromagnetic FarField patterns.
+    % Based largely on information in CST help file: Farfield Calculation.
     % Overview, and the AMTA paper in this folder 'COORDINATE SYSTEM
-    % PLOTTING FOR ANTENNA MEASUREMENTS', GF Masters and SF Gregson
+    % PLOTTING FOR ANTENNA MEASUREMENTS', GF Masters and SF Gregson.
     % Currently assumes direction of propagation is the global z-axis for
     % all directional polarization types.
+    %
+    % Constructor methods
+    % - FarField
+    % - readGRASPgrd
+    % - readFEKOffe
+    % - readCSTffs
+    % - readGRASPcut
+    % - farFieldFromPowerPattern
     
     properties
         r(1,1) double {mustBeReal, mustBeFinite}        % Radius where E-field is evaluated in (m)
@@ -19,7 +30,7 @@ classdef FarField
         freq        % Frequency
         Prad        % Radiated power per frequency
         coorType    % Coordinate system type {'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'}
-        polType     % Polarisation type {'linear','circular','slant'}
+        polType     % polarization type {'linear','circular','slant'}
         gridType    % Grid type {'PhTh','DirCos','AzEl','ElAz','AzAlt','TrueView','ArcSin','Mollweide','RAdec','GalLongLat'}
         freqUnit    % Frequency Unit {'Hz','kHz','MHz','GHz','THz'}
         symmetryXZ  % XZ plane symmetry type {'none','electric','magnetic'}
@@ -32,9 +43,9 @@ classdef FarField
         ph          % Spherical coordinate phi angle of grid
         th          % Spherical coordinate theta angle of grid
         xname       % Name of the x-grid variable {'\phi','u','az','\epsilon','Xg=asin(u)','Xg','North-az','RA','long'}
-        yname       
-        E1name      % Name of the E1-field component {...}
-        E2name      % Name of the E2-field component
+        yname       % Name of the y-grid variable {'\theta','v','el','\alpha','Yg=asin(v)','Yg','Alt','dec','lat'}
+        E1name      % Name of the E1-field component {'Eth','Ex','Eaz','Eal','Eh','Exp','Elh'}
+        E2name      % Name of the E2-field component {'Eph','Ey','Eel','Eep','Ev','Eco','Erh'}
         Nf          % Number of frequencies
         Nx          % Number of unique x points
         Ny          % Number of unique y points
@@ -43,18 +54,18 @@ classdef FarField
         Directivity_dBi % Directivity in dBi
         Gain_dB         % Gain in dB 
         radEff_dB       % Radiation efficiency in dB    
-        xRangeType     % Type of x-range: 'sym' or 'pos'
-        yRangeType     % Type of y-range: 180 or 360
+        xRangeType      % Type of x-range: 'sym' or 'pos'
+        yRangeType      % Type of y-range: 180 or 360
     end
     
     properties (Dependent = true, Hidden = true)
-        symXZ
-        symYZ
-        symXY
+        symXZ % XZ plane symmetry
+        symYZ % YZ plane symmetry
+        symXY % XY plane symmetry
     end
     
     properties (SetAccess = private, Hidden = true)
-        E3 = []         % First E-field component
+        E3 = []         % Radial E-field component
         orientation     % Antenna orientation - altitude/azimuth in radians relative to zenith/North
         earthLocation   % Antenna location on the Earth longitude and latitude in radians, and height above sea level in meters - defaults to the roof of the Stellenbosch University E&E Engineering Dept. :)
         time            % Time as a datetime object (used, for instance, in astronomical observation)
@@ -87,8 +98,53 @@ classdef FarField
     
     methods
         function obj = FarField(varargin)
-            %         function obj = FarField(x,y,E1,E2,freq,Prad,radEff,coorType,polType,gridType,freqUnit,slant)
-%             
+            % FARFIELD class constructor method.
+            % obj = FarField(x,y,E1,E2,freq,Prad,radEff,varargin) - can be
+            % empty, which constructs a z-directed incremental dipole farfield pattern.
+            % 
+            % Inputs
+            % - x: column vector of ph angles in rad, [Nang x 1]
+            % - y: column vector of th angles in rad, [Nang x 1]
+            % - E1: First E-field pattern component, [Nang x Nf]
+            % - E2: Second E-field pattern component, [Nang x Nf]
+            % - freq: Frequencies where the fields are defined in Hz, [1 x Nf]
+            % - Prad: Radiated power at each frequency in W, [1 x Nf]
+            % - radEff: Radiation efficiency at each frequency, [1 x Nf]
+            % * Arbitrary number of pairs of arguments: ...,keyword,value,... where
+            %   keywords and values are from the sets 
+            %   -- E3:          Radial component of E-field ([]), [Nang x 1]
+            %   -- coorType:    {('spherical')|'Ludwig1'|'Ludwig2AE'|'Ludwig2EA'|'Ludwig3'}
+            %   -- polType:     {('linear')|'circular'|'slant'}
+            %   -- gridType:    {('PhTh')|'DirCos'|'AzEl'|'ElAz'|'AzAlt'|'TrueView'|'ArcSin'|'Mollweide'|'RAdec'|'GalLongLat'}
+            %   -- freqUnit:    {('Hz'),'kHz','MHz','GHz','THz'}
+            %   -- symmetryXZ:  {('none')|'electric'|'magnetic'}
+            %   -- symmetryYZ:  {('none')|'electric'|'magnetic'}
+            %   -- symmetryXY:  {('none')|'electric'|'magnetic'}
+            %   -- symBOR:      {('none')|'BOR0'|'BOR1'}
+            %   -- r:           Radius where the E-Field is evaluated in m, (1)
+            %   -- slant:       slant angle in rad for polType=slant, (pi/4)
+            %   -- orientation: Antenna orientation, altitude/azimuth in radians relative to zenith/North ([0,pi/2]), [1 x 2]
+            %   -- earthLocation: Antenna location, East-longitude/North-latitude in rad
+            %                     and height above sea level in m, ([deg2rad(18.86) deg2rad(-33.93) 300])
+            %   -- time:        Time, datetime object data type (datetime(2018,7,22,0,0,0))
+            %
+            % Outputs
+            % - obj:    Farfield object
+            %
+            % Dependencies
+            % -
+            %
+            % Created: 2019-05-09, Dirk de Villiers
+            % Updated: 2019-05-09, Dirk de Villiers
+            %
+            % Tested : Matlab R2018b
+            %  Level : 0
+            %   File : 
+            %
+            % Example
+            %   F = FarField;
+            %   F.plot
+                      
 %             % function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
 %             % Constructor method for the FarField object
 %             % Required inputs:
@@ -381,7 +437,7 @@ classdef FarField
             obj = setBase(obj);
         end
         
-        %% Setters
+        %% Dependency-based Setters
         function ph = get.ph(obj)
             [ph,~] = getPhThCurrent(obj);
         end
@@ -503,8 +559,34 @@ classdef FarField
         
         %% Pattern getters
         function FFpattern = getFarFieldStruct(obj)
+            % GETFARFIELDSTRUCT Returns the legacy FarField struct data format.
+            % FFpattern = getFarFieldStruct(obj) Converts a FarField
+            % object into a struct data type. The struct format is compatible
+            % with old script-based code.
+            % 
+            % Inputs
+            % - obj:    FarField object
+            % 
+            % Outputs
+            % - FFpattern: FarField struct
+            %
+            % Dependencies
+            % -
+            %
+            % Created: 2019-05-09, Dirk de Villiers
+            % Updated: 2019-05-09, Dirk de Villiers
+            %
+            % Tested : Matlab R2018b, Fahmi Mokhupuki
+            %  Level : 1
+            %   File : 
+            %
+            % Example
+            %   F = FarField;
+            %   FFpattern = getFarFieldStruct(F);
+            
             % This returns the legacy structure format for testing with all
             % the tons of old code
+            
             obj = obj.coor2spherical(true);
             FFpattern.th = repmat(obj.y,1,obj.Nf);
             FFpattern.ph = repmat(obj.x,1,obj.Nf);
@@ -518,6 +600,33 @@ classdef FarField
         end
         
         function [E1field, E2field, E3field] = getEfield(obj)
+            % GETEFIELD Returns E-field components from the radiated pattern.
+            % [E1field, E2field, E3field] = getEfield(obj) Returns E-field
+            % components from a FarField object in matrices of size [Nang x Nf]
+            % E-field = E*exp(-jkr)/r
+            %
+            % Inputs
+            % - obj:    FarField object
+            %
+            % Outputs
+            % - E1field:    coorType dependent E-field component 
+            % - E2field:    coorType dependent E-field component
+            % - E3field:    coorType dependent E-field component ([])
+            %
+            % Dependencies
+            % -
+            %
+            % Created: 2019-05-07, Dirk de Villiers
+            % Updated: 2019-05-07, Dirk de Villiers
+            %
+            % Tested : Matlab R2018b, Fahmi Mokhupuki
+            %  Level : 1
+            %   File : 
+            %
+            % Example
+            %   F = FarField;
+            %   [E1,E2,E3] = getEfield(F)
+            
             % function [E1field, E2field, E3field] = getEfield(obj)
             % Returns the Efield matrices of size [Nang x Nf]
             % Efield = E*exp(-jkr)/r
@@ -533,6 +642,8 @@ classdef FarField
         end
         
         function [W] = getW(obj)
+            % GETW Returns the radiation density in W/m2.
+            
             % function [W] = getW(obj)
             % returns the radiation density in W/m2 [Nang x Nf]
             [E1f, E2f] = getEfield(obj);    % Can use any orthogonal pair
@@ -540,42 +651,56 @@ classdef FarField
         end
         
         function [U] = getU(obj)
+            % GETU Returns the radiation intensity in W/unit solid angle.
+            
             % function [U] = getU(obj)
             % returns the radiation intensity in W/unit solid angle [Nang x Nf]
             U = obj.r^2.*getW(obj);
         end
         
         function [D] = getDirectivity(obj)
+            % GETDIRECTIVITY Returns the directivity (linear).
+            
             % function [D] = getDirectivity(obj)
             % returns the directivity (linear) in D [Nang x Nf]
             D = 4.*pi.*bsxfun(@times,getU(obj),1./obj.Prad);
         end
         
         function [G] = getGain(obj)
+            % GETGAIN Returns the gain in a (linear).
+            
             % function [G] = getGain(obj)
             % returns the gain (linear) in G [Nang x Nf]
             G = bsxfun(@times,getDirectivity(obj),obj.radEff);
         end
         
         function [AR] = getAxialRatio(obj)
+            % GETAXIALRATIO Returns the Axial Ratio (linear).
+            
             % function [AR] = getAxialRatio(obj)
             % returns the Axial Ratio (linear) [Nang x Nf]
             AR = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2)));
         end
         
         function [ARinv] = getAxialRatioInv(obj)
+            % GETAXIALRATIOINV Returns the inverted Axial Ration (linear).
+            
             % function [ARinv] = getAxialRatioInv(obj)
             % returns the inverted Axial Ratio in ARinv [Nang x Nf]
             ARinv = sqrt((abs(obj.E1).^2 + abs(obj.E2).^2 - abs(obj.E1.^2 + obj.E2.^2))./(abs(obj.E1).^2 + abs(obj.E2).^2 + abs(obj.E1.^2 + obj.E2.^2)));
         end
         
         function [Xpol] = getCO_XP(obj)
+            % GETCO_XP Returns the CO/XP ratio (linear).
+            
             % function [Xpol] = getCO_XP(obj)
             % returns the CO/XP ratio (linear) [Nang x Nf]
             Xpol = (abs(obj.E2)./abs(obj.E1)).^2;
         end
         
         function [Xpol] = getXP_CO(obj)
+            % GETXP_CO Returns the XP/CO ratio (linear)
+            
             % function [Xpol] = getXP_CO(obj)
             % returns the XP/CO ratio (linear) [Nang x Nf]
             Xpol = (abs(obj.E1)./abs(obj.E2)).^2;
@@ -583,12 +708,16 @@ classdef FarField
         
         %% Grid transformation setters
         function obj = changeGrid(obj,gridTypeString)
+            % CHANGEGRID Change the current FarField object grid.  
+            
             mustBeMember(gridTypeString, {'PhTh','DirCos','AzEl','ElAz','TrueView','ArcSin','AzAlt','RAdec','GalLongLat'});
             handleGridType = str2func(['grid2',gridTypeString]);
             obj = handleGridType(obj);  
         end
         
         function obj = grid2PhTh(obj)
+            % GRID2PHTH Change the current FarField object grid to a PhTh grid.
+            
             formerGridType = obj.gridType;
             formerNx = obj.Nx;
             formerNy = obj.Ny;
@@ -620,6 +749,8 @@ classdef FarField
         end
         
         function obj = grid2DirCos(obj)
+            % GRID2DIRCOS Change the current FarField object grid to a DirCos grid.
+            
             obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'DirCos')
                 [obj.x,obj.y] = getDirCos(obj);
@@ -628,6 +759,8 @@ classdef FarField
         end
         
         function obj = grid2AzEl(obj)
+            % GRID2AZEL Change the current FarField object grid to a AzEl grid.
+            
             obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'AzEl')
                 [obj.x,obj.y] = getAzEl(obj);
@@ -636,6 +769,8 @@ classdef FarField
         end
         
         function obj = grid2ElAz(obj)
+            % GRID2ELAZ Change the current FarField object grid to a ElAz grid.
+            
             obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'ElAz')
                 [obj.x,obj.y] = getElAz(obj);
@@ -644,6 +779,8 @@ classdef FarField
         end
         
         function obj = grid2TrueView(obj)
+            % GRID2TRUEVIEW Change the current FarField object grid to a TrueView grid.
+            
             obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'TrueView')
                 [obj.x,obj.y] = getTrueView(obj);
@@ -652,6 +789,8 @@ classdef FarField
         end
         
         function obj = grid2ArcSin(obj)
+            % GRID2ARCSIN Change the current FarField object grid to an ArcSin grid.
+            
             obj = obj.grid2Base;
             if ~strcmp(obj.gridType,'ArcSin')
                 [obj.x,obj.y] = getArcSin(obj);
@@ -660,6 +799,8 @@ classdef FarField
         end
         
         function obj = grid2AzAlt(obj)
+            % GRID2AZALT Change the current FarField object grid to an AzAlt grid.
+            
             formerNx = obj.Nx;
             formerNy = obj.Ny;
             if ~any(strcmp([obj.projectionGrids,obj.astroGrids],obj.gridType))
@@ -691,6 +832,8 @@ classdef FarField
         end
         
         function obj = grid2RAdec(obj)
+            % GRID2RAdec Change the current FarField object grid to a RAdec grid.
+            
             formerNx = obj.Nx;
             formerNy = obj.Ny;
             assert(any(strcmp(obj.gridTypeBase,[obj.projectionGrids,obj.astroGrids])),'Current grid must be a projection or be in an astronomical reference frame')
@@ -716,6 +859,8 @@ classdef FarField
         end
         
         function obj = grid2GalLongLat(obj)
+            % GRID2GALLONGLAT Change the current FarField object grid to a GalLongLat grid.
+            
             formerNx = obj.Nx;
             formerNy = obj.Ny;
             assert(any(strcmp(obj.gridTypeBase,[obj.projectionGrids,obj.astroGrids])),'Current grid must be a projection or be in an astronomical reference frame');
@@ -742,6 +887,9 @@ classdef FarField
         
         %% Grid range shifters
         function obj = sortGrid(obj)
+            % SORTGRID Sort grid with corresponding E-field values 
+            % in ascending order, according to x then y.
+            
             obj = roundGrid(obj);
             [~,iSort] = sortrows([obj.x,obj.y],[1 2]);
             obj.x = obj.x(iSort);
@@ -752,6 +900,8 @@ classdef FarField
         end
         
         function obj = roundGrid(obj,nSigDig)
+            % ROUNDGRID Round grid entries to some significant number of digits.
+            
             % Round to some significant digits for sorting (some issues can
             % arise in deg2rad and rad2deg
             if nargin < 2
@@ -764,6 +914,8 @@ classdef FarField
         end
         
         function obj = copyAndInsertXcut(obj1,xvalCopy,xvalPaste,tol)
+            % COPYANDINSERTXCUT Copy a FarField cut into another position.
+            
             % Use this to copy an X cut into another position.  Typically
             % handy when some transformation does not include the closing
             % cut - that is the 0 and 360 or -180 and 180 cuts.  Can in
@@ -792,6 +944,9 @@ classdef FarField
         end
         
         function obj = setXrange(obj,type)
+            % SETXRANGE Set the x-range (ph, az or ep) for the angular gridTypes
+            % in the FarField object.
+            
             % Attempts to set the x-range (ph, az, or ep) for the angular
             % gridTypes in the FarField object
             % type = 'pos':
@@ -871,6 +1026,9 @@ classdef FarField
         end
         
         function obj = setYrange(obj,type)
+            % SETXRANGE Set the y-range (th, el, or al) for the angular gridTypes
+            % in the FarField object.
+            
             % Attempts to set the y-range (th, el, or al) for the angular
             % gridTypes in the FarField object
             % type = 180:
@@ -1046,6 +1204,8 @@ classdef FarField
         
         %% Coordinate system transformation methods
         function obj = changeCoor(obj,coorTypeString,setStdGrid)
+            % CHANGECOOR Change the FarField object coordinate type.
+            
             if nargin < 3, setStdGrid = true; end
             mustBeMember(coorTypeString, {'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'});
             handleCoorType = str2func(['coor2',coorTypeString]);
@@ -1053,6 +1213,9 @@ classdef FarField
         end
         
         function obj = coor2spherical(obj,setStdGrid)
+            % COOR2SPHERICAL Change the current FarField object coordinate
+            % type to spherical coordinates.
+            
             if nargin < 2, setStdGrid = true; end
             if ~strcmp(obj.coorType,'spherical')
                 [obj.E1,obj.E2] = getEspherical(obj);
@@ -1064,6 +1227,9 @@ classdef FarField
         end
         
         function obj = coor2Ludwig1(obj,setStdGrid)
+            % COOR2LUDWIG1 Change the current FarField object coordinate
+            % type to Ludwig1 coordinates.
+            
             if nargin < 2, setStdGrid = true; end
             if ~strcmp(obj.coorType,'Ludwig1')
                 [obj.E1,obj.E2] = getELudwig1(obj);
@@ -1075,6 +1241,9 @@ classdef FarField
         end
         
         function obj = coor2Ludwig2AE(obj,setStdGrid)
+            % COOR2LUDWIG2AE Change the current FarField object coordinate
+            % type to Ludwig2AE coordinates.
+            
             if nargin < 2, setStdGrid = true; end
             if ~strcmp(obj.coorType,'Ludwig2AE')
                 [obj.E1,obj.E2] = getELudwig2AE(obj);
@@ -1086,6 +1255,9 @@ classdef FarField
         end
         
         function obj = coor2Ludwig2EA(obj,setStdGrid)
+            % COOR2LUDWIG2EA Change the current FarField object coordinate
+            % type to Ludwig2EA coordinates.
+            
             if nargin < 2, setStdGrid = true; end
             if ~strcmp(obj.coorType,'Ludwig2EA')
                 [obj.E1,obj.E2] = getELudwig2EA(obj);
@@ -1097,6 +1269,9 @@ classdef FarField
         end
         
         function obj = coor2Ludwig3(obj,setStdGrid)
+            % COOR2LUDWIG2EA Change the current FarField object coordinate
+            % type to Ludwig3 coordinates.
+            
             if nargin < 2, setStdGrid = true; end
             if ~strcmp(obj.coorType,'Ludwig3')
                 [obj.E1,obj.E2] = getELudwig3(obj);
@@ -1107,14 +1282,19 @@ classdef FarField
             end
         end
         
-        %% Polarisation type transformation methods
+        %% polarization type transformation methods
         function obj = changePol(obj,polTypeString)
+            % CHANGEPOL Change the FarField object polarization type.
+            
             mustBeMember(polTypeString, {'linear','circular','slant'});
             handlePolType = str2func(['pol2',polTypeString]);
             obj = handlePolType(obj);   
         end
         
         function obj = pol2linear(obj)
+            % POL2LINEAR Change the FarField object polarization to linear
+            % polarization
+            
             if ~strcmp(obj.polType,'linear')
                 [obj.E1, obj.E2] = getElin(obj);
                 obj.polType = 'linear';
@@ -1122,6 +1302,9 @@ classdef FarField
         end
         
         function obj = pol2circular(obj)
+            % POL2CIRCULAR Change the FarField object polarization to circular
+            % polarization
+            
             if ~strcmp(obj.polType,'circular')
                 [obj.E1,obj.E2] = getEcircular(obj);
                 obj.polType = 'circular';
@@ -1129,6 +1312,9 @@ classdef FarField
         end
         
         function obj = pol2slant(obj)
+            % POL2SLANT Change the FarField object polarization to slant
+            % polarization
+            
             if ~strcmp(obj.polType,'slant')
                 [obj.E1,obj.E2] = getEslant(obj);
                 obj.polType = 'slant';
@@ -1137,6 +1323,8 @@ classdef FarField
         
         %% Format transformation
         function obj = transformTypes(obj, obj1)
+            % TRANSFORMTYPES Transform the properties of obj to that of obj1.
+            
             % Function to transform the format of obj to that of obj1 -
             % that is the grid,coor, and pol Types of obj goes to those of
             % obj1.
@@ -1153,6 +1341,9 @@ classdef FarField
         
         %% Base grid functions
         function obj = reset2Base(obj)
+            % RESET2BASE Hard reset the FarField object to its initial format
+            % when it was first initiated.
+            
             % Hard reset to the base format
             obj.x = obj.xBase;
             obj.y = obj.yBase;
@@ -1165,6 +1356,9 @@ classdef FarField
         end
         
         function obj = grid2Base(obj)
+            % GRID2BASE Evaluate the current object (pol and coor) on the
+            % base grid.
+            
             % Evaluate the current object (pol and coor) on the base grid
             coorTypeIn = obj.coorType;
             polTypeIn = obj.polType;
@@ -1177,6 +1371,8 @@ classdef FarField
         end
         
         function obj = currentForm2Base(obj1,stepDeg,xylimsDeg,hemisphere)
+            % CURRENTFORM2BASE Sets the FarField object base to the current format.
+            
             % Sets the base to the current format. Resamples the field on a
             % regular plaid grid, and makes this the new base grid. This is
             % typically then not where actual samples where, but instead
@@ -1760,6 +1956,7 @@ classdef FarField
         end
         
         function plotJones(FF1,FF2,varargin)
+            % PLOTJONES Plots the Jones matrix type representation FarFields
             
             % function [] = plotJones(FF1,FF2,varargin)
             % plots the Jones matrix type representation of the farfields specified in
@@ -1822,6 +2019,8 @@ classdef FarField
         end
         
         function plotPrincipleCuts(FF,varargin)
+            % PLOTPRINCIPLECUTS Plots the principle cuts of a FarField in
+            % cartesian and polar coordinates.
             
             % [] = plotPrincipleCuts(FF,varargin)
             % plots the principle cuts of the farfield specified in FF
@@ -1998,6 +2197,8 @@ classdef FarField
         end
 
         function plotGrid(obj,markerStyle)
+            % PLOTGRID Plots the FarField object grid.
+            
             if nargin < 2
                 markerStyle = 'k.';
             end
@@ -2024,12 +2225,15 @@ classdef FarField
         end
         
         function plotGridBase(obj)
+            % PLOTGRIDBASE Plots the FarField object base grid.
+            
             obj = obj.reset2Base;
             obj.plotGrid;
         end
         
         %% Interpolation methods
         function [Zi] = interpolateGrid(obj,output,xi,yi,varargin)
+            % INTERPOLATEDGRID Grid interpolation at specified interpolation points.
             
             % Check inputs
             narginchk(4,6);
@@ -2214,6 +2418,8 @@ classdef FarField
 
         %% Phase centre/shifts/rotations of the field
         function [Z, Delta, delta0, eta_pd] = phaseCentreKildal(FF,pol,th_M)
+            % PHASECENTREKILDAL Computes the phase centre and approximates
+            % the phase efficiency.
             
             % function [PC, eta_phi] = PCoptFunc(pol,freq_vect,th_M,BOR1pattern)
             % computes the phase center and approximate phase efficiency of a given
@@ -2297,6 +2503,8 @@ classdef FarField
         end
         
         function obj = rotate(obj1,rotHandle,rotAng,onlyRotPowerPattern)
+            % ROTATE Rotation function for FarField objects.
+            
             % General rotation function for FarField objects
             % rotHandle is the function handle for the type of rotation:
             %   rotx3Dsph, roty3Dsph, rotz3Dsph, rotGRASPsph, rotEulersph
@@ -2450,6 +2658,8 @@ classdef FarField
         end
         
         function obj = shift(obj,shiftVect)
+            % SHIFT Shifts the FarField by a specified distance.
+            
             % Shifts the FarField by a distance specified in the Pnt3D input
             % shiftVect (only uses the first entry)
             % shiftVect can also be a vector of length 3 with elements
@@ -2477,6 +2687,8 @@ classdef FarField
         
         %% Maths - all overloaded methods
         function obj = plus(obj1,obj2)
+            % PLUS Add two FarFields
+            
             obj1base = reset2Base(obj1);
             obj2base = reset2Base(obj2);
             
@@ -2498,6 +2710,8 @@ classdef FarField
         end
         
         function obj = minus(obj1,obj2)
+            % MINUS Subtract two FarFields
+            
             obj1base = reset2Base(obj1);
             obj2base = reset2Base(obj2);
             
@@ -2519,6 +2733,8 @@ classdef FarField
         end
         
         function obj = times(obj1,obj2)
+            % TIMES Multiply two FarFields
+            
             % Don't operate in BaseGrid - straight on the actual values.
             % This is often used with conj, which operates in the current
             % grid.
@@ -2535,18 +2751,24 @@ classdef FarField
         end
         
         function obj = conj(obj1)
+            % CONJ Get the complex conjugate of E-field values in a FarField.
+            
             obj = obj1;
             obj.E1 = conj(obj1.E1);
             obj.E2 = conj(obj1.E2);
         end
         
         function obj = abs(obj1)
+            % ABS Get the absolute value of E-field components in a FarField.
+            
             obj = obj1;
             obj.E1 = abs(obj1.E1);
             obj.E2 = abs(obj1.E2);
         end
         
         function obj = scale(obj1,scaleFactor)
+            % SCALE Scale E-field components by a scaleFactor in a FarField.
+            
             % Scale the FarField object E-fields by the scaleFactor
             obj = obj1;
             obj.E1 = obj1.E1.*scaleFactor;
@@ -2555,6 +2777,8 @@ classdef FarField
         end
         
         function [normE] = norm(obj,Ntype)
+            % NORM Calculate the vector norm of the three E-field components.
+            
             % Calculate the vector norm of the three E-field components - overloads the MATLAB norm function
             % This is used for error checking mostly - when comparing
             % different fields for instance...
@@ -2568,6 +2792,8 @@ classdef FarField
         end
         
         function [rmsE1,rmsE2,rmsE3] = rms(obj,DIM)
+            % RMS Calculate the rms of E-field components in a FarField.
+            
             % Calculate the rms of the three E-field components - overloads the MATLAB rms function
             % This is used for error checking mostly - when comparing
             % different fields for instance...
@@ -2580,6 +2806,9 @@ classdef FarField
         end
         
         function T = convPower(obj1,obj2)
+            % CONVPOWER Convolve the power patterns, over the full sphere,
+            % of two FarField objects.
+            
             % Convolve the power patterns, over the full sphere, of two
             % FarField objects. Typically used for antenna temperature
             % calculations
@@ -2597,6 +2826,9 @@ classdef FarField
         
         %% Field normalization
         function P = pradInt(obj)
+            % PRADINT  Calculates the total power in the field integrated
+            % over the full available grid.
+            
             % Returns the total power in the field integrated over the
             % full available grid
             obj = reset2Base(obj);
@@ -2638,6 +2870,9 @@ classdef FarField
         end
         
         function obj = setPower(obj1,powerWatt)
+            % SETPOWER Normalizes the FarField object to have the total
+            % radiated power specified in powerWatt (in Watts)
+            
             % Normalizes the FarField object obj1 to have the a total
             % radiated power specified in powerWatt (in Watts, of course)
             % powerWatt can be a vector of length obj.Nf or scalar.
@@ -2663,6 +2898,9 @@ classdef FarField
         
         %% Frequency modifications
         function obj = getFi(obj1,freqIndex)
+            % GETFI Returns an object only containing the results in
+            % freqIndex.
+            
             % Returns an object only containing the results in freqIndex
             obj = obj1;
             obj.E1 = obj1.E1(:,freqIndex);
@@ -2675,6 +2913,8 @@ classdef FarField
         
         %% Symmetry handlers
         function obj = setSymmetryXZ(obj,symmetryType)
+            % SETSYMMETRYXZ Specify symmetry along the XZ plane.
+            
             mustBeMember(symmetryType,{'none','electric','magnetic'})
             if ~strcmp(symmetryType,'none')
                 % Test if the input range is valid
@@ -2687,6 +2927,8 @@ classdef FarField
         end
         
         function obj = setSymmetryYZ(obj,symmetryType)
+            % SETSYMMETRYYZ Specify symmetry along the YZ plane.
+            
             mustBeMember(symmetryType,{'none','electric','magnetic'})
             if ~strcmp(symmetryType,'none')
                 % Test if the input range is valid
@@ -2699,11 +2941,16 @@ classdef FarField
         end
         
         function obj = setSymmetryXY(obj,symmetryType)
+            % SETSYMMETRYXY Specify symmetry along the XY plane.
+            
             mustBeMember(symmetryType,{'none','electric','magnetic'})
             %             warning('function: setSymmetryXY not implemented yet - unchanged object returned');
         end
         
         function obj = mirrorSymmetricPattern(obj1)
+            % MIRRORSYMMETRICPATTERN Returns the full pattern mirrored
+            % according to the symmetry definitions
+            
             % Returns the full pattern mirrored according to the symmetry
             % definitions
             
@@ -2776,6 +3023,9 @@ classdef FarField
         end
         
         function obj = getBORpattern(obj1,BORcomp)
+            % GETBORPATTERN expands the input FarField pattern into its BOR
+            % components, BOR0 and BOR1. 
+            
             % Function that expands the input FarField pattern into its BOR
             % components, and returns a FarField object which only contains
             % the BOR0 or BOR1 components.  The output field has the same th
@@ -2845,6 +3095,9 @@ classdef FarField
         end
         
         function obj = expandBORpattern(obj1,phStepDeg)
+            % EXPANDBORPATTERN Generates a BOR pattern over a 2*pi phi
+            % span.
+            
             % Expands a BOR pattern, typically generated by
             % FarField.getBORpattern, into a 2*pi ph span
             
@@ -2883,6 +3136,8 @@ classdef FarField
         end
         
         function [A1,B1,C1,D1] = getBOR1comps(obj1)
+            % GETBOR1COMPS Returns components of a BOR1 pattern.
+            
             assert(strcmp(obj1.symmetryBOR,'BOR1'),'Input object not BOR1 symmetric')
             assert(strcmp(obj1.gridType,'PhTh'),'BOR1 patterns must be specified on a PhTh grid')
             assert(strcmp(obj1.coorType,'spherical'),'BOR1 patterns must be specified in a spherical coordinate system')
@@ -2897,6 +3152,8 @@ classdef FarField
         
         %% Format and other testers
         function y = isGridEqual(obj1,obj2)
+            % ISGRIDEQUAL Compares the grid between two FarField objects.
+            
             % Dont go for formal equality - floating point error just too much...
             tol = 10^(-obj1.nSigDig+1);
             if all(size(obj1.x) == size(obj2.x)) && all(size(obj1.y) == size(obj2.y))
@@ -2911,6 +3168,9 @@ classdef FarField
         end
         
         function y = typesAreEqual(obj1,obj2)
+            % TYPESAREEQUAL Compares if the grid, coorTpe and polarization
+            % are equal between two FarField objects.
+            
             gridEqual = strcmp(obj1.gridType,obj2.gridType);
             coorEqual = strcmp(obj1.coorType,obj2.coorType);
             polEqual = strcmp(obj1.polType,obj2.polType);
@@ -2918,6 +3178,8 @@ classdef FarField
         end
         
         function y = isGrid4pi(obj)
+            % ISGRID4PI Check if the data is defined over a full sphere.
+            
             % Set to the PhTh coordinate system - this is how most data
             % will be generated anyway.
             % Very quick check - necessary but not always sufficient
@@ -2929,6 +3191,8 @@ classdef FarField
         end
         
         function y = isGridUniform(obj)
+            % ISGRIDUNIFORM Checks for a plaid, monotonic, uniform grid format. 
+            
             % Test for a plaid, monotonic, uniform grid format
             
             if obj.Nx*obj.Ny == obj.Nang
@@ -2955,6 +3219,8 @@ classdef FarField
         
         %% Astronomical methods
         function obj = setOrientation(obj,newOrientation)
+            % SETORIENTATION Set the antenna orientation.
+            
             currGridType = obj.gridType;
             obj = obj.grid2PhTh;
             obj.orientation = newOrientation;
@@ -2963,6 +3229,8 @@ classdef FarField
         end
         
         function obj = setTime(obj,newTime)
+            % SETTIME Set time.
+            
             currGridType = obj.gridType;
             obj = obj.grid2AzAlt;
             obj.time = newTime;
@@ -2970,6 +3238,8 @@ classdef FarField
         end
         
         function obj = setEarthLocation(obj,newEarthLocation)
+            % SETEARTHLOCATION Set the antenna location on Earth.
+            
             currGridType = obj.gridType;
             obj = obj.grid2AzAlt;
             obj.earthLocation = newEarthLocation;
@@ -2978,6 +3248,8 @@ classdef FarField
         
         %% File Output methods
         function writeGRASPcut(obj,pathName)
+            % WRITEGRASPCUT Write a FarField object to a GRASP cut file
+            % format.
             
             % function [] = writeGRASPcut(obj,pathName)
             % Function to write GRASP cut files to the location PathName
@@ -3065,13 +3337,13 @@ classdef FarField
             
             fclose(fid);
         end
-
         
     end
     
     methods (Static = true)
         %% Farfield reading methods
         function FF = readGRASPgrd(pathName,varargin)
+            % READGRASPGRD Create a FarFiled object from a GRASP .grd file. 
             
             % function FF = readGRASPgrd(filePathName)
             % Reads a GRASP .grd file and returns the FarField object.
@@ -3256,6 +3528,7 @@ classdef FarField
         end
 
         function FF = readFEKOffe(pathName,varargin)
+            % READFEKOFFE Create a FarFiled object from a FEKO .ffe file.
             
             %Name: readFEKOffe.m
             %Description:
@@ -3411,6 +3684,20 @@ classdef FarField
         end
 
         function FF = readCSTffs(pathName,varargin)
+            % READCSTFFS Create a FarFiled object from a CST .ffs file.
+            
+            % function [FF] = readCSTffs(pathName)
+            % Loads a CST generated farfield source file pathName.ffs.
+            %
+            %
+            % Inputs:
+            % path_name - Full path and filename (no extension) string
+            % Outputs:
+            % FF - standard farfield object
+            %
+            % Dirk de Villiers
+            % Created: 2015-02-03
+            % Last edit: 2019-18-02
             
             % Parsing through the inputs
             parseobj = inputParser;
@@ -3418,14 +3705,6 @@ classdef FarField
             
             typeValidator_pathName = @(x) isa(x,'char');
             parseobj.addRequired('pathname',typeValidator_pathName);
-            
-            expected_symPlane = {'none','electric','magnetic'};
-            parseobj.addParameter('symmetryXZ','none', @(x) any(validatestring(x,expected_symPlane)));
-            parseobj.addParameter('symmetryYZ','none', @(x) any(validatestring(x,expected_symPlane)));
-            parseobj.addParameter('symmetryXY','none', @(x) any(validatestring(x,expected_symPlane)));
-            
-            expected_symBOR = {'none','BOR0','BOR1'};
-            parseobj.addParameter('symmetryBOR','none', @(x) any(validatestring(x,expected_symBOR)));
             
             typeValidation_scalar = @(x) validateattributes(x,{'numeric'},{'real','finite','nonnan','scalar'},'readGRASPcut');
             parseobj.addParameter('r',1,typeValidation_scalar);
@@ -3442,28 +3721,10 @@ classdef FarField
             parseobj.parse(pathName,varargin{:})
             
             pathName = parseobj.Results.pathname;
-            symmetryXZ = parseobj.Results.symmetryXZ;
-            symmetryYZ = parseobj.Results.symmetryYZ;
-            symmetryXY = parseobj.Results.symmetryXY;
-            symmetryBOR = parseobj.Results.symmetryBOR;
             r = parseobj.Results.r;
             orientation = parseobj.Results.orientation;
             earthLocation = parseobj.Results.earthLocation;
             time = parseobj.Results.time;
-            
-            % function [FF] = readCSTffs(pathName)
-            % Loads a CST generated farfield source file pathName.ffs.
-            %
-            %
-            % Inputs:
-            % path_name - Full path and filename (no extension) string
-            % Outputs:
-            % FF - standard farfield object
-            %
-            % Dirk de Villiers
-            % Created: 2015-02-03
-            % Last edit: 2019-18-02
-            
             
             % Open the data file
             if ~strcmp(pathName(end-3:end),'.ffs')
@@ -3552,12 +3813,12 @@ classdef FarField
             
             FF = FarField(x,y,E1,E2,freq,Prad,radEff,...
                 'coorType',coorType,'polType',polType,'gridType',gridType,'freqUnit',freqUnit,...
-                'symmetryXZ',symmetryXZ,'symmetryYZ',symmetryYZ,'symmetryXY',symmetryXY,'symmetryBOR',symmetryBOR,...
                 'r',r,'orientation',orientation,'earthLocation',earthLocation,'time',time);
             
         end
 
         function FF = readGRASPcut(pathName,nr_freq,nr_cuts,varargin)
+            % READGRASPCUT Create a FarFiled object from a GRASP .cut file.
             
             % [FF] = readGRASPcut(pathName)
             % Loads a GRASP generated farfield source file pathName.cut.
@@ -3729,6 +3990,8 @@ classdef FarField
         end
 
         function FF = farFieldFromPowerPattern(x,y,P,freq,varargin)
+            % FARFIELDFROMPOWERPATTERN Create a Farfield object from a
+            % power pattern.
             
             %Name: farFieldFromPowerPattern.m
             %Description:
@@ -3870,11 +4133,15 @@ classdef FarField
     methods (Access = private)
         %% Grid getters
         function [u, v, w] = getDirCos(obj)
+            % GETDIRCOS Get DirCos grid.
+            
             handle2DirCos = str2func([obj.gridTypeBase,'2DirCos']);
             [u,v,w] = handle2DirCos(obj.xBase,obj.yBase);
         end
         
         function [ph, th] = getPhTh(obj)
+            % GETPHTH Get PhTh grid.
+            
             switch obj.gridTypeBase
                 case 'PhTh'
                     ph = obj.xBase;
@@ -3886,6 +4153,8 @@ classdef FarField
         end
         
         function [az, el] = getAzEl(obj)
+            % GETAZEL Get AzEl grid.
+            
             switch obj.gridTypeBase
                 case 'AzEl'
                     el = obj.yBase;
@@ -3897,6 +4166,8 @@ classdef FarField
         end
         
         function [ep, al] = getElAz(obj)
+            % GETELAZ Get ElAz grid.
+            
             switch obj.gridTypeBase
                 case 'ElAz'
                     ep = obj.xBase;
@@ -3908,6 +4179,8 @@ classdef FarField
         end
         
         function [Xg, Yg] = getTrueView(obj)
+            % GETTRUEVIEW Get TrueView grid.
+            
             switch obj.gridTypeBase
                 case 'TrueView'
                     Xg = obj.xBase;
@@ -3919,6 +4192,8 @@ classdef FarField
         end
         
         function [asinu, asinv] = getArcSin(obj)
+            % GETARCSIN Get ArcSin grid.
+            
             switch obj.gridTypeBase
                 case 'ArcSin'
                     asinu = obj.xBase;
@@ -3930,6 +4205,8 @@ classdef FarField
         end
         
         function [az,alt] = getAzAlt(obj)
+            % GETAZALT Get AzAlt grid.
+            
             switch obj.gridTypeBase
                 case 'AzAlt'
                     az = obj.xBase;
@@ -3950,6 +4227,8 @@ classdef FarField
         end
         
         function [RA, dec] = getRAdec(obj)
+            % GETRADEC Get RAdec grid.
+            
             switch obj.gridTypeBase
                 case 'AzAlt'
                     equCoords= wrap2pi(celestial.coo.horiz_coo([obj.x obj.y],juliandate(obj.time),obj.earthLocation(1:2),'e'));
@@ -3971,6 +4250,8 @@ classdef FarField
         end
         
         function [long, lat] = getGalLongLat(obj)
+            % GETGALLINGLAT Get GalLongLat grid.
+            
             switch obj.gridTypeBase
                 case 'PhTh'
                     obj1 = obj.grid2AzAlt;
@@ -4001,6 +4282,8 @@ classdef FarField
         
         %% Coordinate system getters
         function [Eth, Eph, Er] = getEspherical(obj)
+            % GETESPHERICAL Get Espherical coordinates.
+            
             [Ph,Th] = getPhTh(obj);
             TH = repmat(Th(:,1),1,obj.Nf);
             PH = repmat(Ph(:,1),1,obj.Nf);
@@ -4031,6 +4314,8 @@ classdef FarField
         end
         
         function [Ex, Ey, Ez] = getELudwig1(obj)
+            % GETELUDWIG1 Get ELudwig1 coordinates.
+            
             switch obj.coorTypeBase
                 case 'Ludwig1'
                     Ex = obj.E1Base;
@@ -4048,6 +4333,8 @@ classdef FarField
         end
         
         function [Eaz, Eel, E3] = getELudwig2AE(obj)
+            % GETELUDWIG2AE Get ELudwig2AE coordinates.
+            
             switch obj.coorTypeBase
                 case 'Ludwig2AE'
                     Eaz = obj.E1Base;
@@ -4072,6 +4359,8 @@ classdef FarField
         end
         
         function [Eal, Eep, E3] = getELudwig2EA(obj)
+            % GETELUDWIG2EA Get ELudwig2EA coordinates.
+            
             switch obj.coorTypeBase
                 case 'Ludwig2EA'
                     Eal = obj.E1Base;
@@ -4095,6 +4384,8 @@ classdef FarField
         end
         
         function [Eh, Ev, E3] = getELudwig3(obj)
+            % GETELUDWIG3 Get ELudwig3 coordinates.
+            
             switch obj.coorTypeBase
                 case 'Ludwig3'
                     Eh = obj.E1Base;
@@ -4110,6 +4401,8 @@ classdef FarField
         end
         
         function obj = setBase(obj)
+            % SETBASE Set base grid.
+            
             obj.xBase = obj.x;
             obj.yBase = obj.y;
             obj.NxBase = obj.Nx;
@@ -4125,6 +4418,8 @@ classdef FarField
         end
         
         function [ph,th] = getPhThCurrent(obj)
+            % GETPHTHCURRENT Get current PhTh grid.
+            
             % This does not operate on the base grid, but instead the
             % current grid
             if strcmp(obj.gridType,'PhTh')
@@ -4139,6 +4434,7 @@ classdef FarField
         
         %% Polarization type getters
         function [E1lin, E2lin, E3lin] = getElin(obj)
+            % GETELIN Get linear polarization.
             
             % Start at the base, transform to correct coordinate system
             coorTypeIn = obj.coorType;
@@ -4163,6 +4459,8 @@ classdef FarField
         end
         
         function [Elh,Erh,E3circ] = getEcircular(obj)
+            % GETECIRCULAR Get circular polarization.
+            
             switch obj.polType
                 case 'circular'
                     Elh = obj.E1;
@@ -4177,6 +4475,8 @@ classdef FarField
         end
         
         function [Exp,Eco,E3slant] = getEslant(obj)
+            % GETESLANT Get slant polarization.
+            
             switch obj.polType
                 case 'slant'
                     Exp = obj.E1;
@@ -4193,6 +4493,8 @@ classdef FarField
         
         % Set the names of the 2 grid components
         function [xname,yname] = setXYnames(obj)
+            % SETXYNAMES Set x and y names
+            
             switch obj.gridType
                 case 'PhTh'
                     xname = '\phi';
@@ -4230,6 +4532,8 @@ classdef FarField
         % Set the names of the 2 farfield components based on the
         % polarization type.  Names used for info and plotting.
         function [E1name,E2name] = setEnames(obj)
+            % SETENAMES Set E-field component names
+            
             switch obj.polType
                 case 'circular'
                     E1name = 'Elh';
@@ -4262,6 +4566,8 @@ classdef FarField
         end
         
         function [xRangeType,yRangeType] = setRangeTypes(obj)
+            % SETRANGETYPES Returns current rangeType
+            
             % Try to figure out what the current rangeType is.
             % Not much error checking is done - assume somewhat
             % sensible inputs are provided most of the time.
@@ -4281,6 +4587,8 @@ classdef FarField
         end
         
         function objNew = shiftRedun(obj,iout,iin,xAdd,yAdd)
+            % SHIFTREDUN Shift redundant points.
+            
             objNew = obj;
             Nredun = min(numel(iout),numel(iin));    % How many we have to remove/add
             
