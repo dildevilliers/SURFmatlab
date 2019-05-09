@@ -667,7 +667,7 @@ classdef FarField
                 if ~strcmp(currGridType,'PhTh')
                     obj = obj.grid2PhTh;
                 end
-                obj = obj.rotate(@rotGRASPsph,[wrapToPi(pi/2-obj.orientation(2)),-obj.orientation(1),0]);
+                obj = obj.rotate(@rotGRASPsph,[wrap2pi(pi/2-obj.orientation(2)),-obj.orientation(1),0]);
                 eval(['obj = grid2',currGridType,'(obj);']);
             end
             obj = obj.grid2Base;
@@ -3960,8 +3960,8 @@ classdef FarField
                     dec = obj.yBase;
                 case 'GalLongLat'
                     [equCoords,~] = celestial.coo.coco([obj.x obj.y],'g','j2000.0','r','r');
-                    RA = wrapToPi(equCoords(:,1)); %right ascension
-                    dec = wrapToPi(equCoords(:,2)); %declination
+                    RA = wrap2pi(equCoords(:,1)); %right ascension
+                    dec = wrap2pi(equCoords(:,2)); %declination
                 case obj.projectionGrids
                     [u,v,w] = getDirCos(obj);
                     [RA,dec] = DirCos2AzAlt(u,v,w);
@@ -3976,16 +3976,16 @@ classdef FarField
                     obj1 = obj.grid2AzAlt;
                     obj1 = obj1.grid2RAdec;
                     [galCoords,~] = celestial.coo.coco([obj1.x obj1.y],'j2000.0','g','r','r');
-                    long = wrapToPi(galCoords(:,1)); %galactic longitude
+                    long = wrap2pi(galCoords(:,1)); %galactic longitude
                     lat = galCoords(:,2); %galactic latitude
                 case 'AzAlt'
                     obj1 = obj.grid2RAdec;
                     [galCoords,~] = celestial.coo.coco([obj1.x obj1.y],'j2000.0','g','r','r');
-                    long = wrapToPi(galCoords(:,1)); %galactic longitude
+                    long = wrap2pi(galCoords(:,1)); %galactic longitude
                     lat = galCoords(:,2); %galactic latitude
                 case 'RAdec'
                     [galCoords,~] = celestial.coo.coco([obj.x obj.y],'j2000.0','g','r','r');
-                    long = wrapToPi(galCoords(:,1)); %galactic longitude
+                    long = wrap2pi(galCoords(:,1)); %galactic longitude
                     lat = galCoords(:,2); %galactic latitude
                 case 'GalLongLat'
                     long = obj.xBase;

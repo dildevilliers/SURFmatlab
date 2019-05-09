@@ -20,7 +20,8 @@ classdef Pnt3D
     methods
         function obj = Pnt3D(X,Y,Z)
             % PNT3D class constructor
-            % obj = Pnt3D(X,Y,Z) - can be empty
+            % obj = Pnt3D(X,Y,Z) Can be empty, which retunr a point at the
+            % origin.
             %
             % Inputs
             % - X:  Matrix of x-values in m (0)
