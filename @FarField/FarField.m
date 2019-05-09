@@ -1,12 +1,11 @@
 classdef FarField
-    %FARFIELD   Class of antenna FarField patterns.
-    % Class of radiated FarField patterns.
-    % Class of radiated electromagnetic FarField patterns.
+    %FARFIELD  Class of radiated FarField patterns (2 field orthogonal field components) 
     % Based largely on information in CST help file: Farfield Calculation.
     % Overview, and the AMTA paper in this folder 'COORDINATE SYSTEM
     % PLOTTING FOR ANTENNA MEASUREMENTS', GF Masters and SF Gregson.
-    % Currently assumes direction of propagation is the global z-axis for
-    % all directional polarization types.
+    % Provides a wide variety of methods for manupulating farfield patterns
+    % including plotting, comparison, transformations between grids and coordinate
+    % system and polarisation types, etc.
     %
     % Constructor methods
     % - FarField
@@ -144,167 +143,6 @@ classdef FarField
             % Example
             %   F = FarField;
             %   F.plot
-                      
-%             % function obj = FarField(th,ph,E1,E2,E3,freq,Prad,radEff)
-%             % Constructor method for the FarField object
-%             % Required inputs:
-%             % x: column vector [Nang x 1] of ph angles in rad
-%             % y: column vector [Nang x 1] of th angles in rad
-%             % E1: First E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
-%             % E2: Second E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
-%             %
-%             % Optional inputs - can be left empty or omitted
-%             % 'E3': Third E-field pattern component (exp(jkr)/r suppressed) of size [Nang x Nf]
-%             % 'freq': vector [1 x Nf] of frequencies where the fields are defined in Hz
-%             % 'Prad': vector [1 x Nf] of radiated powers in W
-%             % 'radEff': vector [1 x Nf] of radiation efficiencies
-%             
-%             if nargin == 0 %No-inputs case - generate a Gaussian beam pattern at a single frequency (1 GHz) over the full sphere, 5 degree angular resolution
-%                 [ph,th] = PhThGrid;
-%                 th0 = deg2rad(50);
-%                 taper_dB = -50;
-%                 freq = 1e9;
-%                 P = powerPattern(ph,th,'gauss',th0,taper_dB,freq);
-%                 obj = FarField.farFieldFromPowerPattern(ph,th,P,freq,'linearY');
-%             else
-%                 % Basic input error checking
-%                 [Nang_x, Nf_x] = size(x);
-%                 [Nang_y, Nf_y] = size(y);
-%                 [Nang_E1, Nf_E1] = size(E1);
-%                 [Nang_E2, Nf_E2] = size(E2);
-%                 if nargin < 5 || isempty(E3)
-%                     E3 = [];
-%                     [Nang_E3,Nf_E3] = deal(Nang_E1,Nf_E1);
-%                 else
-%                     [Nang_E3, Nf_E3] = size(E3);
-%                 end
-%                 
-%                 if ~isequal(Nang_x,Nang_y,Nang_E1,Nang_E2,Nang_E3)
-%                     error('All inputs must have the same number of rows');
-%                 end
-%                 if ~isequal(Nf_E1,Nf_E2,Nf_E3)
-%                     error('E1, E2, and E3 must have the same number of columns');
-%                 end
-%                 if Nf_x > 1 || Nf_y > 1
-%                     warning('Only using first column of th and ph since they must be equal for all frequencies anyway');
-%                     x = x(:,1);
-%                     y = y(:,1);
-%                 end
-%                 
-%                 obj.x = x;
-%                 obj.y = y;
-%                 obj.E1 = E1;
-%                 obj.E2 = E2;
-%                 obj.E3 = E3;
-%                 % Do here to allow the automatic power calculation from the
-%                 % base grid - must repeat later again after coor/grid/pol
-%                 % read
-%                 obj = setBase(obj);
-%                 
-%                 Nf = Nf_E1;
-%                 if nargin < 6
-%                     freq = ones(1,Nf).*obj.freq;
-%                     %                 warning('freq not specified - using default for all columns');
-%                 else
-%                     if isempty(freq)
-%                         freq = ones(1,Nf).*obj.freq;
-%                         %                     warning('freq not specified - using default for all columns');
-%                     elseif Nf ~= length(freq(1,:))
-%                         error('freq must have the same number of columns as E1 and E2');
-%                     end
-%                 end
-%                 if nargin < 7 || isempty(Prad)
-%                     if obj.isGrid4pi
-%                         Prad = obj.pradInt;
-%                     else
-%                         Prad = ones(1,Nf).*obj.Prad;
-%                     end
-%                     
-%                     %                 warning('Prad not specified - using default for all columns');
-%                 elseif Nf ~= length(Prad(1,:))
-%                     error('Prad must have the same number of columns as E1 and E2');
-%                 end
-%                 if nargin < 8
-%                     radEff = ones(1,Nf).*obj.radEff;
-%                     %                 warning('radEff not specified - using default for all columns');
-%                 else
-%                     if isempty(radEff)
-%                         radEff = ones(1,Nf).*obj.radEff;
-%                         %                     warning('radEff not specified - using default for all columns');
-%                     elseif Nf ~= length(radEff(1,:))
-%                         error('radEff must have the same number of columns as E1 and E2');
-%                     end
-%                 end
-%                 if nargin < 9
-%                     coorType = obj.coorType;
-%                 else
-%                     if isempty(coorType)
-%                         coorType = obj.coorType;
-%                     end
-%                 end
-%                 if nargin < 10
-%                     polType = obj.polType;
-%                 else
-%                     if isempty(polType)
-%                         polType = obj.polType;
-%                     end
-%                 end
-%                 if nargin < 11
-%                     gridType = obj.gridType;
-%                 else
-%                     if isempty(gridType)
-%                         gridType = obj.gridType;
-%                     end
-%                 end
-%                 if nargin < 12
-%                     freqUnit = obj.freqUnit;
-%                 else
-%                     if isempty(freqUnit)
-%                         freqUnit = obj.freqUnit;
-%                     end
-%                 end
-%                 if nargin < 13
-%                     slant = obj.slant;
-%                 else
-%                     if isempty(slant)
-%                         slant = obj.slant;
-%                     end
-%                 end
-%                 if nargin < 14
-%                     earthLocation = obj.earthLocation;
-%                 else
-%                     if isempty(earthLocation)
-%                         earthLocation = obj.earthLocation;
-%                     end
-%                 end
-%                 if nargin < 15
-%                     time = obj.time;
-%                 else
-%                     if isempty(time)
-%                         time = obj.time;
-%                     end
-%                 end
-%                 if nargin < 16
-%                     orientation = obj.orientation;
-%                 else
-%                     if isempty(orientation)
-%                         orientation = obj.orientation;
-%                     end
-%                 end
-%                 
-%                 obj = setFreq(obj,freq,freqUnit);
-%                 obj.Prad = Prad;
-%                 obj.radEff = radEff;
-%                 obj.coorType = coorType;
-%                 obj.polType = polType;
-%                 obj.gridType = gridType;
-%                 obj.slant = slant;
-%                 obj.time = time;
-%                 obj.earthLocation = earthLocation;
-%                 obj.orientation = orientation;
-%                 obj = setBase(obj);
-%             end
-%         end
             
             % Set up defaults: z-directed incremental dipole
             [ph0,th0] = PhThGrid;
