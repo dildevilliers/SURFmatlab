@@ -5,11 +5,11 @@ function Xd = rotGRASP(X,angGRASP)
 % vector X = [x;y;z]
 % Vectors can be rows of equal length
 
-coor_base = coordinateSystem();     % Work from global coordinate system
+coor_base = CoordinateSystem();     % Work from global coordinate system
 % Make a GRASP rotated coordinate system
-coor_new = coordinateSystem();
+coor_new = CoordinateSystem();
 coor_new = rotGRASP(coor_new,angGRASP);
-X = pnt3D(X(1,:),X(2,:),X(3,:));
+X = Pnt3D(X(1,:),X(2,:),X(3,:));
 % Xd = changeBase(X,coor_new,coor_base);
 Xd = changeBase(X,coor_base,coor_new);
 Xd = Xd.pointMatrix;

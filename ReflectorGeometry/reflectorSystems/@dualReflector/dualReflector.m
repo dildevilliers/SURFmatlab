@@ -404,7 +404,7 @@ classdef dualReflector
                 case 'PR'
                     [Mint,ph_in,th_in] = obj.PR.getMask(CoordinateSystem,A,0);
                     P = repmat(double(Mint(:)),1,numel(freq));
-                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq,'linearY','Hz');
+                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq,'fieldPol','linearY','freqUnit','Hz');
                     % Build the pointing matrix - already at globalCoor base
                     MaskPointing(size(ph_in)) = CoordinateSystem;
                     % Fix the non-masked position pointing angles - in the global
@@ -427,7 +427,7 @@ classdef dualReflector
                     % extension - all the information is here
                     P = repmat(double(Mint(:)),1,numel(freq));
                     P(P>0) = 1;
-                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq,'linearY','Hz'); % Don't return the extension information here - only in the third output
+                    FFM_F = FarField.farFieldFromPowerPattern(ph_in(:),th_in(:),P,freq,'fieldPol','linearY','freqUnit','Hz'); % Don't return the extension information here - only in the third output
                     
                     % Build the pointing matrix
                     MaskPointing(size(ph_in)) = CoordinateSystem;

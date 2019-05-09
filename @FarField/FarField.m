@@ -336,14 +336,15 @@ classdef FarField
             obj.earthLocation = parseobj.Results.earthLocation;
             obj.time = parseobj.Results.time;
             
+            % Set the base for power integration and symmetry checks
+            obj = setBase(obj);
+                
             % Check input sizes
             Nang = size(obj.x,1);
             Nf = numel(obj.freq);
             assert(size(obj.y,1)==Nang && size(obj.E1,1)==Nang && size(obj.E2,1)==Nang,'x,y,E1 and E2 must have the same number of rows')
             % Integrate power if none provided, but a full sphere of fields is 
             if isempty(obj.Prad)
-                % Set the base for power integration
-                obj = setBase(obj);
                 if obj.isGrid4pi
                     obj.Prad = obj.pradInt;
                 else
@@ -2427,7 +2428,7 @@ classdef FarField
                 for ff = 1:obj1.Nf
                     Ugrid(:,ff) = interpolateGrid(FFsph,'U',xi,yi,ff,'top');
                 end
-                FFsph = FarField.farFieldFromPowerPattern(xi,yi,Ugrid,FFsph.freq,'linearY',FFsph.freqUnit);
+                FFsph = FarField.farFieldFromPowerPattern(xi,yi,Ugrid,FFsph.freq,'fieldPol','linearY','freqUnit',FFsph.freqUnit);
             else
                 FFsph = FFsph.currentForm2Base(stepDeg,rad2deg([xmin,xmax;ymin,ymax]));
             end
