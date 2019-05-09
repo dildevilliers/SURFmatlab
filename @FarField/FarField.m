@@ -6,45 +6,45 @@ classdef FarField
     % all directional polarization types.
     
     properties
-        r(1,1) double {mustBeReal, mustBeFinite} = 1    % Radius where E-field is evaluated in (m)
+        r(1,1) double {mustBeReal, mustBeFinite}        % Radius where E-field is evaluated in (m)
         radEff(1,:) double {mustBeReal, mustBeFinite}   % Radiation efficiency per unit
         slant(1,1) double {mustBeReal, mustBeFinite}    % slant angle (for polType=slant) in radians
     end
     
     properties (SetAccess = private)
-        x%(:,1) double {mustBeReal, mustBeFinite}
-        y%(:,1) double {mustBeReal, mustBeFinite}
-        E1%(:,:) double %{mustBeFinite}
-        E2%(:,:) double %{mustBeFinite}
-        freq%(1,:) double {mustBeReal, mustBeFinite}
-        Prad%(1,:) double {mustBeReal, mustBeFinite}% = 4*pi
-        coorType%(1,:) char {mustBeMember(coorType,{'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'})} = 'spherical'
-        polType%(1,:) char {mustBeMember(polType,{'linear','circular','slant'})} = 'linear'
-        gridType%(1,:) char {mustBeMember(gridType,{'PhTh','DirCos','AzEl','ElAz','AzAlt','TrueView','ArcSin','Mollweide','RAdec','GalLongLat'})} = 'PhTh'
-        freqUnit%(1,:) char {mustBeMember(freqUnit,{'Hz','kHz','MHz','GHz','THz'})} = 'Hz'
-        symmetryXZ% = 'none'   % Type of symmetry about the xz-plane (could be electric|none|magnetic)
-        symmetryYZ% = 'none'   % Type of symmetry about the yz-plane (could be electric|none|magnetic)
-        symmetryXY% = 'none'   % Type of symmetry about the xy-plane (could be electric|none|magnetic)
-        symmetryBOR% = false % Is the pattern a BOR1 type pattern
+        x           % First (azimuth) grid parameter
+        y           % Second (polar) grid parameter
+        E1          % First E-field component
+        E2          % Second E-field component
+        freq        % Frequency
+        Prad        % Radiated power per frequency
+        coorType    % Coordinate system type {'spherical','Ludwig1','Ludwig2AE','Ludwig2EA','Ludwig3'}
+        polType     % Polarisation type {'linear','circular','slant'}
+        gridType    % Grid type {'PhTh','DirCos','AzEl','ElAz','AzAlt','TrueView','ArcSin','Mollweide','RAdec','GalLongLat'}
+        freqUnit    % Frequency Unit {'Hz','kHz','MHz','GHz','THz'}
+        symmetryXZ  % XZ plane symmetry type {'none','electric','magnetic'}
+        symmetryYZ  % YZ plane symmetry type {'none','electric','magnetic'}
+        symmetryXY  % XY plane symmetry type {'none','electric','magnetic'}
+        symmetryBOR % BOR symmetry type {'none','BOR0','BOR1'}
     end
     
     properties (Dependent = true)
-        ph
-        th
-        xname
-        yname
-        E1name  % ['Eth', 'Ex', 'Eaz', 'Eal', 'Eh', 'Elh', 'Exp'] - depends on coorType and polType
-        E2name  % ['Eph', 'Ey', 'Eel', 'Eep', 'Ev', 'Erh', 'Eco'] - depends on coorType and polType
-        Nf      % number of frequencies
-        Nx     % number of unique x angles
-        Ny     % number of unique y angles
-        Nang    % number of angle combinations [Nx x Ny]
-        freqHz
-        Directivity_dBi % directivity in dBi [1 x Nf]
-        Gain_dB         % Gain in dB [1 x Nf]
-        radEff_dB
-        xRangeType     % 'sym' or 'pos'
-        yRangeType     % 180 or 360
+        ph          % Spherical coordinate phi angle of grid
+        th          % Spherical coordinate theta angle of grid
+        xname       % Name of the x-grid variable {'\phi','u','az','\epsilon','Xg=asin(u)','Xg','North-az','RA','long'}
+        yname       
+        E1name      % Name of the E1-field component {...}
+        E2name      % Name of the E2-field component
+        Nf          % Number of frequencies
+        Nx          % Number of unique x points
+        Ny          % Number of unique y points
+        Nang        % Number of point combinations (total number of directions)
+        freqHz      % Frequency in Hz
+        Directivity_dBi % Directivity in dBi
+        Gain_dB         % Gain in dB 
+        radEff_dB       % Radiation efficiency in dB    
+        xRangeType     % Type of x-range: 'sym' or 'pos'
+        yRangeType     % Type of y-range: 180 or 360
     end
     
     properties (Dependent = true, Hidden = true)
@@ -54,10 +54,11 @@ classdef FarField
     end
     
     properties (SetAccess = private, Hidden = true)
-        E3 = []
-        orientation% = [0 pi/2] %antenna orientation - altitude/azimuth in radians relative to zenith/North
-        earthLocation% = [deg2rad(21.45) deg2rad(-30.71) 0]; %[deg2rad(18.866541) deg2rad(-33.928395) 0] % antenna location on the Earth longitude and latitude in radians, and height above sea level in meters - defaults to the roof of the Stellenbosch University E&E Engineering Dept. :)
-        time% = datetime(2018,7,22,0,0,0);%datetime(year(now),3,20,0,0,0) %21, 58, 0) % time as a datetime object (used, for instance, in astronomical observation)
+        E3 = []         % First E-field component
+        orientation     % Antenna orientation - altitude/azimuth in radians relative to zenith/North
+        earthLocation   % Antenna location on the Earth longitude and latitude in radians, and height above sea level in meters - defaults to the roof of the Stellenbosch University E&E Engineering Dept. :)
+        time            % Time as a datetime object (used, for instance, in astronomical observation)
+        
         % Keep the input data here to not lose some info when going through
         % transformations and back...
         xBase

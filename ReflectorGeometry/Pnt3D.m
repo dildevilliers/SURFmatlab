@@ -5,29 +5,6 @@ classdef Pnt3D
    % rotated scaled, as well as added and subtracted from each other. They
    % can also be defined and redefined in terms of different
    % CoordinateSystem bases. Several plotting functions are provided.
-   %
-   % Constructor: obj = Pnt3D(X,Y,Z)
-   % Inputs
-   % - X:  Matrix of x-values in m (0)
-   % - Y:  Matrix of y-values in m (0)
-   % - Z:  Matrix of z-values in m (0)
-   %
-   % Outputs
-   % - obj:  Pnt3D object
-   %
-   % Dependencies
-   % -
-   %
-   % Created: 2019-05-07, Dirk de Villiers
-   % Updated: 2019-05-07, Dirk de Villiers
-   %
-   % Tested : Matlab R2018b, Dirk de Villiers
-   %  Level : 2
-   %   File : testScript_Pnt3D.m
-   %
-   % Example
-   %   p = Pnt3D([1:3],[2:2:6],4)
-   %   p.plot
    
     properties (SetAccess = private)
         x double {mustBeReal, mustBeFinite} = 0 % x value in m
@@ -42,7 +19,31 @@ classdef Pnt3D
     
     methods
         function obj = Pnt3D(X,Y,Z)
-            % test
+            % PNT3D class constructor
+            % obj = Pnt3D(X,Y,Z) - can be empty
+            %
+            % Inputs
+            % - X:  Matrix of x-values in m (0)
+            % - Y:  Matrix of y-values in m (0)
+            % - Z:  Matrix of z-values in m (0)
+            %
+            % Outputs
+            % - obj:  Pnt3D object
+            %
+            % Dependencies
+            % -
+            %
+            % Created: 2019-05-07, Dirk de Villiers
+            % Updated: 2019-05-07, Dirk de Villiers
+            %
+            % Tested : Matlab R2018b, Dirk de Villiers
+            %  Level : 2
+            %   File : testScript_Pnt3D.m
+            %
+            % Example
+            %   p = Pnt3D([1:3],[2:2:6],4)
+            %   p.plot
+            
             if nargin == 3
                 % Get all the same size
                 obj.x = (Y+eps(realmin))./(Y+eps(realmin)).*(Z+eps(realmin))./(Z+eps(realmin)).*X;
