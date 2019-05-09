@@ -7,4 +7,4 @@ function th = wrap2pi(th)
 %   negative multiples of pi map to -pi.)
 
 q = (th < -pi) | (pi < th);
-th(q) = wrap2pi(th(q) + pi) - pi;
+th(q) = wrap22pi(th(q) + pi) - pi;
